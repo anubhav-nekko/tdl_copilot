@@ -2,8 +2,6 @@
 ;  PRINTING CONFIGURATION SUB-FORM (F/N toggle)
 ;  ---------------------------------------------------------------------------
 ;  Original Code  : Khokan • 2021-06-21 12:09
-;  This revision  : Added descriptive comments only. **No functional changes.**
-;  Every original line is preserved; all new lines start with “;”.
 ; =============================================================================
 
 
