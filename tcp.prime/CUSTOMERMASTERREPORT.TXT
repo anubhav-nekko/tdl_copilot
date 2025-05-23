@@ -1,7 +1,6 @@
 ; =============================================================================
-;  CUSTOMER MASTER REPORT – INLINE DOCUMENTATION
+;  CUSTOMER MASTER REPORT – DOCUMENTATION
 ;  ---------------------------------------------------------------------------
-;  Source file left un-modified; only comments (lines starting with “;”) added
 ;  Original Author : Khokan            •  Created : 2022-02-26 15:38
 ;  Documentation   : 2025-05-23        •  Scope   : Enterprise readability
 ; =============================================================================
