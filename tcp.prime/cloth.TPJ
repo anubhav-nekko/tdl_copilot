@@ -1,0 +1,21 @@
+[PROJECT INFO]
+Project Name=Cloth
+Project File=.\cloth.txt
+[PRODUCT INFO]
+Output Path=.\cloth.tcp
+Product Name=cloth
+Product Author=Circuit World,9903039753
+Product Version=2.5  04.Apr.2024 11:50
+Secured Compile=1
+Authorization Required=1
+Deny Loading In Edu Mode=0
+Trial Period=0
+[COMPILER OPTIONS]
+Show Warning=1
+Treat Warning as Error=0
+Show Remark=0
+Ignore Error=1
+Analyze=0
+[EXECUTION OPTIONS]
+LoadNoIniTDL=2
+LoadNoIniCmp=2
