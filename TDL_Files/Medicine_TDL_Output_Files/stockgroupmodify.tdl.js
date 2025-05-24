@@ -1,0 +1,62 @@
+// Auto-generated from stockgroupmodify.txt
+const tdl = `
+;===============================================================================
+; STOCKGROUPMODIFY.TXT
+; Created By: Taniya on 2023-08-30 09:47, ID:
+; Purpose: Adds a "Top Level Group" field to the Stock Group master in Tally,
+;          allowing assignment and mass update of the topmost parent group.
+;===============================================================================
+
+;------------------------------------------------------------------------------
+; EXTEND STOCK GROUP FORM WITH TOPMOST GROUP FIELD
+;------------------------------------------------------------------------------
+
+[#form : stockgroup]
+    add : option : cwSetTopMostGroup : @@RoseHomeoEnabled
+
+[!form : cwSetTopMostGroup]
+    add : part : cwSetTopMostGroup
+
+[part : cwSetTopMostGroup]
+    line : cwSetTopMostGroup
+
+[line : cwSetTopMostGroup]
+    field : mp, snf
+    Local: Field: mp: info: "Top Level Group:"
+    Local: Field: snf: storage: cwTopMostGroup
+    Local: Field: snf: Set As: $$GetMyParentnews:$parent
+
+;------------------------------------------------------------------------------
+; MENU INTEGRATION: ADD "SET TOP GROUP" BUTTON TO GATEWAY
+;------------------------------------------------------------------------------
+
+[#Menu: Gateway of Tally]
+    add: button : cwTopMostGroup
+
+[key : cwTopMostGroup]
+    title: "Set Top Group"
+    key : Alt + S
+    action : call : cwSetTopGRoups
+
+;------------------------------------------------------------------------------
+; FUNCTION: MASS UPDATE TOPMOST GROUP FOR ALL STOCK GROUPS
+;------------------------------------------------------------------------------
+
+[function : cwSetTopGRoups]
+    ;; {14.Aug.19 13:35} 00 : log : "A"
+    10 : walk : stockgroup
+    ;; {14.Aug.19 13:35} 11 :  log : $name
+    20 : if : $parent <> $$sysname:Primary
+    30 : modify object: (stockgroup,$name).cwTopMostGroup[1].cwTopMostGroup : $$GetMyParentnews:$parent
+    35 : else
+    36 : modify object: (stockgroup,$name).cwTopMostGroup[1].cwTopMostGroup : $name
+    40 : end if
+    45 : end walk
+    50 : return : no
+
+;===============================================================================
+; END OF FILE
+;===============================================================================
+
+`;
+export default tdl;

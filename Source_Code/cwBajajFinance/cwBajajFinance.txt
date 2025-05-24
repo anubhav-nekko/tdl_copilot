@@ -1,0 +1,16 @@
+
+;;Client:
+;;Serial:
+; Created By: pg on 2021-07-27 14:40, ID: 
+
+[include : e:\d7comps\tprime\RefreshTDL.txt]
+[include : e:\d7comps\tprime\cwSite.txt]
+[include : e:\d7comps\tprime\CommonFields2.txt]
+[include : e:\d7comps\tprime\CommonFormulae.txt]
+
+[include : e:\d7comps\tprime\ShowDemoForm.txt] ;; Demo Form
+[include : e:\d7comps\tprime\commonvars.txt]
+
+;;[include : Changelog.txt] ;; Not Related to Tally, But For Changes we do in Project
+
+[include : cwBajajFinanceNC.txt]

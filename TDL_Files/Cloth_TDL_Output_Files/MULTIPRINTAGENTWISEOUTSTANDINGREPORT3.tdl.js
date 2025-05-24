@@ -1,0 +1,69 @@
+// Auto-generated from MULTIPRINTAGENTWISEOUTSTANDINGREPORT3.TXT
+const tdl = `
+;===============================================================================
+; MULTIPRINTAGENTWISEOUTSTANDINGREPORT3.TXT
+; Created By: Khokan on 2021-08-31 10:25, ID:
+; Purpose: Implements a "Multi Print Agent Wise Outstanding Report" in Tally,
+;          allowing bulk printing of agent-wise outstanding statements with
+;          bill-by-bill details (Dr/Cr), address, contact, and totals.
+;===============================================================================
+
+## Main Features
+
+- **Menu Integration:**
+  - Adds the report to Gateway of Tally and Debug menu for easy access.
+  - Menu option: "Multi print agent wise" (labelled via \`@@multiprintAGENTReport\`)[1].
+
+- **Report Structure:**
+  - For each agent/party, prints a detailed outstanding statement.
+  - Two main sections per party:
+    - **Debit Bills (Dr):** Date, Bill No, Mode of Credit, Qty, Dr. Value.
+    - **Credit Bills (Cr):** Date, Bill No, Mode of Credit, Qty, Cr. Value.
+  - Each section has its own totals line.
+  - Address and contact details are included at the top (company and party).
+  - Page breaks and formatting for professional multi-party printing.
+
+- **Data Model:**
+  - **Debit Side (\`ColmultiprintAGENT\`):**
+    - Type: Bills
+    - Filters: Only Dr (debit) bills, agent filter always enabled.
+    - Fetches agent/party custom caption (\`cwcaption1item\`).
+    - Sorted by parent (party/agent).
+  - **Credit Side (\`ColmultiprintAGENTb\`):**
+    - Type: Bills
+    - Filters: Only Cr (credit) bills, agent filter always enabled.
+    - Fetches agent/party custom caption.
+    - Sorted by parent.
+  - Both collections ensure only relevant bills are included for each party.
+
+- **Layout and Styling:**
+  - Each party's statement is split into two vertical parts (Dr and Cr) side by side (each 50% page width).
+  - Bold headers, clear alignment, and thin borders for clarity.
+  - Totals at the bottom of each section.
+  - Toolbar buttons for navigation, export, and print.
+
+- **Technical Highlights:**
+  - Uses TDL's \`repeat\`, \`scroll\`, and \`total\` features for dynamic, multi-party reporting.
+  - System formulas and variables control filtering and formatting.
+  - No hard-coded party names; filters are generic for all agents.
+
+## Example Output
+
+For each party:
+
+| Date     | Bill No | Mode of Credit | Qty | Dr. Value |   | Date     | Bill No | Mode of Credit | Qty | Cr. Value |
+|----------|---------|----------------|-----|-----------|---|----------|---------|----------------|-----|-----------|
+| 01-05-25 | 1001    | ...            | 10  | 10,000    |   | 10-05-25 | 2001    | ...            | 5   | 5,000     |
+| ...      | ...     | ...            | ... | ...       |   | ...      | ...     | ...            | ... | ...       |
+|          |         |                |     | **Total** |   |          |         |                |     | **Total** |
+
+---
+
+**Summary:**  
+MULTIPRINTAGENTWISEOUTSTANDINGREPORT3.TXT enables bulk, professional printing of agent-wise outstanding statements in Tally, with clear Dr/Cr bill details, address, contact, and totals for each party. It is ideal for collection follow-up, audit, and customer communication, supporting export/print and flexible page setup[1].
+
+---
+[1]: See attached file MULTIPRINTAGENTWISEOUTSTANDINGREPORT3.TXT for full source and details.
+
+`;
+export default tdl;

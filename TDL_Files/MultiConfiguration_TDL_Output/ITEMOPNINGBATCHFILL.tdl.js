@@ -1,0 +1,117 @@
+// Auto-generated from ITEMOPNINGBATCHFILL.TXT
+const tdl = `
+;===============================================================================
+; ITEMOPNINGBATCHFILL.TXT
+; Created By: Akshay on 2015-06-05 14:46, ID:
+; Purpose: Enables batch-wise breakup and auto-filling of opening balances
+;          for stock items in Tally, with barcode/serial logic and MRP support.
+;===============================================================================
+
+;------------------------------------------------------------------------------
+; (COMMENTED) SUBFORM INTEGRATION FOR OPENING BALANCE FIELD
+;------------------------------------------------------------------------------
+
+;; [#Field: STKI OpBal]
+;; add:Sub Form :before:STKBATCHAllocation:ITEMOPBATCHFILL:($IsBatchWiseOn OR $$IsMultiGodownOn) AND NOT $$IsEmpty:$OpeningBalance and @@cwbarcodeeachqtyx and @@cwbarcodeeachqtyx
+
+;------------------------------------------------------------------------------
+; ADD "FILL BATCH" BUTTON TO BATCH ALLOCATION FORM
+;------------------------------------------------------------------------------
+
+;; [#Form: STKBATCH Allocation]
+;; add:button:fillopbatch
+
+[Button:fillopbatch]
+    Key     : F5
+    Title   : $$LocaleString:"Fill Batch"
+    Action  : modify variable : ITEMOPBATCHFILL
+
+;------------------------------------------------------------------------------
+; BATCH FILL REPORT AND FORM
+;------------------------------------------------------------------------------
+
+[Report: ITEMOPBATCHFILL]
+    Form: ITEMOPBATCHFILL
+    title : "Enter Batch-wise Breakup Details..."
+
+[Form: ITEMOPBATCHFILL]
+    Part: ITEMOPBATCHFILL
+    on : form Accept : yes : Form Accept
+    on : form Accept : yes : Call : batchbarcodefillop:$cwmfddt:$cwnewgodownname:$cwnewbcodeqty:$cwnewrate:$cwnewamount:$cwnewsl:#fldprtno:#fldbatch:#fldnuzero:#fldstno:$cwmrpbatch:$cwnewsl
+
+[Part: ITEMOPBATCHFILL]
+    use:itembarcodedet
+
+    local:line:itembarcodedet:local:field:numf3:invisible:yes
+    local:line:itembarcodedet:local:field:snfx:invisible:yes
+    local:line:itembarcodedet:local:field:snf:invisible:yes
+    local:line:itembarcodedet:local:field:snf2:invisible:yes
+
+    local:line:itembarcodedet2:local:field:numf3:invisible:yes
+    local:line:itembarcodedet2:local:field:snf:invisible:yes
+    local:line:itembarcodedet2:local:field:snf2:invisible:yes
+    local:line:itembarcodedet2:Local: Field: nf: add :table:Stockable Godown VchExtract ,Not Applicable
+
+    local:line:itembarcodedet:Local: Field: sdf: delete:invisible
+    local:line:itembarcodedet2:Local: Field: fillVCHBATCHMfdx: delete: invisible
+
+;------------------------------------------------------------------------------
+; FUNCTION: FILL BATCHES FOR OPENING (WITH BARCODE/SERIAL/MRP)
+;------------------------------------------------------------------------------
+
+[Function: batchbarcodefillop]
+    parameter : mftx : duedate
+    parameter : mygodown : string
+    parameter : myqty : number
+    parameter : myrate : number
+    parameter : myamount : number
+    PARAMETER : FPARTNO : STRING
+    PARAMETER : LASTBATCH : NUMBER
+    PARAMETER : FNUMZERO : NUMBER
+    PARAMETER : STARTINGNO : NUMBER
+    PARAMETER : mymrp : STRING
+
+    VARIABLE : ctr : number : $$numitems:BatchAllocations
+
+    ; Delete existing batch allocations if not in stock journal
+    03a: if : not $$isstockjrnl:##SVvouchertype
+    03c:  while : ##ctr  >= 0
+    ;; 03d: delete collection object : BatchAllocations : 1 : yes
+    03d1: decr : ctr
+    03e: end while
+    03z: end if
+
+    10  : set: ctr : 1
+    30 : for range  : ctr1 : number : 1 :  ##myqty
+        08 : do if : ##ctr > 0 : insert collection object  : BatchAllocations
+        09 : do if : ##ctr=0 : set target:BatchAllocations[1]
+        101 : SET OBJECT
+        50d : set value : MfdOn : ##mftx
+        50 : set value : godownname : ##mygodown
+        55 : set value : batchname  :  $$Cwmakebatchop
+        70 : set value : billedqty : $$asqty:1
+        60 : set value : Actualqty : $$asqty:1
+        80 : set value : batchrate : $$asrate:##myrate
+        92 : set value : cwmrpbatch: ##mymrp
+        199 : set: ctr : ##ctr + 1
+    200 : end for
+
+;------------------------------------------------------------------------------
+; FUNCTION: GENERATE BATCH NAME BASED ON PART NO AND SERIAL
+;------------------------------------------------------------------------------
+
+[function : Cwmakebatchop]
+    returns : string
+    variable : str : string
+    variable : itemline : string : #snfLineNo
+    10 : set : str : ##fpartno
+    20 :  if : ##lastbatch = 0
+    30 : set : lastbatch : ##startingno
+    40 : else
+    50 : set : lastbatch : ##lastbatch + 1
+    60 : end if
+    70  : return : ##str + $$zerofill:($$string:##lastbatch):@@cwnumzerofill
+
+
+`;
+export default tdl;

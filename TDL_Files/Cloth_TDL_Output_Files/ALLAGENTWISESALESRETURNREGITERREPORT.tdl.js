@@ -1,0 +1,273 @@
+// Auto-generated from ALLAGENTWISESALESRETURNREGITERREPORT.TXT
+const tdl = `
+;===============================================================================
+; ALLAGENTWISESALESRETURNREGITERREPORT.TXT
+; Created By: khokan on 2022-04-27 12:46, ID:
+; Created By: Khokan on 2021-08-25 18:00, ID:
+; Purpose: Provides an "All Agent Wise Sales Return Register Report" in Tally,
+;          showing sales returns grouped by agent/party with quantities and
+;          gross amounts, including subtotals and totals.
+;===============================================================================
+
+;------------------------------------------------------------------------------
+; MENU INTEGRATION: Add report option to Gateway of Tally and Debug menu
+;------------------------------------------------------------------------------
+
+[#menu: Gateway of Tally]
+;; {29.Apr.22 09:45}         add: Option: AllWISEsalesReturnregiterreportLock ;; : @@AllWISEsalesReturnregiterreportDemoLock
+
+[#menu : cw_Debug_menu]
+    add: Item: before: @@locQuit: @@AllWISEsalesReturnregiterreportReport: Display Collection: colllRepAllWISEsalesReturnregiterreport
+[!menu: AllWISEsalesReturnregiterreportLock]
+    add: Item: before: @@locQuit: @@AllWISEsalesReturnregiterreportReport: Display :RepAllWISEsalesReturnregiterreport   ;;Collection: colllRepAllWISEsalesReturnregiterreport
+    add: Item: before: @@locQuit: Blank
+
+;------------------------------------------------------------------------------
+; SYSTEM FORMULA: Report title (and optional demo lock)
+;------------------------------------------------------------------------------
+
+[System: formula]
+    AllWISEsalesReturnregiterreportReport: "All Agent wise sales return report"
+;; AllWISEsalesReturnregiterreportDemoLock: $$MachineDate < $$Date:"01/04/2013"
+
+;------------------------------------------------------------------------------
+; COLLECTION: For menu selection and report trigger
+;------------------------------------------------------------------------------
+
+[Collection: colllRepAllWISEsalesReturnregiterreport]
+    Use         : Extract Alias Collection
+    Source Collection	: List of Ledgers
+    Variable    : Ledger Name
+    Report      : RepAllWISEsalesReturnregiterreport
+    Trigger     : cwLedgerName1
+    Fetch       : Name
+
+;------------------------------------------------------------------------------
+; MAIN REPORT DEFINITION
+;------------------------------------------------------------------------------
+
+[Report: RepAllWISEsalesReturnregiterreport]
+    use: Dsp Template
+    Title: @@AllWISEsalesReturnregiterreportReport
+    Printset: Report Title: @@AllWISEsalesReturnregiterreportReport
+    Form: FrmAllWISEsalesReturnregiterreport
+    Export: Yes
+    set  : svfromdate : ##svcurrentdate
+    set  : svTodate : ##svcurrentdate
+    Local: Button: RelReports: Inactive: Yes
+
+;------------------------------------------------------------------------------
+; MAIN FORM LAYOUT AND TOOLBAR BUTTONS
+;------------------------------------------------------------------------------
+
+[Form: FrmAllWISEsalesReturnregiterreport]
+    use: DSP Template
+    Part: DspAccTitles,PrtTitle0AllWISEsalesReturnregiterreport,PrtAllWISEsalesReturnregiterreport
+    Width: 100% Page
+    Height: 100% Page
+    Background: @@SV_STOCKSUMMARY
+    delete: page break
+    add: page break: AllWISEsalesReturnregiterreportbotbrk,AllWISEsalesReturnregiterreportbotOpbrk
+    Bottom Toolbar Buttons 	: BottomToolBarBtn1, BottomToolBarBtn3, BottomToolBarBtn8, BottomToolBarBtn9, BottomToolBarBtn10, BottomToolBarBtn11,BottomToolBarBtn12
+
+    local:Part:DSPCompanyName:local:line:DSPCompanyName: Local: Field: DSP CompanyName:PrintStyle:styleCalisto2
+    local:Part:DSPCompanyAddress:local:line:DSPCompanyAddress: Local: Field: DSPCompanyAddress:PrintStyle:style2n
+    local:Part:DSPReportTitle:local:line:DSPReportName: Local: Field: DSPReportName:PrintStyle:style3n
+    local:Part:DSPReportSubTitle:local:line:DSPReportSubTitle: Local: Field: DSPReportSubTitle:PrintStyle:style2n
+    local:Part:DSPReportTitle:local:line:DSPReportPeriod:Local: Field: DSPReportPeriod:PrintStyle:style2n
+    local:Part:DSPPageNo:local:line:DSPPageNo: Local: Field:DSPPageNo:PrintStyle:style2n
+
+;------------------------------------------------------------------------------
+; PAGE BREAK AND TITLE PARTS
+;------------------------------------------------------------------------------
+
+[part: AllWISEsalesReturnregiterreportbotBrk]
+    line: EXPINV PageBreak
+    border: thin top
+
+[part: AllWISEsalesReturnregiterreportbotopbrk]
+    use: dspacctitles
+    add: part: AllWISEsalesReturnregiterreportTitlePart
+
+[part: AllWISEsalesReturnregiterreportTitlePart]
+    line: LnAllWISEsalesReturnregiterreportTitle
+
+[line: LnAllWISEsalesReturnregiterreportCurrPeriod]
+    field: fwf,fwf2
+    Local: field: fwf2: Align: Right
+    Local: Field: fwf: Style: normal bold
+    Local: Field: fwf2: Style: styleCalisto
+    Local: Field: fwf: Style: styleCalisto
+    Local: Field: NF: Style: styleCalisto
+    Local: Field: fwf: Set As: ##LedgerName
+    Local: Field: nf: Set As: $$ReptField:Name:2:ledger:##LedgerName
+    Local: Field: fwf2: Set As: @@dspDateStr
+    Local: Field: fwf2: invisible: $$inprintmode
+
+[part: PrtTitle0AllWISEsalesReturnregiterreport]
+    line : LnAllWISEsalesReturnregiterreportCurrPeriod
+
+;------------------------------------------------------------------------------
+; MAIN DATA PART: REPEAT LINES FOR EACH AGENT/PARTY
+;------------------------------------------------------------------------------
+
+[Part: PrtAllWISEsalesReturnregiterreport]
+    Line: LnAllWISEsalesReturnregiterreportTitle, LnAllWISEsalesReturnregiterreportTitle1, LnAllWISEsalesReturnregiterreport
+    bottom Line: LnAllWISEsalesReturnregiterreportTotals
+    repeat: LnAllWISEsalesReturnregiterreport: ColAllWISEsalesReturnregiterreport
+    scroll: Vertical
+    Common Border: Yes
+    Total: Qtyf, amtf
+
+;------------------------------------------------------------------------------
+; COLLECTION: Aggregates sales return by agent/party
+;------------------------------------------------------------------------------
+
+[Collection: ColAllWISEsalesReturnregiterreport]
+    source Collection: sourceColAllWISEsalesReturnregiterreport
+    by: partyledgername: $partyledgername
+    by: cwcaption1vch1: $..cwcaption1vch
+    aggr compute: billedqty: sum: $$CollAmtTotal:inventoryentries:$billedqty
+    aggr compute: amount1: sum: $$CollAmtTotal:inventoryentries:$amount
+    compute: CWTEMPGSTEWAYTRANSPORTERNAME1: $CWTEMPGSTEWAYTRANSPORTERNAME
+    compute: BILLOFLADINGNO1: $BILLOFLADINGNO
+    compute: BILLOFLADINGDATE1: $BILLOFLADINGDATE
+    compute: narration1: $narration
+    compute: BASICFINALDESTINATION1: $BASICFINALDESTINATION
+    sort: @@default: $cwcaption1vch1
+    filter: cwcaption1vch1fil
+
+[Collection: sourceColAllWISEsalesReturnregiterreport]
+    Type	   : Vouchers	: VoucherType
+    Child Of   : $$VchTypeCreditNote
+    Belongs To : Yes
+    filter: cwEnableSalesReturn
+
+[system: Formula]
+    cwcaption1vch1fil: not $$isempty:$cwcaption1vch1
+
+;------------------------------------------------------------------------------
+; COLUMN HEADERS: Main Title and Sub-Title Lines
+;------------------------------------------------------------------------------
+
+[Line: LnAllWISEsalesReturnregiterreportTitle1]
+    use: LnAllWISEsalesReturnregiterreport
+    local: field: fwf: set as: $$CollectionField:$cwcaption1vch1:First:ColAllWISEsalesReturnregiterreport
+    local: field: qtyf: set as: ""
+    local: field: amtf: set as: ""
+    local: field: nf4: set as: ""
+    local: field: fwf: style: styleCalistox2
+    Local: field: snf: set as: $$ReptField:Name:2:COSTCENTRE:#fwf
+
+[Line: LnAllWISEsalesReturnregiterreportTitle]
+    use: LnAllWISEsalesReturnregiterreport
+    option: titleopt
+    local: field: SNF: set as: "Agent/ Party"
+    local: field: fwf: set as: ""
+    local: field: qtyf: set as: "Pcs"
+    local: field: amtf: set as: "Gr. Amt"
+    local: field: nf4: set as: "Agent"
+    local: field: snf: style: styleCalisto2
+    local: field: sdf: style: styleCalisto2
+    local: field: fwf: style: styleCalisto2
+    local: field: nf: style: styleCalisto2
+    local: field: nf3: style: styleCalisto2
+    local: field: snf2: style: styleCalisto2
+    local: field: snf3: style: styleCalisto2
+    local: field: sdf2: style: styleCalisto2
+    local: field: nf2: style: styleCalisto2
+    local: field: nf4: style: styleCalisto2
+    local: field: qtyf: style: styleCalisto2
+    local: field: ratepf: style: styleCalisto2
+    local: field: amtf: style: styleCalisto2
+    Local: field: default: Align: centre
+    Local: field: fwf: Align: left
+    Local: field: fwf: indent: 10
+
+;------------------------------------------------------------------------------
+; MAIN DATA LINE: Sales return details per agent/party
+;------------------------------------------------------------------------------
+
+[Line: LnAllWISEsalesReturnregiterreport]
+    Fields: SNF, fwf
+    right field: Qtyf, Amtf, nf4, Qtyf2, Amtf2
+    Option: Alter on Enter
+    local: field: qtyf: Format: "NoSymbol, Short Form, No Compact,NoZero"
+    local: field: ratepf: setas: #amtf/#qtyf
+    local: field: fwf: alter: voucher: $$isvoucher
+    option: alter on enter
+    local: field: fwf: alter: voucher: $$isvoucher
+    Local: field: snf: set as: $$ReptField:Name:2:LEDGER:#fwf
+    local: field: fwf: set as: $partyledgername
+    local: field: qtyf: set as: $billedqty
+    local: field: amtf: set as: $amount1
+    local: field: nf4: set as: $cwcaption1vch1
+    local: field: qtyf2: set as: if $$line=1 then #qtyf else if $cwcaption1vch1 <> $$prevobj:$cwcaption1vch1 then #qtyf else $$prevlinefield+#qtyf
+    local: field: amtf2: set as: if $$line=1 then #amtf else if $cwcaption1vch1 <> $$prevobj:$cwcaption1vch1 then #amtf else $$prevlinefield+#amtf
+    local: field: default: style: styleCalisto
+    local: field: qtyf2: Invisible: yes
+    local: field: amtf2: Invisible: yes
+    local: field: nf4: Invisible: yes
+    border: thin bottom
+
+;------------------------------------------------------------------------------
+; EXPLOSION PART: Subtotal and subtotal lines for agent grouping
+;------------------------------------------------------------------------------
+
+add: explode: expAgentWISEsalesRetur: $$line = $$numitems or $cwcaption1vch1 <> $$nextobj:$cwcaption1vch1
+
+[part: expAgentWISEsalesRetur]
+    line: expAgentWISEsalesRetursubtotal, expAgentWISEsalesRetur
+
+[line: expAgentWISEsalesRetur]
+    use: LnAllWISEsalesReturnregiterreport
+    delete: explode
+    local: field: fwf: set as: $$nextobj:$cwcaption1vch1
+    local: field: nf: set as: ""
+    Local: field: snf: set as: $$ReptField:Name:2:COSTCENTRE:#fwf
+    local: field: qtyf: set as: ""
+    local: field: amtf: set as: ""
+    local: field: fwf: style: styleCalistox2
+    delete: border: thin bottom
+
+[line: expAgentWISEsalesRetursubtotal]
+    use: LnAllWISEsalesReturnregiterreport
+    delete: explode
+    local: field: fwf: align: right
+    local: field: fwf: set as: "Agent Total"
+    local: field: nf: set as: ""
+    local: field: qtyf: set as: #qtyf2
+    local: field: amtf: set as: #amtf2
+    local: field: qtyf2: set as: $$prevlinefield
+    local: field: amtf2: set as: $$prevlinefield
+    local: field: default: style: styleCalisto2
+    Local: field: fwf: Align: Right
+    delete: border: thin bottom
+
+;------------------------------------------------------------------------------
+; TOTALS LINE: Display totals for all columns
+;------------------------------------------------------------------------------
+
+[line: LnAllWISEsalesReturnregiterreportTotals]
+    use: LnAllWISEsalesReturnregiterreport
+    option: totalOpt
+    local: field: fwf: align: right
+    local: field: fwf: set as: "Report Total"
+    local: field: qtyf: set as: $$total:qtyf
+    local: field: amtf: set as: $$total:amtf
+    local: field: snf: style: styleCalisto2
+    local: field: sdf: style: styleCalisto2
+    local: field: fwf: style: styleCalisto2
+    local: field: nf: style: styleCalisto2
+    local: field: snf2: style: styleCalisto2
+    local: field: snf3: style: styleCalisto2
+    local: field: sdf2: style: styleCalisto2
+    local: field: nf2: style: styleCalisto2
+    local: field: nf2: style: styleCalisto2
+    local: field: qtyf: style: styleCalisto2
+    local: field: ratepf: style: styleCalisto2
+    local: field: amtf: style: styleCalisto2
+
+
+`;
+export default tdl;

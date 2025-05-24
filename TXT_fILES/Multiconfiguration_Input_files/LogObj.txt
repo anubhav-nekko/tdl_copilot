@@ -1,0 +1,986 @@
+; Created By: Pg on 2013-06-22 11:37, ID: 
+
+[#form: Statistics]
+add : button : cwMasterList  ; Adds the cwMasterList button to the Statistics form
+;local : field : default : border : thin box  ; Commented out default border setting
+
+/* 
+Form Modification: Statistics
+Purpose: Adds a button to access the master list functionality
+*/
+
+[#Form: List of Accounts]
+add : button : cwMasterList  ; Adds the cwMasterList button to the List of Accounts form
+
+/* 
+Form Modification: List of Accounts
+Purpose: Adds a button to access the master list functionality
+*/
+
+[key : cwMasterList]
+title: "CwMasterList"  ; Sets the display title for the button
+key : alt + f7  ; Sets the keyboard shortcut
+action : display :RepfTemp  ; Defines the action to display the RepfTemp report
+
+/* 
+Key Definition: cwMasterList
+Purpose: Defines a keyboard shortcut and action for the master list button
+Shortcut: Alt+F7
+Action: Displays the RepfTemp report
+*/
+
+     [#menu: Gateway of Tally]
+;     add : item : cwRr : display : cwRR  ; Commented out menu item addition
+
+/* 
+Menu Modification: Gateway of Tally
+Purpose: Would add a menu item for cwRR report (currently commented out)
+*/
+
+;------------------------- REPORT FOR EXPORT TO DELPHI
+[REPORT : RepfTemp2]
+USE : RepfTemp  ; Inherits from RepfTemp report
+DELETE : FORM  ; Removes the form from the parent report
+ADD : FORM :  FrmfTemp2  ; Adds a new form
+
+/* 
+Report Definition: RepfTemp2
+Purpose: Modified version of RepfTemp for export to Delphi
+Changes: Uses a different form (FrmfTemp2) than the parent report
+*/
+
+      [Form: FrmfTemp2]
+        use: DSP Template  ; Inherits from the display template
+       Part: PrtfTemp2  ; Specifies the part to use
+       
+       [PART: PrtfTemp2]
+       Line: LnfTempTitle,LnfTemp  ; Includes title and data lines
+
+     repeat: LnfTemp: ColfTemp  ; Repeats the data line for each item in the collection
+     scroll: Vertical  ; Enables vertical scrolling
+
+/* 
+Form Definition: FrmfTemp2
+Purpose: Display form for the RepfTemp2 report
+Components: Uses PrtfTemp2 part with title and repeating data lines
+*/
+
+     
+     
+     [report : cwrr]
+     use : RepfTemp  ; Inherits from RepfTemp report
+     set : sdf1temp : $$date:"20-07-2013"  ; Sets a specific date filter
+     set : accounttype : $$sysname:StockItems  ; Sets to display stock items
+
+/* 
+Report Definition: cwrr
+Purpose: Specialized version of RepfTemp for stock items with a specific date filter
+*/
+     
+;; {04.Aug.13 11:57}         add: Option: fTempLock  ;;: @@cwdebug  ; Commented out option addition
+
+
+ [#menu : Account Statements]
+        add: Option: fTempLock  : $$machinedate < $$date:"01/09/2013"  ; Adds the fTempLock option with a date condition
+       
+/* 
+Menu Modification: Account Statements
+Purpose: Adds the fTempLock option to the Account Statements menu
+Condition: Only available before September 1, 2013
+*/
+
+     [!menu: fTempLock]
+        add: Item: before: @@locQuit: "Alter Mod Date" : menu : cwModDetails  ; Adds a submenu for modification options
+        add: Item: before: @@locQuit: Blank  ; Adds a blank line before the Quit option
+        
+/* 
+Menu Definition: fTempLock
+Purpose: Creates a menu for accessing modification options
+Items: "Alter Mod Date" submenu and a blank separator
+*/
+
+        [menu : cwModDetails]
+        title :"Modify"  ; Sets the menu title
+        indent : Stock  ; Creates a section header for stock-related items
+        item : Stock Item : Alter :RepfTempItems  ; Option to modify stock items
+        item : Stock Group : alter : repfTempSGroups  ; Option to modify stock groups
+        item : Stock Category : alter : RepFTempSCategory  ; Option to modify stock categories
+        item : Unit : alter : repFtempUnit  ; Option to modify units
+        item : Godown : alter : repFGodown  ; Option to modify godowns
+        
+        indent : Ledgers  ; Creates a section header for ledger-related items
+        item : Ledger : Alter :RepfTempLedgers  ; Option to modify ledgers
+        item : Cost Category :alter : repFCostCategory  ; Option to modify cost categories
+        item : Cost Centre : alter : repFCostCentre  ; Option to modify cost centers
+        item : blank  ; Adds a blank separator
+        item : Voucher Type : alter : repFVoucherType  ; Option to modify voucher types
+        item : blank  ; Adds a blank separator
+        item : @@locquit  ; Adds the quit option
+
+/* 
+Menu Definition: cwModDetails
+Purpose: Creates a hierarchical menu for modifying different master types
+Sections:
+  - Stock: For inventory-related masters
+  - Ledgers: For accounting-related masters
+*/
+
+;                  AL Budget, +
+;                  AL Currency
+
+;                  AL Tariff Classification, +
+
+;                  AL Serial Number, +
+
+/* 
+Commented out additional menu items that could be added in the future
+*/
+
+[report : repFVoucherType]
+        use : RepfTempx  ; Inherits from RepfTempx report
+        set : account type : VoucherTypes  ; Sets to display voucher types
+
+/* 
+Report Definition: repFVoucherType
+Purpose: Specialized version of RepfTempx for voucher types
+*/
+
+        [report: repFCostCentre]
+        use : RepfTempx  ; Inherits from RepfTempx report
+        set : account type : CostCentres  ; Sets to display cost centers
+
+/* 
+Report Definition: repFCostCentre
+Purpose: Specialized version of RepfTempx for cost centers
+*/
+        
+        [report : RepfTempItems]
+        use : RepfTempx  ; Inherits from RepfTempx report
+        set : account type : Stockitems  ; Sets to display stock items
+        
+/* 
+Report Definition: RepfTempItems
+Purpose: Specialized version of RepfTempx for stock items
+*/
+
+        [report : repfTempSGroups]
+        use : RepfTempx  ; Inherits from RepfTempx report
+        set : account type : StockGroups  ; Sets to display stock groups
+        
+/* 
+Report Definition: repfTempSGroups
+Purpose: Specialized version of RepfTempx for stock groups
+*/
+
+        [report : RepfTempLedgers]
+        use : RepfTempx  ; Inherits from RepfTempx report
+        set : account type : Ledgers  ; Sets to display ledgers
+        
+/* 
+Report Definition: RepfTempLedgers
+Purpose: Specialized version of RepfTempx for ledgers
+*/
+
+        [report : RepFTempSCategory]
+        use : repfTempx  ; Inherits from RepfTempx report
+        set : account type : Stockcategories  ; Sets to display stock categories
+        
+/* 
+Report Definition: RepFTempSCategory
+Purpose: Specialized version of RepfTempx for stock categories
+*/
+
+        [report: repFtempUnit]
+        use : repfTempx  ; Inherits from RepfTempx report
+        set : account type : units  ; Sets to display units
+        
+/* 
+Report Definition: repFtempUnit
+Purpose: Specialized version of RepfTempx for units
+*/
+
+        [report : repFGodown]
+        use : repfTempx  ; Inherits from RepfTempx report
+        set : account type : Godowns  ; Sets to display godowns
+        
+/* 
+Report Definition: repFGodown
+Purpose: Specialized version of RepfTempx for godowns
+*/
+
+        [report : repFCostCategory]
+        use : repfTempx  ; Inherits from RepfTempx report
+        set : account type : CostCategories  ; Sets to display cost categories
+
+/* 
+Report Definition: repFCostCategory
+Purpose: Specialized version of RepfTempx for cost categories
+*/
+
+
+
+
+
+[report : RepfTempx]
+    use : RepfTemp  ; Inherits from RepfTemp report
+local : form : FrmfTemp :delete : button  ; Removes buttons from the form
+local : form : FrmfTemp : add : button : cwFillDAte  ; Adds the cwFillDate button
+variable : logi1temp  ; Declares a logical variable
+set : logi1temp : no  ; Initializes the variable to "no"
+
+/* 
+Report Definition: RepfTempx
+Purpose: Base report for all master type-specific reports
+Modifications: Removes default buttons and adds a custom Fill Date button
+*/
+
+[button : cwFillDAte]
+key : f3  ; Sets the keyboard shortcut
+title : "Fill"  ; Sets the button title
+action : set : logi1temp : not ##logi1temp  ; Toggles the logi1temp variable
+
+/* 
+Button Definition: cwFillDAte
+Purpose: Toggles the logi1temp variable to control date filling behavior
+Shortcut: F3
+*/
+
+[variable : logi1temp]
+type :logical  ; Defines the variable type as logical (yes/no)
+
+/* 
+Variable Definition: logi1temp
+Purpose: Controls date filling behavior in the report
+Type: Logical (yes/no)
+*/
+
+[system : variable]
+logi1temp : no  ; Sets the system-wide default value to "no"
+
+/* 
+System Variable: logi1temp
+Purpose: Sets the default value for the logi1temp variable
+*/
+
+
+        
+    [System: formula]
+   fTempReport: "CwMasterList"  ; Sets the report title
+;; fTempDemoLock: $$MachineDate < $$Date:"01/04/2013"  ; Commented out demo lock condition
+
+/* 
+System Formula: fTempReport
+Purpose: Defines the title for the master list report
+*/
+     
+    [Report: RepfTemp]
+        use: Dsp Template  ; Inherits from the display template
+      Title: @@fTempReport  ; Sets the title from the formula
+   Printset: Report Title: @@fTempReport  ; Sets the print title
+       Form: FrmfTemp  ; Specifies the form to use
+     Export: Yes  ; Enables export functionality
+     set  : svfromdate : ##svcurrentdate  ; Sets from date to current date
+     set  : svTodate : ##svcurrentdate  ; Sets to date to current date
+    Local       : Button   : RelReports        : Inactive : Yes  ; Disables related reports button
+    variable : accounttype  ; Declares a variable for the account type
+    Set         : AccountType       : if $$IsEmpty:##AccountType then $$SysName:Ledgers else ##AccountType  ; Sets default account type to Ledgers
+    variable: sdf1temp  ; Declares a date variable
+     multi objects : ColfTemp  ; Enables multiple object selection
+;; {26.Sep.13 12:57} variable : IMPClAsOP  ; Commented out variable declaration
+    Set         : IMPClAsOp         : No  ; Sets import closing as opening flag to No
+    
+    Variable: logi1  ; Declares a logical variable
+          set :logi1:"yes"  ; Sets the variable to "yes"
+
+
+print : Acct List Print Config  ; Sets the print configuration
+
+/* 
+Report Definition: RepfTemp
+Purpose: Main report for displaying master lists
+Features:
+  - Configurable account type (defaults to Ledgers)
+  - Export capability
+  - Date filtering
+  - Multiple object selection
+*/
+    
+    [variable : sdf1temp]
+    type : date  ; Defines the variable type as date
+    
+/* 
+Variable Definition: sdf1temp
+Purpose: Stores the date filter for modified records
+Type: Date
+*/
+
+    [system : variable]
+    sdf1temp : 0  ; Sets the system-wide default value to 0 (no date)
+     
+/* 
+System Variable: sdf1temp
+Purpose: Sets the default value for the date filter
+*/
+
+      [Form: FrmfTemp]
+        use: DSP Template  ; Inherits from the display template
+       Part: DspAccTitles,PrtTitle0fTemp,PrtfTemp  ; Specifies the parts to use
+      Width: 100% Page  ; Sets the width to full page
+     Height: 100% Page  ; Sets the height to full page
+;; {22.Jun.13 14:08}  Background: @@SV_STOCKSUMMARY  ; Commented out background setting
+     delete: page break  ; Removes default page breaks
+        add: page break: fTempbotbrk,fTempbotOpbrk  ; Adds custom page breaks
+Bottom Toolbar Buttons 	: BottomToolBarBtn1, BottomToolBarBtn3, BottomToolBarBtn8, BottomToolBarBtn9, BottomToolBarBtn10, BottomToolBarBtn11,BottomToolBarBtn12  ; Specifies toolbar buttons
+;; BottomToolBarBtn2, BottomToolBarBtn4, BottomToolBarBtn5,BottomToolBarBtn6, BottomToolBarBtn7,  ; Commented out additional buttons
+;;                        1 Quit, 2 Accept, 3 Delete, 4 Cancel, 5 Duplicate Voucher, 6 Add Voucher, 7 Insert Voucher, 8 Remove Line, 9 Restore Line, 10 Restore all, 11 Select, 12 Select All  ; Button reference
+;;    local : button : report config : action :modify variable: MyPLConfigure  ; Commented out report config button
+
+local : button :  BottomToolBarBtn3  : delete : inactive  ; Enables the Delete button
+local : button :  BottomToolBarBtn8  : delete : inactive  ; Enables the Remove Line button
+local : button :  BottomToolBarBtn9  : delete : inactive  ; Enables the Restore Line button
+local : button :  BottomToolBarBtn10  : delete : inactive  ; Enables the Restore All button
+local : button :  BottomToolBarBtn11  : delete : inactive  ; Enables the Select button
+local : button :  BottomToolBarBtn12 : delete : inactive  ; Enables the Select All button
+
+add:button:BottomToolBarBtn3,BottomToolBarBtn11,BottomToolBarBtn12  ; Adds specific buttons
+add:button:cwNoTransactionBtn  ; Adds the No Transaction button
+
+    Button      : ChangeCompany, BlankButton, +  ; Adds the Change Company button and a blank separator
+                  AL Groups, +  ; Adds the Alter Groups button
+                  AL Ledger, +  ; Adds the Alter Ledger button
+                  AL CstCat, +  ; Adds the Alter Cost Category button
+                  AL CstCtr, +  ; Adds the Alter Cost Center button
+                  AL Budget, +  ; Adds the Alter Budget button
+                  AL Currency, Second Blank Button, +  ; Adds the Alter Currency button and a blank separator
+                  AL Stock Groups, +  ; Adds the Alter Stock Groups button
+                  AL Stock Categories, +  ; Adds the Alter Stock Categories button
+                  AL Stock Items, +  ; Adds the Alter Stock Items button
+                  AL Unit, +  ; Adds the Alter Unit button
+                  AL Godown, +  ; Adds the Alter Godown button
+                  AL Voucher Type  ; Adds the Alter Voucher Type button
+
+;                  AL Tariff Classification, +  ; Commented out additional buttons
+;                  AL Serial Number, +  ; Commented out additional buttons
+
+/* 
+Form Definition: FrmfTemp
+Purpose: Main display form for the master list report
+Features:
+  - Full page layout
+  - Custom page breaks
+  - Configurable toolbar buttons
+  - Multiple alter buttons for different master types
+*/
+
+      [part: fTempbotBrk]
+       line: EXPINV PageBreak  ; Includes the page break line
+     border: thin top  ; Adds a thin top border
+     
+/* 
+Part Definition: fTempbotBrk
+Purpose: Defines the bottom page break with a thin top border
+*/
+
+      [part: fTempbotopbrk]
+        use: dspacctitles  ; Inherits from account titles display
+  add: part: fTempTitlePart  ; Adds the title part
+
+/* 
+Part Definition: fTempbotopbrk
+Purpose: Defines the top page break with account titles and a custom title part
+*/
+
+      [part: fTempTitlePart]
+       line: LnfTempTitle  ; Includes the title line
+       
+/* 
+Part Definition: fTempTitlePart
+Purpose: Contains the title line for the report
+*/
+
+      [line: LnfTempCurrPeriod]
+      field: fwf,fwf2  ; Includes two full-width fields
+      Local: field: fwf2: Align: Right  ; Right-aligns the second field
+      Local: Field: fwf: Style: normal bold  ; Sets the first field style to bold
+      Local: Field: fwf2: Style: normal bold  ; Sets the second field style to bold
+      Local: Field: fwf: Set As: "List of "+##AccountType  ; Sets the first field text to show the account type
+      border : thick bottom  ; Adds a thick bottom border
+  invisible: $$inprintmode  ; Hides in print mode
+  Local: Field: default: Skip: Yes  ; Makes fields non-editable
+
+/* 
+Line Definition: LnfTempCurrPeriod
+Purpose: Displays the report title with the account type
+Features:
+  - Bold styling
+  - Thick bottom border
+  - Hidden in print mode
+*/
+
+      [part: PrtTitle0fTemp]
+      line : LnfTempCurrPeriod  ; Includes the current period line
+      
+/* 
+Part Definition: PrtTitle0fTemp
+Purpose: Contains the current period line for the report header
+*/
+
+      [Part: PrtfTemp]
+     scroll: Vertical  ; Enables vertical scrolling
+    Option          : EXPSoapEnvelopeOpt: ##SVExport AND (($$IsSysNameEqual:XML:##SVExportFormat) OR ($$IsSysNameEqual:AnsiXML:##SVExportFormat))  ; Option for XML export
+    option : myotheropt123 : not ##svExport or not (##SVExport AND (($$IsSysNameEqual:XML:##SVExportFormat) OR ($$IsSysNameEqual:AnsiXML:##SVExportFormat)))  ; Option for non-XML export
+
+/* 
+Part Definition: PrtfTemp
+Purpose: Main content part for the report
+Features:
+  - Vertical scrolling
+  - Conditional options based on export format
+*/
+
+    [!part : myotheropt123]
+       Line: LnfTempTitle,LnfTemp  ; Includes title and data lines
+
+     repeat: LnfTemp: ColfTemp  ; Repeats the data line for each item in the collection
+
+/* 
+Part Option: myotheropt123
+Purpose: Standard display format for non-XML export
+Components: Title line and repeating data lines
+*/
+
+[Collection: ColfTemp]
+fetch : *  ; Fetches all fields
+
+option : cwx : $$SysName:##AccountType  ; Option based on account type
+
+  Option : cwGroups2 : $$IsSysNameEqual:Groups:##AccountType  ; Option for Groups
+  Option : cwLedgers2        : $$IsSysNameEqual:Ledgers:##AccountType  ; Option for Ledgers
+  Option : cw PayHeads2	      : $$IsSysNameEqual:PayHeads:##AccountType  ; Option for PayHeads
+  Option : cw CostCentres2    : $$IsSysNameEqual:CostCentres:##AccountType  ; Option for CostCentres
+  Option : cw CostCategories2 : ($$IsSysNameEqual:CostCategories:##AccountType) OR +
+                         			   		  ($$IsSysNameEqual:Employees:##AccountType AND $$ExplodeLevel = 0) OR ($$IsSysNameEqual:EmployeeGroups:##AccountType AND $$ExplodeLevel = 0)  ; Option for CostCategories or top-level Employees/EmployeeGroups
+  Option : cw Employees2      : $$IsSysNameEqual:Employees:##AccountType  ; Option for Employees
+  Option : cw EmployeeGroups2 : $$IsSysNameEqual:EmployeeGroups:##AccountType  ; Option for EmployeeGroups
+  Option : cw Budgets Scenario2: $$IsSysNameEqual:BudgetScenarios:##AccountType  ; Option for BudgetScenarios
+  Option : cw Godowns2        : $$IsSysNameEqual:Godowns:##AccountType OR $$IsSysNameEqual:Locations:##AccountType  ; Option for Godowns or Locations
+  Option : cw StockGroups2    : $$IsSysNameEqual:StockGroups:##AccountType  ; Option for StockGroups
+  Option : cw StockCategories2: $$IsSysNameEqual:StockCategories:##AccountType  ; Option for StockCategories
+  Option : cw StockItems2     : $$IsSysNameEqual:StockItems:##AccountType  ; Option for StockItems
+  Option : cw Currencies2     : $$IsSysNameEqual:Currencies:##AccountType  ; Option for Currencies
+  Option : cw Units2          : $$IsSysNameEqual:Units:##AccountType  ; Option for Units
+  Option : cw VoucherTypes2   : $$IsSysNameEqual:VoucherTypes:##AccountType  ; Option for VoucherTypes
+  Option : cw Attd Types2     : $$IsSysNameEqual:AttendanceTypes:##AccountType  ; Option for AttendanceTypes
+  Option : cw Deductee Type2  : $$IsSysNameEqual:DeducteeTypes:##AccountType  ; Option for DeducteeTypes
+  option : cwclzerovalue : ##logi1  ; Option based on logi1 variable
+  filter : InTEmpDate  ; Filters by modification date
+  filter : cwClzerovaluefltr  ; Filters by closing balance
+  filter : cwopzerovaluefltr  ; Filters by opening balance
+fetch : cwmodifieldondate  ; Fetches the modification date field
+
+/* 
+Collection Definition: ColfTemp
+Purpose: Main data collection for the report
+Features:
+  - Dynamic type selection based on AccountType
+  - Multiple filtering options
+  - Conditional display based on balance values
+*/
+  
+  [!collection:cwclzerovalue]
+delete:filter:cwClzerovaluefltr  ; Removes the closing balance filter
+delete:filter:cwopzerovaluefltr  ; Removes the opening balance filter
+
+/* 
+Collection Option: cwclzerovalue
+Purpose: Removes balance filters when logi1 is true
+Effect: Shows all records regardless of balance
+*/
+
+  [System: Formula]
+InTEmpDate :if $$isempty:##sdf1temp then yes else if $$isempty:$cwModifiedOnDate then no else $$date:$cwModifiedOnDate >= ##sdf1temp  ; Formula to check if record was modified on or after the filter date
+cwClzerovaluefltr:not $$isempty:$closingBalance  ; Formula to check if closing balance is not empty
+cwopzerovaluefltr:not $$isempty:$openingBalance  ; Formula to check if opening balance is not empty
+
+/* 
+System Formulas:
+- InTEmpDate: Determines if a record meets the date filter criteria
+- cwClzerovaluefltr: Filters out records with empty closing balance
+- cwopzerovaluefltr: Filters out records with empty opening balance
+*/
+
+[!collection : cwx]
+type : units  ; Sets the collection type to units
+
+/* 
+Collection Option: cwx
+Purpose: Default collection type when AccountType is not recognized
+Type: units
+*/
+
+[!collection :   cwGroups2]
+type : group  ; Sets the collection type to group
+
+/* 
+Collection Option: cwGroups2
+Purpose: Collection for Groups account type
+Type: group
+*/
+
+[!collection :   cwLedgers2]
+type :ledger  ; Sets the collection type to ledger
+;; {11.Aug.14 17:39} 	Use : ExtractAlias Collection  ; Commented out alias extraction
+;; {11.Aug.14 17:38} 	Source Collection: List of Ledgers  ; Commented out source collection
+;; {11.Aug.14 17:38} 	Fetch				: Name  ; Commented out fetch field
+;; {11.Aug.14 17:38} sort :@@default:$name  ; Commented out sort order
+
+/* 
+Collection Option: cwLedgers2
+Purpose: Collection for Ledgers account type
+Type: ledger
+*/
+
+[!collection :   cw PayHeads2]
+use : RemotePAYGroupChildOfGroupName  ; Uses a predefined collection
+
+/* 
+Collection Option: cw PayHeads2
+Purpose: Collection for PayHeads account type
+Source: RemotePAYGroupChildOfGroupName collection
+*/
+
+[!collection :   cw CostCentres2]
+type : cost centre  ; Sets the collection type to cost centre
+
+/* 
+Collection Option: cw CostCentres2
+Purpose: Collection for CostCentres account type
+Type: cost centre
+*/
+
+[!collection :   cw CostCategories2]
+type : cost category  ; Sets the collection type to cost category
+
+/* 
+Collection Option: cw CostCategories2
+Purpose: Collection for CostCategories account type
+Type: cost category
+*/
+
+[!collection :   cw Employees2]
+use : ListEmployeeChildOfEmpName  ; Uses a predefined collection
+
+/* 
+Collection Option: cw Employees2
+Purpose: Collection for Employees account type
+Source: ListEmployeeChildOfEmpName collection
+*/
+
+[!collection :   cw EmployeeGroups2]
+use  : ListEmployeeGroups  ; Uses a predefined collection
+
+/* 
+Collection Option: cw EmployeeGroups2
+Purpose: Collection for EmployeeGroups account type
+Source: ListEmployeeGroups collection
+*/
+
+[!collection :   cw Budgets Scenario2]
+type : budget  ; Sets the collection type to budget
+
+/* 
+Collection Option: cw Budgets Scenario2
+Purpose: Collection for BudgetScenarios account type
+Type: budget
+*/
+
+[!collection :  cw Godowns2]
+type : godown  ; Sets the collection type to godown
+
+/* 
+Collection Option: cw Godowns2
+Purpose: Collection for Godowns account type
+Type: godown
+*/
+
+[!collection :   cw StockGroups2]
+type : stock group  ; Sets the collection type to stock group
+
+/* 
+Collection Option: cw StockGroups2
+Purpose: Collection for StockGroups account type
+Type: stock group
+*/
+
+[!collection :   cw StockCategories2]
+type : stock category  ; Sets the collection type to stock category
+
+/* 
+Collection Option: cw StockCategories2
+Purpose: Collection for StockCategories account type
+Type: stock category
+*/
+
+[!collection :   cw StockItems2]
+type : stock item  ; Sets the collection type to stock item
+
+/* 
+Collection Option: cw StockItems2
+Purpose: Collection for StockItems account type
+Type: stock item
+*/
+
+[!collection :   cw Currencies2]
+type : currency  ; Sets the collection type to currency
+
+/* 
+Collection Option: cw Currencies2
+Purpose: Collection for Currencies account type
+Type: currency
+*/
+
+[!collection :   cw Units2]
+type : unit  ; Sets the collection type to unit
+
+/* 
+Collection Option: cw Units2
+Purpose: Collection for Units account type
+Type: unit
+*/
+
+[!collection :   cw VoucherTypes2]
+type: voucher type  ; Sets the collection type to voucher type
+
+/* 
+Collection Option: cw VoucherTypes2
+Purpose: Collection for VoucherTypes account type
+Type: voucher type
+*/
+
+[!collection :   cw Attd Types2]
+use : ListAttdTypeChildofATName  ; Uses a predefined collection
+
+/* 
+Collection Option: cw Attd Types2
+Purpose: Collection for AttendanceTypes account type
+Source: ListAttdTypeChildofATName collection
+*/
+
+[!collection :   cw Deductee Type2]
+type : Deductee Type  ; Sets the collection type to Deductee Type
+
+/* 
+Collection Option: cw Deductee Type2
+Purpose: Collection for DeducteeTypes account type
+Type: Deductee Type
+*/
+
+
+      [Line: LnfTempTitle]
+FIELD : NF  ; Includes a name field
+
+/* 
+Line Definition: LnfTempTitle
+Purpose: Title line for the report
+Components: Name field
+*/
+
+      [Line: LnfTemp]
+/*     Fields: sdf,nf,fwf
+right field: ratepf,Qtyf,Amtf
+     Option: Alter on Enter
+local:field: qtyf : Format : "NoSymbol, Short Form, No Compact,NoZero"
+;;local:field: qtyf : Format : "NoSymbol, Short Form, No Compact,NoZero,decimals:0"
+local:field: ratepf : setas  : #amtf/#qtyf
+     local: field: fwf: alter : voucher : $$isvoucher
+option : alter on enter
+local : field : fwf : alter : voucher : $$isvoucher
+;; local : field : fwf : alter : ledger : $$isledger
+ local : field : sdf : set as : $date
+*/  ; Commented out original line definition
+LINE : FME  ; Uses the FME line instead
+
+/* 
+Line Definition: LnfTemp
+Purpose: Data line for the report
+Components: Uses the FME line definition
+Notes: Original definition is commented out
+*/
+
+ [field: snf5masterid]
+ use : simple field  ; Uses the simple field type
+ set as : $masterid  ; Sets the value to the master ID
+ 
+/* 
+Field Definition: snf5masterid
+Purpose: Displays the master ID of the record
+Type: Simple field
+*/
+ 
+  [field: snf6guid]
+ use : simple field  ; Uses the simple field type
+ set as : $guid  ; Sets the value to the GUID
+ 
+/* 
+Field Definition: snf6guid
+Purpose: Displays the GUID of the record
+Type: Simple field
+*/
+ 
+ 
+[field : snf3temp]
+use : simple field  ; Uses the simple field type
+storage: cwmodifiedondate  ; Links to the cwmodifiedondate field
+set as : if not ##logi1temp then $$value else if $$line =1 then $$value else $$prevlinefield  ; Sets the value based on logi1temp and line number
+width : 1 inch  ; Sets the field width
+max : 20  ; Sets the maximum length
+set always: yes  ; Ensures the set as condition is always evaluated
+
+/* 
+Field Definition: snf3temp
+Purpose: Displays and manages the modification date
+Type: Simple field
+Behavior: When logi1temp is true, copies the value from the previous line (except for the first line)
+*/
+
+[field : snf4guid]
+use : simple field  ; Uses the simple field type
+max : 200  ; Sets the maximum length
+width : 1 inch  ; Sets the field width
+storage : cwmasterid  ; Links to the cwmasterid field
+set always : yes  ; Ensures the set as condition is always evaluated
+Set As: if (not ##logi1temp) or not $$isempty:$$Value then $$value else $$MakeUniqueID  ; Sets the value based on logi1temp and existing value
+
+/* 
+Field Definition: snf4guid
+Purpose: Displays and manages the master ID
+Type: Simple field
+Behavior: Generates a unique ID when logi1temp is true and the field is empty
+*/
+
+[field: cwsimplefield]
+use : simple field  ; Uses the simple field type
+set as :  $$reptfield:name:2  ; Sets the value to the second name field from the report
+Skip: Yes  ; Makes the field non-editable
+     border : thin left right  ; Adds thin left and right borders
+     width : 20  ; Sets the field width
+
+/* 
+Field Definition: cwsimplefield
+Purpose: Base field for displaying additional information
+Type: Simple field
+Features: Non-editable with thin borders
+*/
+
+[LINE : FME]
+
+	Full Object : Yes  ; Enables full object display
+    On  : Export Object : ##IMPClAsOp   : Call  : ChangeClBalToOpBal  ; Calls a function when exporting with IMPClAsOp flag
+;; {26.Sep.13 13:08}     border : thin box : $$isledger  ; Commented out conditional border
+	field : simple field,cwsimplefield  ; Includes two fields
+	right field : snf3temp,snf4guid ,snf5masterid,snf6guid  ; Includes right-aligned fields
+	add : option : cwitemfields : $$isstockitem  or $$isledger or $$isgroup  ; Adds option for stock items, ledgers, or groups
+
+	Local: field: snf3temp: Align: Right  ; Right-aligns the modification date field
+;; {18.Jul.13 16:32} 	Local: Field: snf3: Border: thin box  ; Commented out border setting
+	Local: Field: simple field: Set As: $name  ; Sets the main field to display the name
+	local : field : simple field : width : 3 inch  ; Sets the field width
+	option : alter on enter  ; Enables alter on enter functionality
+local : field : simple 	 field : alter :ledger : $$isledger  ; Enables ledger alteration for ledgers
+local : field : simple 	 field : alter :group : $$isgroup  ; Enables group alteration for groups
+;; {22.Jun.13 14:12} local : field : simple 	 field : alter : group : $$ispayhead  ; Commented out payhead alteration
+local : field : simple 	 field : alter : costcentre: $$iscostcentre  ; Enables cost centre alteration for cost centres
+local : field : simple 	 field : alter : costcategory: $$iscostcategory  ; Enables cost category alteration for cost categories
+
+local : field : simple 	 field : alter : godown: $$isgodown  ; Enables godown alteration for godowns
+local : field : simple 	 field : alter : stockgroup: $$isstockgroup  ; Enables stock group alteration for stock groups
+local : field : simple 	 field : alter :stockitem : $$isstockitem  ; Enables stock item alteration for stock items
+local : field : simple 	 field : alter : stockcategory: $$isstockcategory  ; Enables stock category alteration for stock categories
+local : field : simple 	 field : alter : currency: $$iscurrency  ; Enables currency alteration for currencies
+local : field : simple 	 field : alter : unit: $$isunit  ; Enables unit alteration for units
+local : field : simple 	 field : alter : vouchertype: $$isvouchertype  ; Enables voucher type alteration for voucher types
+
+/* 
+Line Definition: FME
+Purpose: Main data display line for all master types
+Features:
+  - Full object display
+  - Dynamic alteration based on object type
+  - Additional fields for metadata (modification date, IDs)
+  - Conditional options for different master types
+*/
+
+/*
+  Option : cw PayHeads2	      : $$IsSysNameEqual:PayHeads:##AccountType
+                         			   		  ($$IsSysNameEqual:Employees:##AccountType AND $$ExplodeLevel = 0) OR ($$IsSysNameEqual:EmployeeGroups:##AccountType AND $$ExplodeLevel = 0)
+  Option : cw Employees2      : $$IsSysNameEqual:Employees:##AccountType ;;AND $$ExplodeLevel > 0
+  Option : cw EmployeeGroups2 : $$IsSysNameEqual:EmployeeGroups:##AccountType ;;AND $$ExplodeLevel > 0
+  Option : cw Attd Types2     : $$IsSysNameEqual:AttendanceTypes:##AccountType
+  Option : cw Deductee Type2  : $$IsSysNameEqual:DeducteeTypes:##AccountType
+
+*/	; Commented out reference code
+
+[!line : cwitemfields]
+add :right  field : at beginning :cwsimplefield5, cwsimplefield2,cwsimplefield3,cwsimplefield4,cwSimpleFieldHSN,cwSimpleFieldGSTPer,cwSimpleFieldQty  ; Adds additional fields for stock items
+
+/* 
+Line Option: cwitemfields
+Purpose: Adds additional fields for stock items, ledgers, and groups
+Components: Part number, parent, units, category, HSN code, GST rate, and quantity
+*/
+
+[Field: cwsimplefield5]
+use : cwsimplefield  ; Inherits from cwsimplefield
+set as : if $$isstockitem then $partno else ""  ; Sets the value to the part number for stock items
+
+/* 
+Field Definition: cwsimplefield5
+Purpose: Displays the part number for stock items
+Type: Simple field
+*/
+
+
+  [field: cwsimplefield2]
+     use : cwsimple field  ; Inherits from cwsimplefield
+     set as : if $$issysname:$parent then "" else $parent  ; Sets the value to the parent name (if not a system name)
+
+/* 
+Field Definition: cwsimplefield2
+Purpose: Displays the parent name for hierarchical masters
+Type: Simple field
+*/
+     
+  [field: cwsimplefield3]
+     use : cwsimple field  ; Inherits from cwsimplefield
+     set as : if $$isstockitem then  $baseunits else ""  ; Sets the value to the base units for stock items
+
+/* 
+Field Definition: cwsimplefield3
+Purpose: Displays the base units for stock items
+Type: Simple field
+*/
+     
+  [field: cwsimplefield4]
+     use : cwsimple field  ; Inherits from cwsimplefield
+     set as : if $$isstockitem then $category  else ""  ; Sets the value to the category for stock items
+
+/* 
+Field Definition: cwsimplefield4
+Purpose: Displays the category for stock items
+Type: Simple field
+*/
+     
+  [field: cwSimpleFieldHSN]
+     use : cwsimple field  ; Inherits from cwsimplefield
+     set as : if $$isstockitem then $$collectionfield:$hsncode:last:GSTDETAILS else ""  ; Sets the value to the HSN code for stock items
+
+/* 
+Field Definition: cwSimpleFieldHSN
+Purpose: Displays the HSN code for stock items
+Type: Simple field
+*/
+
+  [field: cwSimpleFieldGSTPer]
+     use : cwsimple field  ; Inherits from cwsimplefield
+     set as : if $$isstockitem then $$collectionfield:($$collectionfield:($$filtervalue:$GSTRATE:RateDetails:1:cwIGSTMapped):first:STATEWISEDETAILS):last:GSTDETAILS  else ""  ; Sets the value to the GST rate for stock items
+
+/* 
+Field Definition: cwSimpleFieldGSTPer
+Purpose: Displays the GST percentage for stock items
+Type: Simple field
+*/
+
+  [field: cwSimpleFieldQty]
+  use : number field  ; Uses the number field type
+  set as : if $$isstockitem then $closingBalance else ""  ; Sets the value to the closing balance for stock items
+
+/* 
+Field Definition: cwSimpleFieldQty
+Purpose: Displays the closing quantity for stock items
+Type: Number field
+*/
+
+
+     [System: Formula]
+     cwIGSTMapped : $GSTRATEDUTYHEAD="Integrated Tax"  ; Formula to identify IGST entries
+
+/* 
+System Formula: cwIGSTMapped
+Purpose: Identifies Integrated Tax (IGST) entries in GST rate details
+*/
+
+
+      [line: LnfTempTotals]
+        use: LnfTemp  ; Inherits from LnfTemp
+;; {22.Jun.13 12:22}      option: totalOpt  ; Commented out total option
+      local: field: fwf: align: right  ; Right-aligns the full-width field
+      local: field: default : style: normal bold  ; Sets default style to bold
+      local: field: qtyf: set as: $$total:qtyf  ; Sets quantity field to the total
+      local: field: fwf: set as: "Total"  ; Sets full-width field to "Total"
+      local: field: fwf: set as: ""  ; Clears the full-width field (overrides previous setting)
+      local: field: amtf : set as :  $$total:amtf  ; Sets amount field to the total
+
+/* 
+Line Definition: LnfTempTotals
+Purpose: Displays totals for the report
+Features:
+  - Bold styling
+  - Right alignment
+  - Total calculations for quantity and amount
+*/
+
+[button:cwNoTransactionBtn]
+ key:alt+f8  ; Sets the keyboard shortcut
+ title:"Not Transaction"  ; Sets the button title
+;; {29.Aug.23 16:38}  Action : Modify Variables:cwNoTransactionrep  ; Commented out original action
+ action : set : logi1 : not ##logi1  ; Toggles the logi1 variable
+
+/* 
+Button Definition: cwNoTransactionBtn
+Purpose: Toggles the display of zero-balance records
+Shortcut: Alt+F8
+Action: Toggles the logi1 variable
+*/
+
+ [report:cwNoTransactionrep]
+ form:cwNoTransactionfrm  ; Specifies the form to use
+
+/* 
+Report Definition: cwNoTransactionrep
+Purpose: Configuration report for the No Transaction button
+*/
+
+ [form:cwNoTransactionfrm]
+ part:cwNoTransactionpart  ; Specifies the part to use
+
+ HEIGHT:20% PAGE  ; Sets the height to 20% of the page
+ WIDTH:30% PAGE  ; Sets the width to 30% of the page
+ 
+/* 
+Form Definition: cwNoTransactionfrm
+Purpose: Dialog form for the No Transaction configuration
+Size: 30% width, 20% height
+*/
+
+ [part:cwNoTransactionpart]
+ line:cwNoTransactionLn  ; Includes the configuration line
+ 
+/* 
+Part Definition: cwNoTransactionpart
+Purpose: Contains the configuration line for the No Transaction dialog
+*/
+
+ [line:cwNoTransactionLn]
+field:sp,cwlogical  ; Includes a short prompt and a logical field
+
+Local: Field: sp: info:"Show Transaction"  ; Sets the prompt text
+Local: Field: cwlogical: Modifies :logi1  ; Links the logical field to the logi1 variable
+Local: Field: cwLogical: setas :##logi1  ; Sets the initial value from logi1
+
+;; {29.Aug.23 16:31} Local: field: sp: Width:40  ; Commented out width setting
+
+/* 
+Line Definition: cwNoTransactionLn
+Purpose: Configuration line for toggling zero-balance records
+Components: Prompt and checkbox linked to the logi1 variable
+*/

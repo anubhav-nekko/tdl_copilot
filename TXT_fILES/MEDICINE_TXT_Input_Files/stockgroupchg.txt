@@ -1,0 +1,340 @@
+; *************************************
+; Created By: CW on 2014-07-30 11:30, ID:
+; Description: 
+;   This configuration defines the "Stock Group" form which includes fields and subforms for
+;   Sales Rate, Purchase Rate, and Price Levels. It also defines system formulas to compute pricing
+;   based on various conditions (e.g., RoseHomeoEnabled, valid price levels, remote company settings, etc.).
+; *************************************
+
+; ---------------------------------------------------------------------------
+; Form Definition for Stock Group
+; ---------------------------------------------------------------------------
+[#Form: Stock Group]
+; Add an option that ties the new stock group functionality to the RoseHomeo feature.
+add:option:newStockGroup:@@RoseHomeoEnabled
+
+; Invoke the new stock group form.
+[!form:newStockGroup]
+
+; ---------------------------------------------------------------------------
+; Modify MSTParent Part: Insert additional lines after the SALESRATELINE.
+; ---------------------------------------------------------------------------
+local:Part: MSTParent:ADD:LINE:AFTER:MSTParent:SALESRATELINE,purchaserateline,cwPricelabelsLine
+
+; ---------------------------------------------------------------------------
+; Define the Sales Rate Line:
+;   Contains a prompt (SP) and a numeric field (NUMF) for entering the Sales Rate.
+; ---------------------------------------------------------------------------
+[LINE:SALESRATELINE]
+FIELD:SP,NUMF
+Local: Field: SP: Set As:"Sales Rate"         ; Set label for the prompt field
+Local: Field: numf: storage:cwSalesRate         ; Store value for Sales Rate in cwSalesRate
+Local: field: SP: Width:14                     ; Define width for the prompt field
+Local: Field: NUMF: Style: Normal Bold         ; Apply normal bold style to numeric field
+Local: field: NUMF: Align:LEFT                 ; Left align the numeric field
+
+; ---------------------------------------------------------------------------
+; Define the Purchase Rate Line:
+;   Similar setup to SALESRATELINE for the Purchase Rate.
+; ---------------------------------------------------------------------------
+[line:purchaserateline]
+FIELD:SP,NUMF
+Local: Field: SP: Set As:"Purchase Rate"       ; Set label for Purchase Rate
+Local: Field: numf: storage:cwPurchaseRate       ; Store value in cwPurchaseRate
+Local: field: SP: Width:14                     ; Define width for prompt
+Local: Field: NUMF: Style: Normal Bold         ; Apply style
+Local: field: NUMF: Align:LEFT                 ; Left align the numeric field
+
+; ---------------------------------------------------------------------------
+; Define the Price Labels Line:
+;   Handles the configuration of price levels using a subform.
+; ---------------------------------------------------------------------------
+[line:cwPricelabelsLine]
+field:sp,cwlogical
+Local: Field: sp: Set As:"Prise Levels"          ; Label for Price Levels
+Local: Field:cwlogical : storage:cwPriseLevels   ; Map to storage variable for Price Levels
+Local: Field : cwlogical : SubForm :repdatePriseLevels:$$value  ; Link to subform/report for updating price levels
+
+; ---------------------------------------------------------------------------
+; Define the Report for Price Level Dates SubForm
+; ---------------------------------------------------------------------------
+[report:repdatePriseLevels]
+form:frmdatePriseLevels
+
+; ---------------------------------------------------------------------------
+; Form Definition for Price Level Dates
+;   Contains parts responsible for displaying and editing date-based price level details.
+; ---------------------------------------------------------------------------
+[form:frmdatePriseLevels]
+part:datePriseLevelspart ;;,PriseLevelspart2
+
+; ---------------------------------------------------------------------------
+; Part: Date Based Price Levels
+;   Layout definitions for the header and detail lines of date-based price levels.
+; ---------------------------------------------------------------------------
+[part:datePriseLevelspart]
+
+;; {15.Sep.23 12:19} Insert price level title and main lines 
+line:cwMPLPriceLivel,datePriseLevelstitleLn2 ;;,PriseLevelsmainLn
+; Repeat the date title line collection for each price level entry until a price level date is empty.
+repeat:datePriseLevelstitleLn2:colldatepriselevel
+break on:$$isempty:$cwpriceleveldate         ; Break if there is no price level date
+height : 20% page
+width:35% page
+common border:yes
+
+; ---------------------------------------------------------------------------
+; Collection: Collate Date Price Levels
+;   Groups the repeated lines under a common collection for the stock group ledger.
+; ---------------------------------------------------------------------------
+[collection:colldatepriselevel]
+type :collpriselevel:stock group ;;ledger
+;; {09.Feb.23 15:41} Aggregate compute: Count one entry per group.
+;;aggr compute : collthanqty2 : count : 1
+child of:$name
+
+; ---------------------------------------------------------------------------
+; Define Line: Date Price Level Title Line 2
+;   Displays the date information and links to the subform for editing price levels.
+; ---------------------------------------------------------------------------
+[line:datePriseLevelstitleLn2]
+Fields: MPL Price Livel
+right field:sdf,sdf2
+Local: Field: sdf: Storage:cwpriceleveldate         ; Store the "To Date" of the price level
+Local: Field: sdf2: Storage:cwpricelevelfromdate       ; Store the "From Date"
+Local: Field : sdf2 : SubForm :repPriseLevels :not $$issysname:$cwpriceleveldate ;;$$value  ; Link to detailed price level subform (if not a system name)
+Local: Field: MPL Price Livel : storage:cwMPLPricestrg  ; Store value for MPL Price Level string
+;; {19.Sep.23 12:49} Additional configuration for the price levels table (Create Master, Always show)
+Local: Field: snf: table:Price Levels, Create Master;; ,Not Applicable
+;; {19.Sep.23 12:49} Ensure the table is always shown.
+Local: Field: snf: Show table: Always
+Space Bottom: 0.5
+
+;; {19.Sep.23 12:29} Set field MPL Price Livel inactive if it matches a system name.
+local: field: MPL Price Livel :inactive:$$issysname:#MPLPriceLivel ;;#numf ;;#sdf
+
+; ---------------------------------------------------------------------------
+; Define Line: MPL Price Level Display
+;   Uses the previous date title line and provides a detailed display prompt for price levels.
+; ---------------------------------------------------------------------------
+[line:cwMPLPriceLivel]
+use:datePriseLevelstitleLn2
+;; {19.Sep.23 12:25} Set up field prompts with medium style and right field alignment.
+Local       : Field : MPL Price Livel : Info : $$LocaleString:"Price Level"
+Local: Field: sdf: info: "To Date"
+local: field: sdf: type: String
+Local: field: sdf: Align: centre
+Local: Field: sdf: Style: Normal Bold
+
+Local: Field: sdf2: info: "From Date"
+local: field: sdf2: type: String
+Local: field: sdf2: Align: centre
+Local: Field: sdf2: Style: Normal Bold
+border:thin box
+
+; Delete storage values for cleanup after display.
+local: field: MPL Price Livel: delete : storage
+local: field: sdf : delete : storage
+local: field: sdf2 : delete : storage
+
+; Re-enable the fields that were deleted from storage.
+local: field: MPL Price Livel:delete: inactive
+local: field: sdf:delete: inactive
+local: field: sdf2:delete: inactive
+
+; ---------------------------------------------------------------------------
+; Define Detailed Price Level Report
+;   This report will display the detailed entries for each price level.
+; ---------------------------------------------------------------------------
+[report:repPriseLevels]
+form:frmPriseLevels
+
+; ---------------------------------------------------------------------------
+; Form Definition for Detailed Price Levels
+; ---------------------------------------------------------------------------
+[form:frmPriseLevels]
+part:PriseLevelspart ;;,PriseLevelspart2
+
+; ---------------------------------------------------------------------------
+; Part: Detailed Price Levels
+;   Combines title and main detail lines for displaying full price level details.
+; ---------------------------------------------------------------------------
+[part:PriseLevelspart]
+
+line:PriseLevelstitleLn,PriseLevelstitleLn2,PriseLevelsmainLn
+;; {15.Sep.23 12:34} Use MPL Price Level, title, and main lines together
+repeat:PriseLevelsmainLn:collpriselevel
+; Break repeating detail if key values are empty ($cwRate, $cwLessThen, or $cwDate).
+break on:$$isempty:$cwRate ;;$cwLessThen ;;$cwDate
+height : 30% page
+width:35% page
+common border:yes
+
+; ---------------------------------------------------------------------------
+; Collection: Collate Detailed Price Levels
+;   Groups each price level detail entry under the stock group.
+; ---------------------------------------------------------------------------
+[collection:collpriselevel]
+type :collpriselevel:stock group ;;ledger
+;; {09.Feb.23 15:41} Aggregate compute: Count each price level detail.
+;;aggr compute : collthanqty2 : count : 1
+child of:$name
+
+; ---------------------------------------------------------------------------
+; Define Line: Price Level Title Line
+;   Contains the header "Details" for the detailed price level section.
+; ---------------------------------------------------------------------------
+[line:PriseLevelstitleLn]
+field:fwfc
+Local: Field: fwfc: info: "Details"
+Local: Field: fwfc: Border: thin box ;;left right
+
+; ---------------------------------------------------------------------------
+; Define Line: Price Level Title Line 2 (Header)
+;   Provides headers for the fields: Date, From Date, From, Less Then, Rate, Disc, Price Level.
+; ---------------------------------------------------------------------------
+[line:PriseLevelstitleLn2]
+use:PriseLevelsmainLn
+border:thin bottom
+Local: Field: snf: info:"Date"
+Local: Field: sdf: info:"Date"
+Local: Field: sdf2: info:"From Date"
+Local: Field: numf: info:"From"
+Local: Field: numf1: info:"Less Then"
+Local: Field: numf2: info:"Rate"
+Local: Field: numf3: info:"Disc"
+Local: Field: MPL Price Livel: info:"Price Level"
+
+; Remove any storage assignment from header fields so they are not stored.
+local: field: snf : delete : storage
+local: field: sdf : delete : storage
+local: field: numf : delete : storage
+local: field: numf1 : delete : storage
+local: field: numf2 : delete : storage
+local: field: numf3 : delete : storage
+
+; Make sure header fields remain active.
+local: field: snf:delete: inactive
+local: field: sdf:delete: inactive
+local: field: numf:delete: inactive
+local: field: numf1:delete: inactive
+local: field: numf2:delete: inactive
+local: field: numf3:delete: inactive
+
+; Center align header fields for uniformity.
+Local: field: snf: Align: centre
+Local: field: sdf: Align: centre
+Local: field: numf: Align: centre
+Local: field: numf1: Align: centre
+Local: field: numf2: Align: centre
+Local: field: numf3: Align: centre
+
+; Define header fields as string types.
+local: field: snf: type: String
+local: field: sdf: type: String
+local: field: numf: type: String
+local: field: numf1: type: String
+local: field: numf2: type: String
+local: field: numf3: type: String
+
+; Optionally hide snf header field.
+local: field: snf: Invisible: yes
+
+; ---------------------------------------------------------------------------
+; Define Line: Price Level Main Detail Line
+;   Contains the fields for each individual price level entry.
+; ---------------------------------------------------------------------------
+[line:PriseLevelsmainLn]
+field:snf,sdf,sdf2,numf,numf1,numf2,numf3,sdf4 ;;,snf
+
+; Map the sdf4 field to the owner’s price level "from" date.
+Local: Field: sdf4: Set As:$$owner:$cwpricelevelfromdate
+
+; Map each field to its corresponding storage variable.
+Local: Field: snf: Storage:cwpricelavelx
+Local: Field: sdf: Storage:cwDate
+Local: Field: sdf2: Storage:cwfromdatestrg
+Local: Field: numf: Storage:cwFrom
+Local: Field: numf1: Storage:cwLessThen
+Local: Field: numf2: Storage:cwRate
+Local: Field: numf3: Storage:cwDisc
+
+;; {19.Sep.23 15:45} Additional field assignments, including table references and linking to owner fields.
+Local: Field: snf : table: Stock Group,Not Applicable
+Local: Field: sdf: Set As:$$owner:$cwpriceleveldate
+Local: Field: sdf2: Set As:#sdf4 ;;$$owner:$cwpricelevelfromdate
+Local: Field: snf: Set As:$$owner:$cwMPLPricestrg
+Local: Field: numf: Set As:if $$Line = 1 then $$value else $$PrevObj:$cwLessThen ;;$cwLessThen
+;; {13.Sep.23 18:50} Preserve previous line field value.
+Local: Field: numf: Set As:$$prevlinefield
+;; {21.Sep.23 17:27} Always update sdf2 field value.
+Local: Field: sdf2: Set always:yes
+;; {21.Sep.23 17:27} Define sdf2 as a date type.
+local: field: sdf2: type: date
+
+;; {13.Sep.23 17:44} Mark sdf (and similar) fields inactive based on system name constraints.
+;; {13.Sep.23 17:38} Likewise for sdf2.
+;; {15.Sep.23 12:49} Mark numf inactive if necessary.
+local: field: numf1 :inactive:$$issysname:#numf1 ;;#numf ;;#sdf
+local: field: numf2 :inactive:$$issysname:#numf1 ;;#numf ;;#sdf
+local: field: numf3 :inactive:$$issysname:#numf1 ;;#numf ;;#sdf
+
+; Center align all main detail fields.
+Local: field: sdf: Align: centre
+Local: field: sdf2: Align: centre
+Local: field: numf: Align: centre
+Local: field: numf1: Align: centre
+Local: field: numf2: Align: centre
+Local: field: numf3: Align: centre
+
+; Apply a thin left border for visual separation on each field.
+Local: Field: sdf: Border: thin left ;;left right
+Local: Field: sdf2: Border: thin left ;;left right
+Local: Field: numf: Border: thin left ;;left right
+Local: Field: numf1: Border: thin left ;;left right
+Local: Field: numf2: Border: thin left ;;left right
+Local: Field: numf3: Border: thin left ;;left right
+
+; Skip printing/display for hidden fields.
+Local: Field: sdf: Skip: Yes
+Local: Field: sdf2: Skip: Yes
+Local: field: sdf4: Invisible: yes
+
+; Format the numf field as a zero-padded number.
+Local: field: numf: Format:"zero"
+local: field: snf: Invisible: yes
+
+;; {18.Sep.23 12:59} Validation rule for numf1: Either the field value is empty, or if a "from" date exists,
+;; then the value must be greater than or equal to the cwFrom value.
+local:field:numf1 :Valid       : $$IsEmpty:$$Value OR $$IsEmpty:$cwFrom OR ($$Value >= $cwFrom)
+
+; ---------------------------------------------------------------------------
+; System Formulas: Compute Rates Based on Various Conditions
+; ---------------------------------------------------------------------------
+ [System: Formula]
+; Calculate sales rate from stock group parent.
+getsratefromgroup:$$asrate:$cwSalesRate:stockgroup:$parent:stockitem:$stockitemname
+; Calculate purchase rate from stock group parent.
+getpratefromgroup:$$asrate:$cwPurchaseRate:stockgroup:$parent:stockitem:$stockitemname
+
+; System formulas to determine voucher rates based on voucher type and other conditions:
+[#System: Formula]
+StdVchRate  :if $$issales:$vouchertypename then @@StdSellRate else if $$ispurchase:$vouchertypename then @@StdVchRate1 else $$value
+StdVchRate1 :if @@RoseHomeoEnabled and not $$isempty:@@getpratefromgroup then @@getpratefromgroup else if NOT @@IsOutwardType then if NOT $$IsRemoteCompany Then ($$CurrentValue:$StandardCost:StockItem:$StockItemName) Else ($CurrentStdCostMethod:StockItem:$StockItemName) else 0   ;;@@StdSellRate
+StdSellRate : if @@RoseHomeoEnabled and not $$isempty:@@getsratefromgroup then @@getsratefromgroup else if NOT $$IsValidPriceLevel:$PriceLevel then if NOT $$IsRemoteCompany Then ($$CurrentValue:StockItem:$StockItemName) Else ($CurrentStdPriceMethod:StockItem:$StockItemName) else +
+              $$GetPriceFromLevel:$StockItemName:$PriceLevel:$Date:$BilledQty
+
+; ---------------------------------------------------------------------------
+; Alternative Formula Definitions (Commented Out)
+;   These are alternative versions or earlier iterations kept for reference.
+; ---------------------------------------------------------------------------
+   /*
+[#System: Formula]
+ StdVchRate:if @@RoseHomeoEnabled and not $$isempty:@@getpratefromgroup then @@getpratefromgroup else if NOT @@IsOutwardType then if NOT $$IsRemoteCompany Then ($$CurrentValue:$StandardCost:StockItem:$StockItemName) Else ($CurrentStdCostMethod:StockItem:$StockItemName) else @@StdSellRate
+StdSellRate : if @@RoseHomeoEnabled and not $$isempty:@@getsratefromgroup then @@getsratefromgroup else if NOT $$IsValidPriceLevel:$PriceLevel then if NOT $$IsRemoteCompany Then ($$CurrentValue:StockItem:$StockItemName) Else ($CurrentStdPriceMethod:StockItem:$StockItemName) else +
+              $$GetPriceFromLevel:$StockItemName:$PriceLevel:$Date:$BilledQty
+                                                                              */
+ /*
+StdSellRate : if NOT $$IsValidPriceLevel:$PriceLevel then if NOT $$IsRemoteCompany Then ($$CurrentValue:$StandardPrice:StockItem:$StockItemName) Else ($CurrentStdPriceMethod:StockItem:$StockItemName) else +
+               $$GetPriceFromLevel:$StockItemName:$PriceLevel:$Date:$BilledQty
+                                                                               */

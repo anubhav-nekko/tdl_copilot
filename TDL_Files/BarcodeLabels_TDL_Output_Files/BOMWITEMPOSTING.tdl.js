@@ -1,0 +1,254 @@
+// Auto-generated from BOMWITEMPOSTING.TXT
+const tdl = `
+;===============================================================================
+; BOMWITEMPOSTING.TXT
+; Purpose: Adds a "Fill from BOM" button to the Stock Journal form in Tally.
+;          When triggered, this button fills the consumption (outward) items
+;          based on the Bill of Materials (BOM) for each produced (inward) item,
+;          automating the posting of component items and their quantities.
+;===============================================================================
+
+;------------------------------------------------------------------------------
+; Add BOM posting option and button to the Stock Journal Color form
+;------------------------------------------------------------------------------
+
+[#form : stock Journal Color]
+add : option : cwBOMPostInSJ : ##UseBoM ;; Only show if BOM is enabled
+
+[!form : cwBOMPostInSJ]
+add : button: cwBOMPostInSJ
+
+;------------------------------------------------------------------------------
+; Define the "Fill from BOM" button (Alt+F) and its action
+;------------------------------------------------------------------------------
+
+[key: cwBOMPostInSJ]
+key : alt + F
+title:"Fill from BOM"
+action : call : fillcwItemsToPost
+inactive : not $cwFillItemsFromBOM:Vouchertype:##SVVoucherType
+
+;------------------------------------------------------------------------------
+; Variables and collection for posting items from BOM
+;------------------------------------------------------------------------------
+
+[variable : cwItemsToPost]
+variable : rItemName : string
+variable : fBOMMame : string
+variable : fQty : Number
+variable : fProcessed : logical
+VARIABLE : FQTYTOPOST : NUMBER
+variable : myitemname : string
+variable : byitem : string
+variable : fGodownName : string
+
+[collection : cwItemsToPost]
+data source: variable : cwItemsToPost
+format : $rItemName,10
+format : $myitemname
+format : $fBOMMame,10
+format : $fQty,10
+format : $fProcessed,10
+format : $FQTYTOPOST,10
+format : $byitem,10
+format : $fGodownname,10
+
+[system : variable]
+list variable : cwItemsToPost
+
+;------------------------------------------------------------------------------
+; Collection to get BOM name for a produced item
+;------------------------------------------------------------------------------
+
+[collection : cwGetItemDetails]
+type : stockitem
+filter : cwProducedItem
+compute : myBomName : $$CollectionField:$COMPONENTLISTNAME:last:MULTICOMPONENTLIST
+
+[System: Formula]
+cwProducedItem : $name = ##cwProducedItemName
+
+;------------------------------------------------------------------------------
+; Main function to fill items to post from BOM
+;------------------------------------------------------------------------------
+
+[function : fillcwItemsToPost]
+variable : xSteps : number : $$numitems:InventoryEntriesin
+variable : collCtr : number :$$numitems:InventoryEntriesin
+variable : OutCtr : number : $$numitems:InventoryEntriesOut
+variable : toClear : logical : not $$issysname:$$CollectionField:$stockitemname:First:InventoryEntriesOut
+variable : cwProducedItemName : string
+variable : cwbomname : string
+variable : cAmt : amount
+variable : cBranch : string
+variable : cBillType :string
+variable : cClass : string
+variable : BranchIndex : number
+variable : BranchIndex1 : number
+variable : mybom : string
+variable : myitemname: string
+variable : byitem: string
+variable : cqty : number
+variable : cqty2 : number
+variable : aGodown : string
+
+    00 : LIST DELETE	: cwItemsToPost
+    10 : start progress : ##collCtr : "Processing Data" : ##CollCtr
+    20 : walk :InventoryEntriesin
+        30 : set : cwProducedItemName : $stockitemname
+        40 : set : cwBomName : $$CollectionField:$myBomName:First:cwGetItemDetails
+        50 : if : ##cwbomname <> ""
+        60 : Call : CheckInsertItem:##cwProducedItemName:##cwbomname:##byitem:($$number:$actualqty):no:YES:##aGodown
+        70 : end if
+        80 : show progress : ##xSteps
+    90 : end walk
+    100 : end progress
+
+    ; Post all items in the list to InventoryEntriesOut
+    a210 : walk collection :cwItemsToPost
+    a900 : call : PostItem:False:$myitemname:"":$fqtytopost:"Primary Batch":$fgodownname
+    280 : end walk
+    310: return
+
+;------------------------------------------------------------------------------
+; Function to check/insert an item in the posting list, and recursively add BOM components
+;------------------------------------------------------------------------------
+
+[function : CheckInsertItem]
+parameter : itemname : string
+parameter : bomname : string
+parameter : byitemx : string
+parameter : qty : number
+parameter : additem : logical : yes
+PARAMETER : ADDSUBITEM : LOGICAL : YES
+parameter : fGodownName : string :"Main Location"
+
+variable : branchindex : number
+variable : pitemname : string
+variable: xgodownname : string
+
+    100 : if : not $$listfind:cwItemsToPost:##itemname
+    110 : list add : cwItemsToPost : ##itemname
+    120 : else
+    130 : end if
+
+    140 : if : ##additem
+    150 : set : BranchIndex : $$listIndex:cwItemsToPost:##itemname
+    160 : set : cwItemsToPost[##BranchIndex].fBOMMame : ##bomname
+    170 : set : cwItemsToPost[##BranchIndex].fQty : ##qty + ##cwItemsToPost[##BranchIndex].fQty
+    180 : set : cwItemsToPost[##BranchIndex].fQtyTOPOST : ##qty + ##cwItemsToPost[##BranchIndex].fQtyTOPOST
+    190 : set : cwItemsToPost[##BranchIndex].myitemname : ##itemname
+    200 : set : cwItemsToPost[##BranchIndex].byitem :##cwItemsToPost[##BranchIndex].byitem  + " " + ##byitemx + $$string:##cwItemsToPost[##BranchIndex].fQty
+    210 : set : cwItemsToPost[##BranchIndex].fGodownName : ##fGodownName
+    220 :end if
+
+    230 : if : ##bomname <> ""
+        250 : walk collection : Coltdsptestx
+            300 : set : cqty2 : ##qty * ($ActualQty1 / $forqty)
+            320 : set  : pitemname : $StockItemName1
+            321 : set : xgodownname : $godownname
+            390 : do if : ##pitemname<>"" : call :CheckInsertItem:##pitemname:@@getitembom2S:##itemname:##cqty2:YES:YES:##xgodownname
+        410 : end walk
+    420 : end if
+
+;------------------------------------------------------------------------------
+; Collection to walk through BOM components for a given item
+;------------------------------------------------------------------------------
+
+[Collection:Coltdsptestx ]
+Source Collection   : ColtdsptestSTLK
+Walk : MultiComponentList,MultiComponentItemList
+
+compute :ComponentListName1:$ComponentListName
+compute:StockItemName1:$StockItemName
+compute:cwcreatesubitem1:$cwcreatesubitem
+compute:ActualQty1:$$number:$ActualQty
+compute : forqty : $$number:$..ComponentBasicQty
+compute : Godownname: $GODOWNNAME
+
+FILTER : CWSAMEBOM
+
+[Collection:ColtdsptestSTLK ]
+TYPE :STOCKITEM
+filter:ColtdsptestFilter
+
+[system: Formula]
+ColtdsptestFilter: $name = ##ItemName
+CWSAMEBOM :  $ComponentListName1 =  ##bomname
+
+;------------------------------------------------------------------------------
+; Collection and formulas for BOM name lookup
+;------------------------------------------------------------------------------
+
+[Collection:ColtdsptestSTLK1 ]
+TYPE :STOCKITEM
+filter:ColtdsptestFilter1
+
+[system: Formula]
+ColtdsptestFilter1: $name = ##pitemname
+getitembom : $$collectionfield:@@getitembom2:first:ColtdsptestSTLK1
+getitembom2 : $$collectionfield:$COMPONENTLISTNAME:last:MULTICOMPONENTLIST
+getitembom2S : @@getitembom
+
+;------------------------------------------------------------------------------
+; Function to post an item as an InventoryEntriesIn/Out object with batch allocation
+;------------------------------------------------------------------------------
+
+[function : PostItem]
+parameter : isInward : logical
+parameter : ItemName : string
+parameter : ItemNameby : string
+parameter : AQty : number
+parameter : BatchName : string
+parameter : GodownName : string
+
+    0501 : if : $$tgtobject:$$IsStockJrnl:$Vouchertypename
+    0502: do if : NOT ##isInward : Insert Collection Object : Inventory Entriesout
+    0503: do if : ##isInward :  Insert Collection Object : Inventory Entriesout
+    0504 : else
+    0505 : Insert Collection Object : InventoryEntriesin
+    0506 : end if
+
+    ; Set main item values
+    0530 : Set Value : StockItemName : ##ItemName
+    0530xa : Set Value : cwbyitem : ##ItemNameby
+    0531 : start block
+    0532 : set object
+
+    05333y : log : $$asqty:##AQty
+    0533x: log :@@cwmyaqty1
+    0533: set value : ActualQty :if ##isInward then  $$abs:$$asqty:##AQty else -1 * $$abs:$$asqty:##AQty
+    0534: set value : BilledQty :if ##isInward then  $$abs:$$asqty:##AQty else -1 * $$abs:$$asqty:##AQty
+    0540: end block
+
+    0545 : set value : isDeemedPositive : ##isInward
+    0546: set value : Godownname : ##GodownName
+
+    ; Add batch allocation
+    0560 : Insert Collection Object : BATCHALLOCATIONS
+    0561: set value : Batchname : ##batchname
+    0562: set value : Godownname : ##GodownName
+
+    0570: start block
+    0571: set object
+
+    0572 : set value : isDeemedPositive : ##isInward
+    0580: set value : ActualQty : if ##isInward then $$abs:$$asqty:##AQty else -1 *$$abs:$$asqty:##AQty
+    0581: set value : BilledQty : if ##isInward then  $$abs:$$asqty:##AQty else -1 * $$abs:$$asqty:##AQty
+    0591 : end block
+
+    0600 : set value : isDeemedPositive : ##isInward
+
+    0610: set target : ..
+    0611: set target : ..
+
+    0620: return
+
+;------------------------------------------------------------------------------
+; (Commented) Additional functions and collections for advanced scenarios
+;------------------------------------------------------------------------------
+; The file contains commented-out code for alternative or extended BOM posting logic,
+; which can be uncommented and adapted as needed for more complex requirements.
+
+`;
+export default tdl;

@@ -1,0 +1,216 @@
+// Auto-generated from vouchertypechanges.txt
+const tdl = `
+; Created By: suman on 2021-07-29 09:47, ID: 
+
+; =========================
+; Part: Voucher Type Behaviour
+; Adds an option flag for sales vouchers when Bajaj Finance is enabled
+; =========================
+[#Part: VTYP Behaviour]
+   add:option:cwvtypbehopt:$$issales:$parent and @@cwBajajFinanceEnabled  ;;  @@cwsperateparnewridenbopt
+
+; =========================
+; System Formula
+; Sets a flag to separate details by voucher type for the current company
+; =========================
+[System: Formula]
+   cwSeperateDetailsbyVchType: $cwSepratepatnerid:COMPANY:##SVCURRENTCOMPANY
+
+; =========================
+; Part: Voucher Type Behaviour Options
+; Defines lines and fields under this part for configuration
+; =========================
+[!part:cwvtypbehopt]
+   line:cwenablebfcustline ;;,cwvchparterid,cwsubcrippkey,cwsubcripskey,cwpathsaveingfile
+
+; =========================
+; Line: Enable Bajaj Finance Customer Line
+; Checkbox to enable Bajaj Finance Limited customization
+; =========================
+[line:cwenablebfcustline]
+    field:sp,cwlogical
+    Local: Field: sp: Set As:"Enable Bajaj Finance Limited Customization ?"
+    Local: Field: cwlogical: storage:cwbfcustenbopt
+    Local: field: sp: Width:35
+    ;; {30.Jul.21 11:22}     Local: Field: default: Color :red
+    Local: Field : cwlogical : SubForm :cwvchtypesubform: $$value ;;and @@cwSeperateDetailsbyVchType
+    space top : 0.50
+
+; =========================
+; Report: Voucher Type Subform
+; Defines a report to show the voucher type configuration form
+; =========================
+[report:cwvchtypesubform]
+   form:cwvchtypesubform
+   title:"Configuration"
+
+; =========================
+; Form: Voucher Type Subform
+; Contains part to hold configuration lines
+; =========================
+[form:cwvchtypesubform]
+   part:cwvchtypesubform
+
+; =========================
+; Part: Voucher Type Subform
+; Defines fields for various configurations related to voucher type and finance
+; =========================
+[part:cwvchtypesubform]
+   line: cwvchparterid,cwsubcrippkey,cwsubcripskey,cwpathsaveingfile,cwVchInvoiceUploader,cwInvoiceinfo,cwVtypeEnabledocEsign,cwdonoprintline,cwseriallprintine,EXPcwseriallprintine
+   ;; {04.Aug.21 11:42}       height:30% page
+   ;; {04.Aug.21 11:42}       width:40% page
+   Local: field: fwf: delete : full Width
+   Local: field: fwf: Width: 40
+   local: line : cwInvoiceinfo : invisible :  @@cwsperateparnewridenbopt="no"
+
+; =========================
+; Line: Voucher Partner ID
+; Field to enter Group Code (mandatory)
+; Visible only if separate partner option is enabled
+; =========================
+[line:cwvchparterid]
+    field:sp,fwf
+    Local: Field: sp: Set As:"Group Code*:"
+    Local: Field: fwf: storage:cwvchpartnerid
+    Local: field: sp: Width:25
+    space top:.5
+    ;; {30.Jul.21 11:22}     Local: Field: default: Color : blue
+    Local: Field: fwf: Style: Normal Bold
+    ;; {30.Jul.21 11:38}     local: field: default: inactive:$cwbfcustenbopt="no"
+    local: field: default: invisible:@@cwsperateparnewridenbopt="no"
+    local: field: fwf: Case: Normal
+    local:field: fwf : validate : not $$isempty:$$value
+
+; =========================
+; Line: Subscription Primary Key
+; Field to enter primary subscription key (mandatory)
+; Visible only if separate partner option is enabled
+; =========================
+[line:cwsubcrippkey]
+   field:sp,fwf
+    Local: Field: sp: Set As:"Subscription Key (Primary)*:"
+    Local: Field: fwf: storage:cwsubprimarykey
+    Local: field: sp: Width:25
+    space top:.5
+    ;; {30.Jul.21 11:22}     Local: Field: default: Color : blue
+    Local: Field: fwf: Style: Normal Bold
+    ;; {30.Jul.21 11:27}     local: field: default: inactive:$cwbfcustenbopt="no"
+   local: field: default: invisible:@@cwsperateparnewridenbopt="no"
+   local:field: fwf : validate : not $$isempty:$$value
+
+; =========================
+; Line: Subscription Secondary Key
+; Field to enter secondary subscription key (optional)
+; Hidden by default and if separate partner option is disabled
+; =========================
+[line:cwsubcripskey]
+   field:sp,fwf
+    Local: Field: sp: Set As:"Subscription Key (Secondary):"
+    Local: Field: fwf: storage:cwsubsecindarykey
+    Local: field: sp: Width:25
+    space top:.5
+    ;; {30.Jul.21 11:22}     Local: Field: default: Color : blue
+    Local: Field: fwf: Style: Normal Bold
+    ;; {30.Jul.21 11:27}     local: field: default: inactive:$cwbfcustenbopt="no"
+ local: field: default: invisible:yes ;;@@cwsperateparnewridenbopt="no"
+
+; =========================
+; Line: Path for Saving PDF
+; Field to specify file path where PDFs are saved for uploading to Bajaj Finance
+; Visible only if separate partner option is enabled
+; =========================
+[line:cwpathsaveingfile]
+  field:sp,fwf
+  Local: Field: sp: Set As:"Path for Saving PDF [for Upload to BFL]:"
+  Local: Field: fwf: storage:cwpathsavefile
+  Local: field: sp: Width:25
+  space top:.5
+  ;; {30.Jul.21 11:22}     Local: Field: default: Color : blue
+  Local: Field: fwf: Style: Normal Bold
+  ;; {30.Jul.21 11:27}     local: field: default: inactive:$cwbfcustenbopt="no"
+  local: field: default: invisible:@@cwsperateparnewridenbopt="no"
+
+; =========================
+; Line: Invoice Uploader Path
+; Field to specify path to InvoiceUploader.exe executable
+; Visible only if separate partner option is enabled
+; =========================
+[line :cwVchInvoiceUploader]
+ field: sp,fwf
+ Local: Field: sp: info: "Path of InvoiceUploader.exe:"
+ Local: field: sp: Width:25
+ Local: Field: fwf: storage:  cwInvoiceUploader
+ ;; {30.Jul.21 11:27}     local: field: default: inactive:$cwbfcustenbopt="no"
+ local: field: default: invisible:@@cwsperateparnewridenbopt="no"
+
+; =========================
+; Line: DO Number Print Options
+; Checkbox options for printing DO Number and showing it in PDF export
+; =========================
+[line:cwdonoprintline]
+   field:sp,cwlogical
+   Local: Field: sp: Set As:"Print DO Number?"
+   Local: Field: cwlogical: storage:cwdonoprint
+   Local: field: sp: Width:25
+   space top:.5
+   
+   field:sp2,cwlogical2
+   Local: Field: sp2: Set As:"Show DO Number in PDF Export ?"
+   Local: Field: cwlogical2: storage:expcwdonoprint
+   Local: field: sp2: Width:25
+
+; =========================
+; Line: Serial Number Print Options
+; Checkbox options for printing serial number and printing serial number with batch items
+; The batch option is enabled only if the main print serial number checkbox is checked
+; =========================
+[line:cwseriallprintine]
+   field:sp,cwlogical   ,sp2,cwlogical2
+   Local: Field: sp: Set As:"Print Serial Number?"
+   Local: Field: cwlogical: storage:cwserialprint
+   Local: Field: cwlogical2: storage:cwserialprintwithbatch
+   Local: Field: sp2: info: "for items with batch also?"
+   local: field: cwlogical2: inactive: not $cwserialprint
+   local: field: sp2: inactive: not $cwserialprint
+   Local: field: sp: Width:25
+   Local: field: sp2: Width:25
+   space top:1
+
+; =========================
+; Line: Serial Number PDF Export Options
+; Checkbox options for showing serial number in PDF export and for batch items
+; Batch option active only if main option is checked
+; =========================
+[line:EXPcwseriallprintine]
+   field:sp,cwlogical ,sp2,cwlogical2
+   Local: Field: sp: Set As:"Show Serial in PDF Export ?"
+   Local: Field: cwlogical: storage:expcwserialprint
+   Local: field: sp: Width:25
+   space top:.5
+
+   Local: Field: cwlogical2: storage:cwserialexportwithbatch
+   Local: Field: sp2: info: "for items with batch also?"
+
+   local: field: cwlogical2: inactive: not $expcwserialprint
+   local: field: sp2: inactive: not $expcwserialprint
+
+   Local: field: sp2: Width:25
+
+; =========================
+; System Formulas
+; Maps various options to voucher type for reporting/logic use
+; =========================
+[System: Formula]
+  cwvchparterid:not $$isempty:$cwvchpartnerid:vouchertype:$vouchertypename
+  cwdonoprintopt:$cwdonoprint:vouchertype:$vouchertypename
+  cwserialprintopt:$cwserialprint:vouchertype:$vouchertypename
+  expcwdonoprintopt:$expcwdonoprint:vouchertype:$vouchertypename
+  expcwserialprintopt:$expcwserialprint:vouchertype:$vouchertypename
+  
+  cwExportWithBatch : $cwserialexportwithbatch:Vouchertype:$vouchertypename
+  cwPrintWithBatch : $cwserialprintwithbatch:Vouchertype:$vouchertypename
+
+  cwItemhasBatchEnabled : $IsBatchWiseOn:stockitem:$stockitemname
+
+`;
+export default tdl;

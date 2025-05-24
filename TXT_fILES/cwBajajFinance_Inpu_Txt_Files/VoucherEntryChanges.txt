@@ -1,0 +1,117 @@
+; Created By: suman on 2021-07-29 14:14, ID: 
+
+; Created By: Pg on 2018-09-12 11:01, ID:
+
+;-------------------------------
+; System Formula to control printing of DS (Delivery Slip) based on flag cwVchdsEnabled
+;-------------------------------
+[System: Formula]
+cwPrintDS :@@cwVchdsEnabled
+
+
+;-------------------------------
+; Add options and buttons for Delivery Slip upload feature in Sales and POS Invoice forms
+;-------------------------------
+;; {26.Aug.21 11:28} [#form: Sales Vouchers]
+;; Add an option to Sales Vouchers form to enable dsinVch feature
+;; This option will enable a button or functionality related to Delivery Slip upload
+;; {26.Aug.21 11:28} add : option : dsinVch
+
+[#form :POS Invoice]
+;; Add options to POS Invoice form to enable dsinVch and dsinVch2 buttons based on flag cwDSEnabled and form display mode
+;; dsinVch shown when not in display mode
+;; dsinVch2 shown when in display mode
+;; {27.Aug.21 11:02}    add : option : dsinVch : @@cwDSEnabled  and not $$indisplaymode
+;; {27.Aug.21 11:02}    add : option : dsinVch2 : @@cwDSEnabled and  $$indisplaymode
+
+;; On form accept, if Bajaj finance applicable and upload flag enabled, call export function for signing
+;; {27.Aug.21 11:02} on : form accept : $cwbajfinapplcable and $$cwcanuploadBF : call : cwExportforSigning
+
+
+
+[#form : Voucher]
+;; Add options for Delivery Slip upload buttons in Voucher form, only for Sales vouchers with Bajaj Finance enabled
+;; dsinVch shown when not in display mode
+;; dsinVch2 shown when in display mode
+;; {28.Aug.21 18:01}    add : option : dsinVch : @@issales and @@cwBajajFinanceEnabled and not $$indisplaymode
+;; {28.Aug.21 18:01}    add : option : dsinVch2 : @@issales and @@cwBajajFinanceEnabled and  $$indisplaymode
+
+;; On form accept, call export function if finance applicable and upload allowed
+;; {28.Aug.21 18:01} on : form accept : $cwbajfinapplcable and $$cwcanuploadBF  : call : cwExportforSigning
+
+;; Add options to Voucher forms based on whether POS or non-POS sales voucher
+add:option:cwVouchersales:@@issales and not @@cwPos
+add:option:cwVouchersalespos:@@issales and @@cwPos
+
+
+;-------------------------------
+; Form-level triggers to call export functions on form accept when finance applicable and upload enabled
+;-------------------------------
+[!form:cwVouchersales]
+on : formaccept : $cwbajfinapplcable and $$cwcanuploadBF  : call : cwExportforSigning
+
+
+[!form:cwVouchersalespos]
+on : formaccept : $cwbajfinapplcable and $$cwcanuploadBF : call : cwExportforSigningx
+
+
+
+;-------------------------------
+; Function to check if all deals have serial numbers for upload eligibility
+; This function counts total deals and active deals (with serial numbers) in AllInventoryEntries
+; Returns true only if every deal has a serial number (active deal count equals total deals)
+;-------------------------------
+[function : cwCanUploadBF]
+variable : totaldeals : number : 0
+variable : activedeals : number : 0
+
+10 : walk : AllInventoryEntries
+20 : if : not $$isempty:$cwdealid
+25 : set : totaldeals : ##totaldeals + 1
+30 : if : not $$isempty:$cwSerialNo
+31 : set : activedeals : ##activedeals + 1
+32 : end if
+33 : end if
+34 : end walk
+
+35 : return : ##totaldeals  > 0 and ##totaldeals = ##activedeals
+
+
+
+;-------------------------------
+; Forms for dsinVCH and dsinVCH2 options with buttons for uploading Delivery Slip
+;-------------------------------
+[!form : dsinVCH]
+add : button : cwDsInVch
+
+[!form : dsinVCH2]
+add : button : cwDsInVch2
+
+
+;-------------------------------
+; Keyboard shortcut keys for triggering export functions for signing (upload)
+; Disabled or inactive based on form mode and finance applicability
+;-------------------------------
+[key : cwdsinvch]
+title : "Upload Fin."
+key : alt + g
+action : call :cwExportforSigning
+inactive : $$increatemode or not $cwbajfinapplcable
+
+
+[key : cwdsinvch2]
+title : "Upload Fin."
+key : alt + g
+action : call :cwExportforSigning2
+
+
+;-------------------------------
+; Report and form options related to Delivery Slip printing feature
+;-------------------------------
+[#Report: VCH Display NRM]
+
+ 	Pre Fetch Object  : Voucher : ##VoucherID :partyledgername
+
+[#Form: VCH Display]
+; Add option dsinVCH2 if print DS is enabled
+ add : option : dsinVCH2 : @@cwPrintDS

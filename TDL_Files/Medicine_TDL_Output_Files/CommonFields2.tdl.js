@@ -1,0 +1,296 @@
+// Auto-generated from CommonFields2.txt
+const tdl = `
+;; ---------------------------
+;; Debug Flag Formula
+;; ---------------------------
+[#system:formula]
+cwdebugfld : @@cwdebug ; "nfdebug"
+
+;; ---------------------------
+;; Gateway Menu Extension
+;; ---------------------------
+[#menu : Gateway of Tally]
+add : option : cw_debug_items : @@cwdebug
+
+;; ---------------------------
+;; Debug Items Menu Definition
+;; ---------------------------
+[!menu : cw_Debug_items]
+add : item : before : @@locquit : @@cw_debug_menu : menu : cw_debug_menu
+
+[System: Formula]
+cw_debug_menu : "9. Debug Menu"
+
+[menu : cw_Debug_menu]
+title : "Debug Menu"
+
+;; ---------------------------
+;; Debug Export Fields Setup
+;; ---------------------------
+[!line: cwExport]
+;; Numeric Fields (nf)
+Local: field: nf to nf10 : Width: 100
+;; Short Name Fields (snf)
+Local: field: snf to snf10 : Width: 100
+
+;; ---------------------------
+;; Sample Fields
+;; ---------------------------
+[!field : cw]
+color : Blue
+
+[!field : cw1]
+style : normal bold
+
+;; ---------------------------
+;; Sample Report Part and Line
+;; ---------------------------
+[part : sampleReport]
+line : SampleReportLine
+
+[line : SampleReportLine]
+field : fwfC
+Local : Field : fwfC : Set As: "This is a Sample Copy"
+LOCAL : FIELD : FWFC : STYLE : NORMAL BOLD
+
+;; ---------------------------
+;; Indented Lines
+;; ---------------------------
+[line : cwindent]
+field : nf
+Local: Field : nf: Style: normal bold
+Local: Field: nf : Skip: Yes
+
+[line : cwindent2]
+use : cwindent
+
+;; ---------------------------
+;; Company Address Full Line
+;; ---------------------------
+[line : cwDefcmpaddrFull]
+field : fwfc
+Local: Field: fwfc : Set As: @@cwCMPFullAddress
+local : field : fwfc : lines: 0
+
+;; ---------------------------
+;; Continuation Lines
+;; ---------------------------
+[line : cwclline]
+right field : nf
+Local: Field: nf : Set As: "Continued to Page No. "+ $$string:@@cwnextpage
+border : thin top
+
+[line : cwFromPrevPage]
+use : cwclline
+Local: Field: nf : Set As: "Continued from Page No. "+ $$string:@@cwPrevPage
+delete : border
+
+;; ---------------------------
+;; Dummy Part with Blank Line
+;; ---------------------------
+[part : cwDummyPart]
+line: cwblankline
+
+;; ---------------------------
+;; Authorised Signatory Line
+;; ---------------------------
+[line : cwfor]
+field : fwf
+right field : fwf2
+Local: Field : fwf2 : Set As: @@FORCMPMAIL
+local : field : fwf2 : align : right
+
+[line : cwAuthorised]
+use : cwfor
+Local: Field : fwf2 : Set As: "Authorised Signatory"
+
+;; ---------------------------
+;; Subject and Footer Notes
+;; ---------------------------
+[line : cwSubject]
+field : fwfc
+Local: Field : fwfc : Set As: $$SPrintf:@@SubjectToJurisdictionFormat:@@Jurisdiction
+
+[line : cwComputer]
+field : fwfc
+Local : Field: fwfc : Set As: "Computer Generated Invoice, requires no signature."
+
+;; ---------------------------
+;; Border Style Definitions
+;; ---------------------------
+[border: cwdouble top bottom]
+top: double
+bottom : double
+
+;; ---------------------------
+;; Total and Title Lines with Borders
+;; ---------------------------
+[!line : totalOpt]
+local : field : default : delete : storage
+
+border : Totals
+
+[!line : TitleOpt]
+local : field : default : type : string
+
+border : Column Titles
+local : field : numf : type : string
+
+[!line : TitleOpt2]
+use : titleOpt
+delete : border
+delete : remove if
+
+[!line : TitleOpt3]
+use : titleOpt
+border : thin bottom
+
+[!line : TitleOpt3thick]
+use : titleOpt
+border : thick bottom
+
+[!line : TitleOpt4]
+use : titleOpt
+border : thin top
+
+[!line : TitleOpt4thick]
+use : titleOpt
+border : thick top
+
+[!line : TitleOpt5]
+use : titleOpt
+border : thin top bottom
+
+[!line : defborder]
+local : field : default : border : thin box
+
+[!field : titleopt]
+delete : inactive
+delete : storage
+type : string
+skip : yes
+
+[!line : defbox]
+local : field : default : border : thin box
+
+[!part : defbox]
+local : field : default : border : thin box
+
+;; ---------------------------
+;; Basic Fields Setup
+;; ---------------------------
+[field : nf]
+use : name field
+style : normal
+set always : yes
+
+;; Debug Field visibility
+[system : formula]
+cwdebugfld : no
+
+[field : nfdebug]
+use : nf
+invisible : not @@cwdebugfld
+border : thin box
+
+;; Repeated numeric field definitions
+[field : nf1 to nf15]
+use : nf
+
+;; Full Width Fields (fwf)
+[field : fwf to fwf10]
+use : nf
+full width : yes
+
+[field : fwfc to fwfc4]
+use : fwf
+align : centre
+
+;; Short Name Fields
+[field : snf to snf17]
+use : short name field
+style : normal
+set always : yes
+
+;; Quantity Fields
+[field : qtyf to qtyf11]
+use : qty Primary field
+
+
+[field : qtynsf1 to qtynsf2]
+use : qtynsf
+
+[field : qtysf]
+use : qty Secondary field
+
+
+;; Rate and Amount Fields
+[field : rateNUF]
+use : Number field
+
+
+[field : ratenuf2 to ratepf4]
+use : corresponding rate field
+
+[field : amtf1 to amtf20]
+use : amtf
+
+;; Number Fields
+[field : numf to numf24]
+use : number field
+
+
+[field : cwslno]
+use : number field
+align : left
+
+
+;; Date Fields
+[field : dtf, dtf1, dtf2]
+use : unidate field
+
+[field : discf]
+use : number field
+
+;; Short Date Fields
+[field : sdf to sdf8]
+use : short date field
+
+
+;; Blank and Cwl Lines
+[line: cwl1 to cwl10]
+;; Empty defined lines
+
+[line: CwBlankLine to CwBlankLine20]
+field : name field
+local : field : name field : skip : yes
+
+;; Prompt Fields
+[field : sp to sp10]
+use : short prompt
+
+[field : mp to mp3]
+use : medium prompt
+
+[field : lp, lp2]
+use : long prompt
+
+;; Narrow Short Name Fields
+[field : snfx to snfx10]
+use : snf
+width : @@shortwidth - 5
+
+;; Logical Fields
+[Field : cwLogical to cwLogical4]
+use : logical Field
+set always : yes
+
+[Field : cwLogical]
+set as : if $$value then yes else No
+
+;; Unique Date Fields
+[FIELD : UNIdf, UNIdf2]
+USE : UNI DATE FIELD
+
+`;
+export default tdl;

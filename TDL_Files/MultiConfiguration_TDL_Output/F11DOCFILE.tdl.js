@@ -1,0 +1,54 @@
+// Auto-generated from F11DOCFILE.TXT
+const tdl = `
+;===============================================================================
+; F11DOCFILE.TXT
+; Created By: Taniya on 2019-11-29 10:59, ID:
+; Purpose: Adds "Enable Image?" and "Image Base Path" fields to the Barcode
+;          Application Location (F11 Features) screen in Tally, with company-level
+;          UDF storage and enable/disable logic.
+;===============================================================================
+
+;------------------------------------------------------------------------------
+; ADD IMAGE ENABLE/BASE PATH FIELDS TO BARCODE FEATURES (F11)
+;------------------------------------------------------------------------------
+
+[#Part: frmbarcodeapplocation]
+    add: line: after: cwincmrpline: cwenablelinex
+
+[line: cwenablelinex]
+    field: sp, cwlogical, sp2, nf
+
+    Local: Field: sp: Set As: "Enable Image?"
+    Local: Field: sp2: Set As: "Image Base Path :"
+    Local: Field: cwlogical: storage: cwEnableDoc
+    Local: Field: nf: storage: cwBasePath
+    local: field: nf: inactive: not #cwlogical
+    local: field: sp2: inactive: not #cwlogical
+    Local: Field: nf: Style: Normal Bold
+
+    Local: field: sp: Width: 25
+    Local: field: sp2: Width: 25
+
+;------------------------------------------------------------------------------
+; SYSTEM FORMULAS FOR COMPANY-LEVEL ACCESS
+;------------------------------------------------------------------------------
+
+[System: Formula]
+    cwdocManagementEnable: $cwEnableDoc:COMPANY:##SVCURRENTCOMPANY
+    cwBasePath: $cwBasePath:COMPANY:##SVCURRENTCOMPANY
+
+;------------------------------------------------------------------------------
+; UDF DECLARATIONS FOR IMAGE MANAGEMENT
+;------------------------------------------------------------------------------
+
+[System: UDF]
+    cwEnableDoc: logical: 1990
+    cwBasePath: string: 1991
+    cwdoc: string: 1992
+
+;===============================================================================
+; END OF FILE
+;===============================================================================
+
+`;
+export default tdl;

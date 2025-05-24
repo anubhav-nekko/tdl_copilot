@@ -1,0 +1,282 @@
+// Auto-generated from AREAWISENETSALESREPORT.TXT
+const tdl = `
+;===============================================================================
+; AREAWISENETSALESREPORT.TXT
+; Created By: Khokan on 2021-08-25 16:19, ID:
+; Purpose: Provides an "Area Wise Net Sales Report" in Tally,
+;          showing net sales, returns, and collections per area/party,
+;          with filtering, grouping, and aggregation features.
+;===============================================================================
+
+[#menu: Gateway of Tally]
+;; {25.Aug.21 16:25}         add: Option: AREAwisenetsalesreportLock ;; : @@PartywisenetsalesreportDemoLock
+
+[#menu : cw_Debug_menu]
+    add: Item: before: @@locQuit: @@AREAwisenetsalesreportReport: Display Collection: colllRepAREAwisenetsalesreport
+    add: Item: before: @@locQuit: Blank
+
+[!menu: AREAwisenetsalesreportLock]
+    add: Item: before: @@locQuit: @@AREAwisenetsalesreportReport: Display Collection: colllRepAREAwisenetsalesreport
+    add: Item: before: @@locQuit: Blank
+
+[System: formula]
+    AREAwisenetsalesreportReport: @@cwcaption3tableundernew + " wise net sales report"
+;; AREAwisenetsalesreportDemoLock: $$MachineDate < $$Date:"01/04/2013"
+
+[Collection: colllRepAREAwisenetsalesreport]
+    Use         : Extract Alias Collection
+    Source Collection : List of Cost Centres
+    Title       : $$LocaleString:"List of Cost Centres"
+    Format      : $CstCatName
+    Filter      : CostCentreFilter
+    Report      : RepAREAwisenetsalesreport
+    Variable    : SCostCentre
+    Trigger     : SCostCentrex
+
+[Report: RepAREAwisenetsalesreport]
+    use: Dsp Template
+    Title: @@AREAwisenetsalesreportReport
+    Printset: Report Title: @@AREAwisenetsalesreportReport
+    Form: FrmAREAwisenetsalesreport
+    Export: Yes
+    set  : svfromdate : ##svcurrentdate
+    set  : svTodate : ##svcurrentdate
+    Local: Button: RelReports: Inactive: Yes
+    variable: str1
+    set: str1: ""
+
+[Form: FrmAREAwisenetsalesreport]
+    use: DSP Template
+    Part: DspAccTitles, PrtTitle0AREAwisenetsalesreport, PrtAREAwisenetsalesreport
+    Width: 100% Page
+    Height: 100% Page
+    Background: @@SV_STOCKSUMMARY
+    delete: page break
+    add: page break: AREAwisenetsalesreportbotbrk, AREAwisenetsalesreportbotOpbrk
+    Bottom Toolbar Buttons 	: BottomToolBarBtn1, BottomToolBarBtn3, BottomToolBarBtn8, BottomToolBarBtn9, BottomToolBarBtn10, BottomToolBarBtn11, BottomToolBarBtn12
+    add: button: agentnetsalesbotton
+    local:Part:DSPCompanyName:local:line:DSPCompanyName: Local: Field: DSP CompanyName:PrintStyle:styleCalisto2
+    local:Part:DSPCompanyAddress:local:line:DSPCompanyAddress: Local: Field: DSPCompanyAddress:PrintStyle:style2n
+    local:Part:DSPReportTitle:local:line:DSPReportName: Local: Field: DSPReportName:PrintStyle:style3n
+    local:Part:DSPReportSubTitle:local:line:DSPReportSubTitle: Local: Field: DSPReportSubTitle:PrintStyle:style2n
+    local:Part:DSPReportTitle:local:line:DSPReportPeriod:Local: Field: DSPReportPeriod:PrintStyle:style2n
+    local:Part:DSPPageNo:local:line:DSPPageNo: Local: Field:DSPPageNo:PrintStyle:style2n
+
+[part: AREAwisenetsalesreportbotBrk]
+    line: EXPINV PageBreak
+    border: thin top
+
+[part: AREAwisenetsalesreportbotopbrk]
+    use: dspacctitles
+    add: part: AREAwisenetsalesreportTitlePart
+
+[part: AREAwisenetsalesreportTitlePart]
+    line: LnAREAwisenetsalesreportTitle
+
+[line: LnAREAwisenetsalesreportCurrPeriod]
+    field: fwf, fwf2
+    Local: field: fwf2: Align: Right
+    Local: Field: fwf: Style: style3x
+    Local: Field: fwf2: Style: style3x
+    Local: Field: fwf2: Set As: @@dspDateStr
+    Local: Field: fwf: Set As: ##SCostCentre
+    Local: Field: fwf2: invisible: $$inprintmode
+
+[part: PrtTitle0AREAwisenetsalesreport]
+    line : LnAREAwisenetsalesreportCurrPeriod
+
+[Part: PrtAREAwisenetsalesreport]
+    Line: LnAREAwisenetsalesreportTitle, LnAREAwisenetsalesreportTitle2, LnAREAwisenetsalesreport
+    bottom Line: LnAREAwisenetsalesreportTotals
+    repeat: LnAREAwisenetsalesreport: ColAREAwisenetsalesreport
+    scroll: Vertical
+    Common Border: Yes
+    Total: Qtyf, amtf, amtf1, amtf2, amtf3, amtf4, amtf5, numf, numf1, numf2, numf3, numf4
+
+[Collection: ColAREAwisenetsalesreport]
+    source Collection: sourceColAREAwisenetsalesreport
+    by: partyledgername: $partyledgername
+    by: cwcaption1vch3: $..cwcaption3vch
+    aggr compute: billedqty: sum: $$CollAmtTotal:inventoryentries:$billedqty
+    aggr compute: amount: sum: $amount
+    aggr compute: amount1: sum: $$CollAmtTotal:inventoryentries:$amount
+    filter: ColAREAwisenetsalesreportFilter
+
+[Collection: sourceColAREAwisenetsalesreport]
+    Type: Vouchers : VoucherType
+    Child Of: $$VchTypesales
+    Belongs To: Yes
+    filter: cwpartylednetsalesfilter
+
+[system: Formula]
+    ColAREAwisenetsalesreportFilter: $cwcaption3item:ledger:$partyledgername = ##SCostCentre
+
+[Line: LnAREAwisenetsalesreportTitle]
+    use: LnAREAwisenetsalesreport
+    option: titleopt
+    local: field: fwf: set as: "Party Name"
+    local: field: grsales: set as: "Net Sales"
+    local: field: grSRIN: set as: "Net Sals Return"
+    local: field: snetsales: set as: "S.Net Sales "
+    local: field: numf3: set as: "Net Sales"
+    local: field: amtf3: set as: "Gross Sale Less Gross Sales Return"
+    local: field: amtf4: set as: "Net Sale Without Gst"
+    local: field: amtf5: set as: "Colleection"
+    local: field: grsales: cells: 2
+    local: field: grSRIN: cells: 2
+    local: field: snetsales: cells: 2
+    local: field: default : style: normal bold
+    local: field: grsales: delete: field
+    local: field: grSRIN: delete: field
+    local: field: snetsales: delete: field
+    Local: Field: grsales: Sub title: Yes
+    Local: Field: grSRIN: Sub title: Yes
+    Local: Field: snetsales: Sub title: Yes
+    Local: field: grSRIN: Align: centre
+    Local: field: grsales: Align: centre
+    Local: field: snetsales: Align: centre
+    Local: field: default: Align: centre
+    Local: field: snf: Align: left
+    Local: field: fwf: Align: left
+    Local: field: nf: Align: left
+    Local: field: default: Lines: 0
+    Local: field: default: Align: centre
+    Local: field: fwf: Align: left
+    local: field: grsales: style: styleCalisto2
+    local: field: grSRIN: style: styleCalisto2
+    local: field: snetsales: style: styleCalisto2
+    local: field: fwf: style: styleCalisto2
+    local: field: numf: style: styleCalisto2
+    local: field: snf2: style: styleCalisto2
+    local: field: numf1: style: styleCalisto2
+    local: field: numf2: style: styleCalisto2
+    local: field: numf3: style: styleCalisto2
+    local: field: amtf: style: styleCalisto2
+    local: field: amtf1: style: styleCalisto2
+    local: field: amtf2: style: styleCalisto2
+    local: field: amtf3: style: styleCalisto2
+    local: field: amtf4: style: styleCalisto2
+    local: field: amtf5: style: styleCalisto2
+
+[Line: LnAREAwisenetsalesreportTitle2]
+    use: LnAREAwisenetsalesreport
+    option: titleopt
+    local: field: fwf: set as: ""
+    local: field: numf: set as: "Pcs"
+    local: field: numf2: set as: "Pcs"
+    local: field: amtf: set as: "Amount"
+    local: field: amtf2: set as: "Amount"
+    local: field: numf3: set as: "Pcs"
+    local: field: amtf3: set as: "Amount"
+    local: field: amtf4: set as: "Amount"
+    local: field: amtf5: set as: "Amount"
+    Local: field: default: Align: centre
+    Local: field: fwf: Align: left
+    local: field: grsales: style: styleCalisto2
+    local: field: grSRIN: style: styleCalisto2
+    local: field: fwf: style: styleCalisto2
+    local: field: numf: style: styleCalisto2
+    local: field: snf2: style: styleCalisto2
+    local: field: numf1: style: styleCalisto2
+    local: field: numf2: style: styleCalisto2
+    local: field: numf3: style: styleCalisto2
+    local: field: amtf: style: styleCalisto2
+    local: field: amtf1: style: styleCalisto2
+    local: field: amtf2: style: styleCalisto2
+    local: field: amtf3: style: styleCalisto2
+    local: field: amtf4: style: styleCalisto2
+    local: field: amtf5: style: styleCalisto2
+
+[Line: LnAREAwisenetsalesreport]
+    Fields: fwf
+    right field: grsales, grSRIN, snetsales, amtf6, amtf4, amtf5
+    Option: Alter on Enter
+    local: field: qtyf: Format: "NoSymbol, Short Form, No Compact,NoZero"
+    local: field: ratepf: setas: #amtf/#qtyf
+    local: field: fwf: alter: voucher: $$isvoucher
+    option: alter on enter
+    local: field: fwf: alter: voucher: $$isvoucher
+    local: field: fwf: set as: $partyledgername
+    local: field: numf: set as: $billedqty
+    local: field: amtf: set as: $amount
+    local: field: numf2: set as: $$reportobject:$$collectionfieldbykey:$billedqty:@@keycrnotenew:cwColNetcrnotereport
+    local: field: amtf2: set as: $$reportobject:$$collectionfieldbykey:$amount:@@keycrnotenew:cwColNetcrnotereport
+    local: field: numf3: set as: #numf-#numf2
+    local: field: amtf3: set as: #amtf-#amtf2
+    local: field: amtf4: set as: #amtf3-#amtf6
+    local: field: amtf5: set as: $$reportobject:$$collectionfieldbykey:$rcptvalue:@@keycrnotenew:Colreceipt
+    local: field: amtf6: set as: (#amtf3*5)/100
+    local: field: amtf6: Invisible: yes
+    Local: Field: default: Border: thin right
+    Local: field: numf: Width: 7
+    Local: field: numf2: Width: 7
+    Local: field: numf3: Width: 7
+    Local: field: amtf: Width: 10
+    Local: field: amtf2: Width: 10
+    Local: field: amtf3: Width: 10
+    local: field: default: style: styleCalisto
+    border: thin bottom
+
+[System: Formula]
+    AREAkeycrnotenew: #fwf
+
+[Collection: cwColNetcrnotereportAREA]
+    source Collection: sourcwColNetcrnotereportAREA
+    by: partyledgername: $partyledgername
+    aggr compute: billedqty: sum: $$CollAmtTotal:inventoryentries:$billedqty
+    aggr compute: amount: sum: $amount
+    aggr compute: amount1: sum: $$CollAmtTotal:inventoryentries:$amount
+    search key: $partyledgername
+
+[System: Formula]
+    cwcrnoteamountAREA: $$reportobject:$$collectionfieldbykey:$amount:@@keycrnotenew:cwColNetcrnotereportAREA
+
+[Collection: sourcwColNetcrnotereportAREA]
+    Type: Vouchers : VoucherType
+    Child Of: $$VchTypeCreditNote
+    Belongs To: Yes
+
+[Collection: ColreceiptAREA]
+    source Collection: ColreceiptsouAREA
+    by: partyledgername: $partyledgername
+    aggr compute: rcptvalue: sum: $amount
+    search key: $partyledgername
+
+[Collection: ColreceiptsouAREA]
+    Type: Vouchers : VoucherType
+    Child Of: $$VchTypereceipt
+    Belongs To: Yes
+
+[line: LnAREAwisenetsalesreportTotals]
+    use: LnAREAwisenetsalesreport
+    option: totalOpt
+    local: field: fwf: align: right
+    local: field: default : style: normal bold
+    local: field: qtyf: set as: $$total:qtyf
+    local: field: fwf: set as: "Total"
+    local: field: numf: set as: $$total:numf
+    local: field: numf2: set as: $$total:numf2
+    local: field: amtf: set as: $$total:amtf
+    local: field: amtf2: set as: $$total:amtf2
+    local: field: numf3: set as: $$total:numf3
+    local: field: amtf3: set as: $$total:amtf3
+    local: field: amtf4: set as: $$total:amtf4
+    local: field: amtf5: set as: $$total:amtf5
+    local: field: grsales: style: styleCalisto2
+    local: field: grSRIN: style: styleCalisto2
+    local: field: fwf: style: styleCalisto2
+    local: field: numf: style: styleCalisto2
+    local: field: snf2: style: styleCalisto2
+    local: field: numf1: style: styleCalisto2
+    local: field: numf2: style: styleCalisto2
+    local: field: numf3: style: styleCalisto2
+    local: field: amtf: style: styleCalisto2
+    local: field: amtf1: style: styleCalisto2
+    local: field: amtf2: style: styleCalisto2
+    local: field: amtf3: style: styleCalisto2
+    local: field: amtf4: style: styleCalisto2
+    local: field: amtf5: style: styleCalisto2
+
+
+`;
+export default tdl;

@@ -1,0 +1,88 @@
+// Auto-generated from VCHTYPECHANGES.TXT
+const tdl = `
+;===============================================================================
+; VCHTYPECHANGES.TXT
+; Created By: Suman on 2016-11-08 14:56, ID:
+; Purpose: Adds barcode and entry behavior options to Voucher Type configuration
+;          in Tally, supporting barcode-before-item, item-without-batch, rate/amount
+;          skipping, POS-like skipping, and duplicate barcode entry lock.
+;===============================================================================
+
+;------------------------------------------------------------------------------
+; EXTEND VOUCHER TYPE BEHAVIOUR PART WITH BARCODE OPTIONS
+;------------------------------------------------------------------------------
+
+[#Part: VTYP Behaviour]
+add: option : VTYPBehavioursl : @@forslvtyp and @@cwenablebarcodebatch
+
+[!Part: VTYPBehavioursl]
+add: line : lnvtypacceptbarcode, lnvtypacceptbarcode2, skipamtrateline, cwSkipOtherDetails, barcodeduplicaoptline
+
+;------------------------------------------------------------------------------
+; OPTION: ACCEPT BARCODE BEFORE ITEM?
+;------------------------------------------------------------------------------
+
+[Line: lnvtypacceptbarcode]
+Fields      : Long Prompt, cwlogical
+Local       : Field : Long Prompt : Info : $$LocaleString:"Accept Barcode Before Item ?"
+Local: Field: cwlogical : storage: cwvtypbarcodeitem
+Space Top   : 0.5
+Local: Field: default: Style: Normal Bold
+
+;------------------------------------------------------------------------------
+; OPTION: ACCEPT ITEMS ALSO (WITHOUT BATCH)?
+;------------------------------------------------------------------------------
+
+[line : lnvtypacceptbarcode2]
+use : lnvtypacceptbarcode
+Local       : Field : Long Prompt : Info : $$LocaleString:"Accept Items also ?"
+Local: Field: cwlogical : storage: cwvtypbarcodeitemwobatch
+local: field: cwlogical: inactive: not $cwvtypbarcodeitem
+
+;------------------------------------------------------------------------------
+; OPTION: SKIP RATE & AMOUNT?
+;------------------------------------------------------------------------------
+
+[line: skipamtrateline]
+field: sp, cwlogical
+Local: Field: sp: Set As: "Skip Rate & Amount?"
+Local: Field: cwlogical: storage: cwskiprateamt
+Local: field: sp: Width: 35
+local: field: cwlogical: inactive: not $cwvtypbarcodeitem
+
+;------------------------------------------------------------------------------
+; OPTION: SKIP LIKE POS?
+;------------------------------------------------------------------------------
+
+[line : cwSkipOtherDetails]
+field : sp, cwlogical
+Local: Field: sp: info: "Skip Like POS?"
+Local: Field: cwlogical: storage: cwSkipLikePOS
+Space Top   : 0.5
+Local: field: sp: Width: 35
+
+;------------------------------------------------------------------------------
+; OPTION: LOCK DUPLICATE BARCODE ENTRY?
+;------------------------------------------------------------------------------
+
+[line: barcodeduplicaoptline]
+field: sp, cwlogical
+Local: Field: sp: Set As: "Lock Duplicate Barcode Entry?"
+Local: Field: cwlogical: storage: cwbarcodedupopt
+Local: field: sp: Width: 35
+local: field: cwlogical: inactive: not $cwvtypbarcodeitem
+
+;------------------------------------------------------------------------------
+; SYSTEM FORMULAS FOR OPTION ENABLEMENT
+;------------------------------------------------------------------------------
+
+[System: Formula]
+cwenableskipopt      : $cwskiprateamt:vouchertype:$VOUCHERTYPENAME
+cwbarcodedupoptenb   : $cwbarcodedupopt:vouchertype:$VOUCHERTYPENAME
+
+;; forslvtyp: enables options for sales, delivery note, debit/credit note, job material issue
+forslvtyp : $$issales:$parent or $$isdelnote:$parent or $$isdebitnote:$parent or $$iscreditnote:$parent or $$IsJobMaterialIssue:$parent
+cwvtypbarcodeitem : $cwvtypbarcodeitem:Vouchertype:##SVVoucherType
+
+`;
+export default tdl;

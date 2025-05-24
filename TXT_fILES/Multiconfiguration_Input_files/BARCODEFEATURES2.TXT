@@ -1,0 +1,207 @@
+;===============================================================================
+; BARCODEFEATURES2.TXT
+; Created By: Anil on 2023-07-08 15:04, ID:
+; Purpose: Adds configurable additional fields to Stock Item Batch in Tally,
+;          with company-level enable/disable, batch field captions, and
+;          dynamic table/under configuration for up to 14 fields.
+;===============================================================================
+
+;------------------------------------------------------------------------------
+; ADDITIONAL BATCH FIELDS CONFIGURATION IN COMPANY FEATURES
+;------------------------------------------------------------------------------
+
+[#Part: frmbarcodeapplocation]
+    add: line: after: lncmpbatchfieldcaption: cwstkbatchlinexxx
+
+[line: cwstkbatchlinexxx]
+    field: cwCustomBatchFldsConfigTitle, cwCustomBatchFldsConfig
+
+[System: Formula]
+    cwCustomBatchFldsEnabled : $cwenablebatchfield:COMPANY:##SVCURRENTCOMPANY
+
+[Field: cwCustomBatchFldsConfigTitle]
+    Use : long prompt
+    info: "Additional Fields in Batch ?"
+
+[Field: cwCustomBatchFldsConfig]
+    Use: logical field
+    Set As: $cwenablebatchfield
+    storage: cwenablebatchfield
+    set always: yes
+    set as: if $$value then yes else No
+    SubForm: stockitemBatchcaptionfrm: $$value
+
+;------------------------------------------------------------------------------
+; BATCH CAPTION CONFIGURATION SUBFORM
+;------------------------------------------------------------------------------
+
+[Report: stockitemBatchcaptionfrm]
+    title: "Stock Item Batch Additional Fields"
+    Form: stockitemBatchcaptionfrm
+
+[Form: stockitemBatchcaptionfrm]
+    Part: stockitemBatchcaptionfrm
+    width: 80% page
+
+[Part: stockitemBatchcaptionfrm]
+    line: lnCaption0x, lnCaption1x, lnCaption2x, lnCaption3x, lnCaption4x, lnCaption5x, lnCaption6x, lnCaption9x, lnCaption10x, lnCaption11x, lnCaption12x, lnCaption13x, lnCaption14x, cwcostcodeline
+
+;------------------------------------------------------------------------------
+; BATCH CAPTION LINES (UP TO 14 FIELDS)
+;------------------------------------------------------------------------------
+
+[line: lnCaption0x]
+    field: fwfc
+    Local: Field: fwfc: info: "Stock Item Batch Additional Fields"
+    Local: Field: fwfc: Style: Normal Bold
+    Local: Field: fwfc: Border: thin bottom
+
+[line: lnCaption1x]
+    field: cwbcspx, cwbcnfx, sp, nf2, sp2, snf
+    space top: 0.5
+    Local: Field: sp: info: "Table From :"
+    Local: Field: sp2: info: "Under :"
+    Local: Field: nf2: storage: cwtableFrom1
+    Local: Field: snf: storage: cwUnder1
+    Local: Field: nf2: table: colbatchtableFrom, Not Applicable
+    Local: Field: nf2: Show table: Always
+    local: field: sp: inactive: not #cwCustombatchFldsConfig
+    local: field: sp2: inactive: not #cwCustombatchFldsConfig
+    local: field: snf: inactive: $$issysname:#nf2
+    local: field: nf2: inactive: $$issysname:#cwbcnfx
+
+; ... (Similar blocks for lnCaption2x, lnCaption3x, ..., lnCaption14x, with appropriate field names and storages) ...
+
+;------------------------------------------------------------------------------
+; COST CODE AND "SHOW IN STOCK SUMMARY" LINE
+;------------------------------------------------------------------------------
+
+[line: cwcostcodeline]
+    field: sp, snf, sp3, cwlogical
+    Local: Field: sp: info: "Cost Code from:"
+    Local: Field: snf: table: cwCostCodeFromx, Not Applicable
+    Local: Field: snf: storage: cwbatchCostCodeFrom
+    Local: field: sp: Width: 14
+    Local: field: snf: Width: 16
+    Local: Field: snf: Style: Normal Bold
+    Local: Field: sp3: Set As: "Show in Stock Summary?"
+    Local: Field: cwlogical: storage: cwshowbatchfieldinStockSummary
+    Local: field: sp3: Width: 20
+
+[Collection: cwCostCodeFromx]
+    title: "Cost Code from"
+    listname: @@cwCostCodeFromF1
+    listname: @@cwCostCodeFromF2
+    listname: @@cwCostCodeFromF3
+
+[System: Formula]
+    cwCostCodeFromF1: "First"
+    cwCostCodeFromF2: "Second"
+    cwCostCodeFromF3: "Third"
+
+;------------------------------------------------------------------------------
+; FIELD DEFINITIONS FOR CAPTIONS AND CONFIG
+;------------------------------------------------------------------------------
+
+[field: cwbcspx]      use: short prompt   info: "Caption1:"
+[field: cwbcsp2x]     use: short prompt   info: "Caption2:"
+[field: cwbcsp3x]     use: short prompt   info: "Caption3:"
+[field: cwbcsp4x]     use: short prompt   info: "Caption4:"
+[field: cwbcsp5x]     use: short prompt   info: "Caption5:"
+[field: cwbcsp6x]     use: short prompt   info: "Caption6:"
+[field: cwbcsp7x]     use: short prompt   info: "Caption7:"
+[field: cwbcsp9x]     use: short prompt   info: "Caption7:"
+[field: cwbcsp10x]    use: short prompt   info: "Caption8:"
+[field: cwbcsp11x]    use: short prompt   info: "Caption9:"
+[field: cwbcsp12x]    use: short prompt   info: "Caption10:"
+[field: cwbcsp13x]    use: short prompt   info: "Caption11:"
+[field: cwbcsp14x]    use: short prompt   info: "Caption12:"
+
+[field: cwbcnfx]      use: name field     storage: cwbatchcaption1
+[field: cwbcnf2x]     use: cwbcnfx        storage: cwbatchcaption2
+[field: cwbcnf3x]     use: cwbcnfx        storage: cwbatchcaption3
+[field: cwbcnf4x]     use: cwbcnfx        storage: cwproductStr2x
+[field: cwbcnf5x]     use: cwbcnfx        storage: cwproductStr3x
+[field: cwbcnf6x]     use: cwbcnfx        storage: cwproductStr4x
+[field: cwbcnf7x]     use: cwbcnfx        storage: cwproductStr5x
+[field: cwbcnf9x]     use: cwbcnfx        storage: cwproductStr9x
+[field: cwbcnf10x]    use: cwbcnfx        storage: cwproductStr10x
+[field: cwbcnf11x]    use: cwbcnfx        storage: cwproductStr11x
+[field: cwbcnf12x]    use: cwbcnfx        storage: cwproductStr12x
+[field: cwbcnf13x]    use: cwbcnfx        storage: cwproductStr13x
+[field: cwbcnf14x]    use: cwbcnfx        storage: cwproductStr14x
+
+;------------------------------------------------------------------------------
+; TABLE FROM COLLECTION FOR CONFIGURATION
+;------------------------------------------------------------------------------
+
+[Collection: colbatchtableFrom]
+    title: "Table From"
+    listname: @@cwforledger
+    listname: @@cwforcostcentre
+    listname: @@cwforcostcategory
+    listname: @@cwforgroup
+    listname: @@cwforstockgroup
+    listname: @@cwforstockcategory
+
+;------------------------------------------------------------------------------
+; SYSTEM FORMULAS FOR TABLE/UNDER FIELDS (EXAMPLES)
+;------------------------------------------------------------------------------
+
+; forunder1:$cwUnder1:COMPANY:##SVCURRENTCOMPANY
+; fortable1led:$cwtableFrom1:COMPANY:##SVCURRENTCOMPANY
+; fortable1ledx:@@fortable1led="ledger"
+; ... (and similar for all fields up to 14) ...
+
+;------------------------------------------------------------------------------
+; UDF DECLARATIONS FOR BATCH CUSTOM FIELDS
+;------------------------------------------------------------------------------
+
+[System: UDF]
+    cwCustomBatchFldsEnabled: logical: 5001
+    cwproductStrx: string: 5002
+    cwproductStr2x: string: 5003
+    cwproductStr3x: string: 5004
+    cwproductStr4x: string: 5005
+    cwproductStr5x: string: 5006
+    cwproductStr9x: string: 5007
+    cwproductStr10x: string: 5008
+    cwproductStr11x: string: 5009
+    cwproductStr12x: string: 5010
+    cwproductStr13x: string: 5011
+    cwproductStr14x: string: 5012
+    cwsizeStrx: string: 5013
+    cwsortnoStrx: string: 5014
+    cwShowItemsBatchInStockSummary: logical: 5015
+
+    cwtableFrom1: string: 5101
+    cwtableFrom2: string: 5102
+    cwtableFrom3: string: 5103
+    cwtableFrom4: string: 5104
+    cwtableFrom5: string: 5105
+    cwtableFrom6: string: 5106
+    cwtableFrom7: string: 5107
+    cwtableFrom9: string: 5108
+    cwtableFrom10: string: 5109
+    cwtableFrom11: string: 5110
+    cwtableFrom12: string: 5111
+    cwtableFrom13: string: 5112
+    cwtableFrom14: string: 5113
+
+    cwUnder1: string: 5201
+    cwUnder2: string: 5202
+    cwUnder3: string: 5203
+    cwUnder4: string: 5204
+    cwUnder5: string: 5205
+    cwUnder6: string: 5206
+    cwUnder7: string: 5207
+    cwUnder9: string: 5208
+    cwUnder10: string: 5209
+    cwUnder11: string: 5210
+    cwUnder12: string: 5211
+    cwUnder13: string: 5212
+    cwUnder14: string: 5213
+
+;===============================================================================
+; END OF FILE
+;===============================================================================

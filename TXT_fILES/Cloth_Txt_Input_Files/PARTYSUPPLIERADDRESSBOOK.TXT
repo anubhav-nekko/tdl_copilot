@@ -1,0 +1,545 @@
+;; ===================================================================
+;; PARTY & SUPPLIER ADDRESS BOOK REPORT MODULE
+;; ===================================================================
+;; Created By: Khokan on 2020-01-28 14:21, ID:
+;; Last Modified: 25.May.21 13:01
+;; Purpose: This module creates a comprehensive address book report for parties and suppliers
+;; with detailed contact information, financial details, and tax registration information.
+;; ===================================================================
+
+;; ===================================================================
+;; MENU CONFIGURATION SECTION
+;; ===================================================================
+;; This section defines how the report appears in Tally's Gateway menu
+;; and configures the menu options for accessing the report.
+;; ===================================================================
+
+     [#menu: Gateway of Tally]
+;; Add the report option to Tally's main Gateway menu
+;; {25.May.21 13:01}         add: Option: supplierpartyaddressbookReportLock ;; : @@supplierpartyaddressbookReportDemoLock
+
+     [!menu: supplierpartyaddressbookReportLock]
+        ;; Add menu item for displaying the report, positioned before the Quit option
+        add: Item: before: @@locQuit: @@supplierpartyaddressbookReportReport: Display Collection:collRepsupplierpartyaddressbookReport ;;: RepsupplierpartyaddressbookReport
+        ;; Add a blank line in the menu for better visual separation
+        add: Item: before: @@locQuit: Blank
+
+    [System: formula]
+   ;; Define the report title that will appear in the menu and report header
+   supplierpartyaddressbookReportReport: "Party & Supplier Address Book"
+;; Commented out demo lock functionality - can be used to restrict access based on date
+;; supplierpartyaddressbookReportDemoLock: $$MachineDate < $$Date:"01/04/2013"
+
+
+;; ===================================================================
+;; PRIMARY COLLECTION DEFINITION
+;; ===================================================================
+;; This collection extracts groups data to be used as the basis for the report
+;; ===================================================================
+
+ [Collection:collRepsupplierpartyaddressbookReport]
+ ;; Define collection type and source
+ Use	: Extract Alias Collection
+ Source Collection	: List of Groups
+ Title       		: $$LocaleString:"List of Groups"
+ Collection  		: Primary
+ Variable    		: Group Name
+ Report      		:RepsupplierpartyaddressbookReport
+ Trigger     		: GroupNamex
+ ;; Specify which fields to fetch from the groups
+ Fetch			: Name, ReserveName, Parent
+
+
+;; ===================================================================
+;; GROUP NAME HANDLING
+;; ===================================================================
+;; These sections define how group names are processed and displayed
+;; ===================================================================
+
+ [Report: GroupNamex]
+ Use     : Collection Variable
+ Local   : Line : Collection Variable : Field : GroupNamex
+ Local   : Field: MV Title            : Info  : $$LocaleString:"Name of Group"
+
+ [Field: GroupNamex]
+ ;; Field configuration for group name handling
+ Use         : Name Field
+ Key         : Create Group
+ ;; Logic to handle empty group names by using Primary as default
+ Set as      : if ##GroupName = "" then $$SysName:Primary else ##GroupName
+ Modifies    : GroupName
+ delete:Table       : Group Summary Extract
+ add:Table       : collGroupSummaryExtract
+ Show Table  : Always
+ CommonTable : No
+
+
+;; ===================================================================
+;; GROUP SUMMARY COLLECTION
+;; ===================================================================
+;; Defines a collection for group summaries with filtering
+;; ===================================================================
+
+ [Collection: collGroupSummaryExtract]
+ type:group
+ title:"List of Groups"
+ add:filter:cwdrcrfilter
+
+ [System: Formula]
+ ;; Filter to include only Sundry Debtors and Sundry Creditors groups
+ cwdrcrfilter:$$IsBelongsTo:$$GroupSundryDebtors OR $$IsBelongsTo:$$GroupSundryCreditors
+
+;; ===================================================================
+;; MAIN REPORT DEFINITION
+;; ===================================================================
+;; Defines the primary report structure, variables, and properties
+;; ===================================================================
+
+ [Report: RepsupplierpartyaddressbookReport]
+ use: Dsp Template
+ Title: @@supplierpartyaddressbookReportReport
+ Printset: Report Title: @@supplierpartyaddressbookReportReport
+ Form: FrmsupplierpartyaddressbookReport
+ Export: Yes
+ ;; Set default date variables to current date
+ set  : svfromdate : ##svcurrentdate
+ set  : svTodate : ##svcurrentdate
+ Local       : Button   : RelReports        : Inactive : Yes
+
+ ;; Define string variables for temporary data storage
+ variable:str1,str2,str3,str4,str5,str6,str7,str8,str9,str10,str11,str12,str13,str14,str15,str16
+
+ ;; Initialize all string variables to empty strings
+ set:str1:""
+ set:str2:""
+ set:str3:""
+ set:str4:""
+ set:str5:""
+ set:str6:""
+ set:str7:""
+ set:str8:""
+ set:str9:""
+ set:str10:""
+ set:str11:""
+ set:str12:""
+ set:str13:""
+ set:str14:""
+ set:str15:""
+ set:str16:""
+
+
+;; ===================================================================
+;; VARIABLE DEFINITIONS
+;; ===================================================================
+;; Detailed configuration for specific variables used in the report
+;; ===================================================================
+
+ [variable : str14]
+     type : string
+  default : ""
+ persistent: no
+
+ [variable : str15]
+     type : string
+  default : ""
+ persistent: no
+
+ [variable : str16]
+     type : string
+  default : ""
+ persistent: no
+
+ [system : variable]
+ ;; System-level variable initialization
+ str14 : ""
+ str15 : ""
+ str16 : ""
+
+
+;; ===================================================================
+;; REPORT FORM DEFINITION
+;; ===================================================================
+;; Defines the visual layout and components of the report form
+;; ===================================================================
+
+ [Form: FrmsupplierpartyaddressbookReport]
+ use: DSP Template
+ Part: DspAccTitles,PrtTitle0supplierpartyaddressbookReport,PrtsupplierpartyaddressbookReport
+ Width: 100% Page
+ Height: 100% Page
+ Background: @@SV_STOCKSUMMARY
+ delete: page break
+ add: page break: supplierpartyaddressbookReportbotbrk,supplierpartyaddressbookReportbotOpbrk
+ ;; Configure bottom toolbar buttons
+ Bottom Toolbar Buttons 	: BottomToolBarBtn1, BottomToolBarBtn3, BottomToolBarBtn8, BottomToolBarBtn9, BottomToolBarBtn10, BottomToolBarBtn11,BottomToolBarBtn12
+;; Commented out buttons: BottomToolBarBtn2, BottomToolBarBtn4, BottomToolBarBtn5,BottomToolBarBtn6, BottomToolBarBtn7,
+;;                        1 Quit, 2 Accept, 3 Delete, 4 Cancel, 5 Duplicate Voucher, 6 Add Voucher, 7 Insert Voucher, 8 Remove Line, 9 Restore Line, 10 Restore all, 11 Select, 12 Select All
+;;    local : button : report config : action :modify variable: MyPLConfigure
+
+;; Add custom filter button
+add:button:bottonnew1
+
+;; Configure display parts for company information and report headers
+local:Part:DSPCompanyName:local:line:DSPCompanyName: Local: Field: DSP CompanyName:PrintStyle:styleCalisto2
+local:Part:DSPCompanyAddress:local:line:DSPCompanyAddress: Local: Field: DSPCompanyAddress:PrintStyle:style2n
+local:Part:DSPReportTitle:local:line:DSPReportName: Local: Field: DSPReportName:PrintStyle:style3n
+local:Part:DSPReportSubTitle:local:line:DSPReportSubTitle: Local: Field: DSPReportSubTitle:PrintStyle:style2n
+local:Part:DSPReportTitle:local:line:DSPReportPeriod:Local: Field: DSPReportPeriod:PrintStyle:style2n  ;; Local: Field: DSPReportPeriod:border:thin box  ;;PrintStyle:style2
+local:Part:DSPPageNo:local:line:DSPPageNo: Local: Field:DSPPageNo:PrintStyle:style2n
+
+
+;; ===================================================================
+;; PAGE BREAK PARTS
+;; ===================================================================
+;; Define parts for handling page breaks in the report
+;; ===================================================================
+
+      [part: supplierpartyaddressbookReportbotBrk]
+       line: EXPINV PageBreak
+       border: thin top
+
+      [part: supplierpartyaddressbookReportbotopbrk]
+        use: dspacctitles
+  add: part: supplierpartyaddressbookReportTitlePart
+
+      [part: supplierpartyaddressbookReportTitlePart]
+       line: LnsupplierpartyaddressbookReportTitle
+
+;; ===================================================================
+;; REPORT LINES AND FIELDS
+;; ===================================================================
+;; Define the structure and formatting of report lines and fields
+;; ===================================================================
+
+      [line: LnsupplierpartyaddressbookReportCurrPeriod]
+      field: fwf,fwf2
+      ;; Configure field alignment and styling
+      Local: field: fwf2: Align: Right
+      Local: Field: fwf: Style: style1
+      Local: Field: fwf2: Style: style1
+      ;; Set field values - date string and group name
+      Local: Field: fwf2: Set As: @@dspDateStr
+      Local: Field: fwf: Set As:##GroupName
+      ;; Hide date in print mode
+      Local: Field: fwf2:invisible: $$inprintmode
+      Local: Field: fwf: Style:style2x
+      Local: Field: fwf2: Style:style2x
+
+      [part: PrtTitle0supplierpartyaddressbookReport]
+      line : LnsupplierpartyaddressbookReportCurrPeriod
+
+      [Part: PrtsupplierpartyaddressbookReport]
+       Line: LnsupplierpartyaddressbookReportTitle,LnsupplierpartyaddressbookReport
+bottom Line: LnsupplierpartyaddressbookReportTotals
+     repeat: LnsupplierpartyaddressbookReport: ColsupplierpartyaddressbookReport
+     scroll: both
+ Common Border: YEs
+      Total: Qtyf,amtf
+
+;; ===================================================================
+;; DATA COLLECTION DEFINITION
+;; ===================================================================
+;; Defines the collection that provides data for the report
+;; ===================================================================
+
+[Collection: ColsupplierpartyaddressbookReport]
+type:ledger
+child of:##GroupName
+belongs to:yes
+
+;; Apply multiple filters to the collection data
+filter:CustomerNamefilter,Customercodefilter,AccountingGroupfilter,SalesPersonfilter,LedStateNamefilter,LedStateNamefilter,PINCodefilter
+filter:Countryfilter,ContactPersonNamefilter,panfilter,RegistrationTypefilter,GSTNumberfilter
+filter:  cwledCaptionnewfilter,cwledCaptionnew2filter,cwledCaptionnew3filter,cwledCaptionnew4filter,cwledCaptionnew5filter
+
+[system: Formula]
+;; Filter to ensure objects belong to the selected group
+ColsupplierpartyaddressbookReportFilter:$$isobjectbelongsto:group:($parent:ledger:$parent):##GroupName
+
+;; ===================================================================
+;; REPORT TITLE LINE DEFINITION
+;; ===================================================================
+;; Defines the column headers for the report
+;; ===================================================================
+
+[Line: LnsupplierpartyaddressbookReportTitle]
+use: LnsupplierpartyaddressbookReport
+option: titleopt
+;;     local: field:default: set as: $$DescName
+
+;; Define column headers for all report fields
+local:field: fwf: set as: "Customer Name"
+local:field: SNF: set as: "Customer Code"
+local:field: SNF2: set as: "Accounting Group"
+local:field: SNF3: set as: "Sales Person"
+local:field: SNF4: set as: "Address Line - 1"
+local:field: SNF5: set as: "Address Line - 2"
+local:field: SNF6: set as: "Address Line - 3"
+local:field: SNF7: set as: "State"
+local:field: SNF8: set as: "PIN Code"
+local:field: SNF9: set as: "Country"
+local:field: NUMF: set as: "Credit Limit (Rs)"
+local:field: SNF10: set as: "Credit Days"
+local:field: SNF11: set as: "Contact Person Name"
+local:field: SNF12: set as: "Land Line "   ;;(Phone No)
+local:field: SNF13: set as: "Mobile Number"
+local:field: SNF14: set as: "Fax Number"
+local:field: SNF15: set as: "Email Address"
+local:field: SNF16: set as: "CC to (If Any)"
+local:field: SNF17: set as: "Website"
+local:field: SNF18: set as: "Bank Name"
+local:field: SNF19: set as: "Account Number"
+local:field: SNF20: set as: "IFSC Code"
+local:field: SNF21: set as: "PAN"
+local:field: SNF22: set as: "Registration Type"
+local:field: SNF23: set as: "GST Number"
+
+;; Set custom caption fields from company configuration
+local:field: SNF25: set as:$cwcaption1:COMPANY:##SVCURRENTCOMPANY
+local:field: SNF26: set as:$cwcaption2:COMPANY:##SVCURRENTCOMPANY
+local:field: SNF27: set as:$cwcaption3:COMPANY:##SVCURRENTCOMPANY
+local:field: SNF28: set as:$cwcaption4:COMPANY:##SVCURRENTCOMPANY
+local:field: SNF29: set as:$cwcaption5:COMPANY:##SVCURRENTCOMPANY
+local:field: SNF30: set as:$cwcaption6:COMPANY:##SVCURRENTCOMPANY
+
+;; Apply consistent styling to all title fields
+Local: Field: fwf: Style:style2x
+Local: Field: numf: Style:style2x
+Local: Field: snf: Style:style2x
+Local: Field: snf1: Style:style2x
+Local: Field: snf2: Style:style2x
+Local: Field: snf3: Style:style2x
+Local: Field: snf4: Style:style2x
+Local: Field: snf5: Style:style2x
+Local: Field: snf6: Style:style2x
+Local: Field: snf7: Style:style2x
+Local: Field: snf8: Style:style2x
+Local: Field: snf9: Style:style2x
+Local: Field: snf10: Style:style2x
+Local: Field: snf11: Style:style2x
+Local: Field: snf12: Style:style2x
+Local: Field: snf13: Style:style2x
+Local: Field: snf14: Style:style2x
+Local: Field: snf15: Style:style2x
+Local: Field: snf16: Style:style2x
+Local: Field: snf17: Style:style2x
+Local: Field: snf18: Style:style2x
+Local: Field: snf19: Style:style2x
+Local: Field: snf20: Style:style2x
+Local: Field: snf21: Style:style2x
+Local: Field: snf22: Style:style2x
+Local: Field: snf23: Style:style2x
+Local: Field: snf24: Style:style2x
+
+Local: Field: snf25: Style:style2x
+Local: Field: snf26: Style:style2x
+Local: Field: snf27: Style:style2x
+Local: Field: snf28: Style:style2x
+Local: Field: snf29: Style:style2x
+Local: Field: snf30: Style:style2x
+Local: Field: snf31: Style:style2x
+Local: Field: snf35: Style:style2x
+Local: Field: snf36: Style:style2x
+Local: Field: snf37: Style:style2x
+Local: Field: snf38: Style:style2x
+Local: Field: snf39: Style:style2x
+Local: Field: snf40: Style:style2x
+Local: Field: snf41: Style:style2x
+
+;; Configure default field alignment and formatting
+Local: field: default: Align:centre
+Local: field: fwf: Align:left
+Local: field: fwf: indent:6
+Local : field : default: Lines : 0
+
+
+;; ===================================================================
+;; REPORT DATA LINE DEFINITION
+;; ===================================================================
+;; Defines how each data row is displayed in the report
+;; ===================================================================
+
+[Line: LnsupplierpartyaddressbookReport]
+Fields: fwf
+;; Previous field configuration (commented out)
+;; {03.Mar.21 14:35} right field:snf,snf2,snf3,snf4,snf5,snf6,snf7,snf35,snf36,snf37,snf38,snf39,snf40,snf41,snf25,snf26,snf27,snf28,snf29,snf30,snf31,snf8,snf9,numf,snf10,snf11,snf12,snf13,snf14,snf15,snf16,snf17,snf18,snf19,snf20,snf21,snf22,snf23
+;; Current field configuration
+right field:snf,snf2,snf3,snf4,snf5,snf6,snf7,snf25,snf26,snf27,snf28,snf29,snf30,numf,snf10,snf11,snf12,snf13,snf14,snf15,snf16,snf17,snf18,snf19,snf20,snf21,snf22,snf23
+Option: Alter on Enter
+
+;; Configure field alteration behavior
+local: field: fwf: alter : LEDGER : $$isLEDGER
+option : alter on enter
+local : field : fwf : alter : LEDGER : $$isLEDGER
+
+;; Map data fields to their respective ledger properties
+local:field: fwf: set as:$name ;;"Customer Name"
+local:field: SNF: set as: $$ReptField:Name:2:ledger:$name ;;"Customer Code"
+local:field: SNF2: set as:$parent ;; "Accounting Group"
+local:field: SNF3: set as:$cwbroker ;; "Sales Person"
+local:field: SNF4: set as:$$CollectionField:$Address:First:Address  ;; "Address Line - 1"
+local:field: SNF5: set as:$$CollectionField:$Address:2:Address  ;; "Address Line - 2"
+local:field: SNF6: set as:$$CollectionField:$Address:3:Address  ;; "Address Line - 3"
+local:field: SNF7: set as:$LedStateName ;; "State"
+local:field: SNF8: set as:$PinCode ;; "PIN Code"
+local:field: SNF9: set as:$CountryofResidence ;;CountryName ;; "Country"
+local:field: NUMF: set as:$CreditLimit ;; "Credit Limit (Rs)"
+local:field: SNF10: set as:$BillCreditPeriod ;; "Credit Days"
+local:field: SNF11: set as:$LedgerContact ;; "Contact Person Name"
+local:field: SNF12: set as:$LedgerPhone ;; "Land Line "   ;;(Phone No)
+local:field: SNF13: set as:$LedgerMobile ;; "Mobile Number"
+local:field: SNF14: set as:$LedgerFax ;; "Fax Number"
+local:field: SNF15: set as:$EMail ;; "Email Address"
+local:field: SNF16: set as:$EMailCC ;; "CC to (If Any)"     IsBillWiseOn
+local:field: SNF17: set as:$Website ;; "Website"
+local:field: SNF18: set as:$(ledger,#fwf).PAYMENTDETAILS[1].bankname ;; "Bank Name"
+local:field: SNF19: set as:$(ledger,#fwf).PAYMENTDETAILS[1].ACCOUNTNUMBER ;; "Account Number"
+local:field: SNF20: set as:$(ledger,#fwf).PAYMENTDETAILS[1].IFSCODE ;; "IFSC Code"
+local:field: SNF21: set as:$IncomeTaxNumber ;; "PAN"
+local:field: SNF22: set as:$GSTRegistrationType ;; "Registration Type"
+local:field: SNF23: set as:$PartyGSTIN ;; "GST Number"
+
+;; Map custom caption fields
+local:field: SNF25: set as:$cwcaption1item
+local:field: SNF26: set as:$cwcaption2item
+local:field: SNF27: set as:$cwcaption3item
+local:field: SNF28: set as:$cwcaption4item
+local:field: SNF29: set as:$cwcaption5item
+local:field: SNF30: set as:$cwcaption6item
+local:field: SNF31: set as:$cwcaption7item
+
+;; Apply styling to data fields
+Local: Field:DEFAULT: Style:style3x
+Local: Field: DEFAULT: Border: thin right
+Local: field: numf: Format: "nozero,decimals:2"
+Local: field: numf: Width:13
+
+;; Configure visibility of custom caption fields based on whether they're empty
+local:field: SNF25:Invisible:if $$isempty:$cwcaption1:COMPANY:##SVCURRENTCOMPANY then yes else no
+local:field: SNF26:Invisible:if $$isempty:$cwcaption2:COMPANY:##SVCURRENTCOMPANY then yes else no
+local:field: SNF27:Invisible:if $$isempty:$cwcaption3:COMPANY:##SVCURRENTCOMPANY then yes else no
+local:field: SNF28:Invisible:if $$isempty:$cwcaption4:COMPANY:##SVCURRENTCOMPANY then yes else no
+local:field: SNF29:Invisible:if $$isempty:$cwcaption5:COMPANY:##SVCURRENTCOMPANY then yes else no
+local:field: SNF30:Invisible:if $$isempty:$cwcaption6:COMPANY:##SVCURRENTCOMPANY then yes else no
+local:field: SNF31:Invisible:if $$isempty:$cwcaption1:COMPANY:##SVCURRENTCOMPANY then yes else no
+
+
+;; ===================================================================
+;; REPORT TOTALS LINE DEFINITION
+;; ===================================================================
+;; Defines the totals row at the bottom of the report
+;; ===================================================================
+
+[line: LnsupplierpartyaddressbookReportTotals]
+use: LnsupplierpartyaddressbookReport
+option: totalOpt
+;; Set all fields to empty strings for the totals line
+local:field: fwf: set as:"" ;;"Customer Name"
+local:field: SNF: set as: "" ;;"Customer Code"
+local:field: SNF2: set as:"" ;; "Accounting Group"
+local:field: SNF3: set as:"" ;; "Sales Person"
+local:field: SNF4: set as:"" ;; "Address Line - 1"
+local:field: SNF5: set as:"" ;; "Address Line - 2"
+local:field: SNF6: set as:"" ;; "Address Line - 3"
+local:field: SNF7: set as:"" ;; "State"
+local:field: SNF8: set as:"" ;; "PIN Code"
+local:field: SNF9: set as:"" ;; "Country"
+local:field: NUMF: set as:"" ;; "Credit Limit (Rs)"
+local:field: SNF10: set as:"" ;; "Credit Days"
+local:field: SNF11: set as:"" ;; "Contact Person Name"
+local:field: SNF12: set as:"" ;; "Land Line "   ;;(Phone No)
+local:field: SNF13: set as:"" ;; "Mobile Number"
+local:field: SNF14: set as:"" ;; "Fax Number"
+local:field: SNF15: set as:"" ;; "Email Address"
+local:field: SNF16: set as:"" ;; "CC to (If Any)"
+local:field: SNF17: set as:"" ;; "Website"
+local:field: SNF18: set as:"" ;; "Bank Name"
+local:field: SNF19: set as:"" ;; "Account Number"
+local:field: SNF20: set as:"" ;; "IFSC Code"
+local:field: SNF21: set as:"" ;; "PAN"
+local:field: SNF22: set as:"" ;; "Registration Type"
+local:field: SNF23: set as:"" ;; "GST Number"
+
+local:field: SNF25: set as:""
+local:field: SNF26: set as:""
+local:field: SNF27: set as:""
+local:field: SNF28: set as:""
+local:field: SNF29: set as:""
+local:field: SNF30: set as:""
+local:field: SNF31: set as:""
+local:field: SNF35: set as:""
+local:field: SNF36: set as:""
+local:field: SNF37: set as:""
+local:field: SNF38: set as:""
+local:field: SNF39: set as:""
+local:field: SNF40: set as:""
+local:field: SNF41: set as:""
+
+;; Apply consistent styling to all totals fields
+Local: Field: fwf: Style:style2x
+Local: Field: numf: Style:style2x
+Local: Field: snf: Style:style2x
+Local: Field: snf1: Style:style2x
+Local: Field: snf2: Style:style2x
+Local: Field: snf3: Style:style2x
+Local: Field: snf4: Style:style2x
+Local: Field: snf5: Style:style2x
+Local: Field: snf6: Style:style2x
+Local: Field: snf7: Style:style2x
+Local: Field: snf8: Style:style2x
+Local: Field: snf9: Style:style2x
+Local: Field: snf10: Style:style2x
+Local: Field: snf11: Style:style2x
+Local: Field: snf12: Style:style2x
+Local: Field: snf13: Style:style2x
+Local: Field: snf14: Style:style2x
+Local: Field: snf15: Style:style2x
+Local: Field: snf16: Style:style2x
+Local: Field: snf17: Style:style2x
+Local: Field: snf18: Style:style2x
+Local: Field: snf19: Style:style2x
+Local: Field: snf20: Style:style2x
+Local: Field: snf21: Style:style2x
+Local: Field: snf22: Style:style2x
+Local: Field: snf23: Style:style2x
+Local: Field: snf24: Style:style2x
+
+Local: Field: snf25: Style:style2x
+Local: Field: snf26: Style:style2x
+Local: Field: snf27: Style:style2x
+Local: Field: snf28: Style:style2x
+Local: Field: snf29: Style:style2x
+Local: Field: snf30: Style:style2x
+Local: Field: snf31: Style:style2x
+Local: Field: snf35: Style:style2x
+Local: Field: snf36: Style:style2x
+Local: Field: snf37: Style:style2x
+Local: Field: snf38: Style:style2x
+Local: Field: snf39: Style:style2x
+Local: Field: snf40: Style:style2x
+Local: Field: snf41: Style:style2x
+
+;;=================================
+
+;; ===================================================================
+;; FILTER BUTTON CONFIGURATION
+;; ===================================================================
+;; Defines the filter button and its associated form
+;; ===================================================================
+
+ [button:bottonnew1]
+ key:f7
+ title:"Filter"
+ Action : Modify Variables:bottonnewrep1
+
+ [report:bottonnewrep1]
+ form:bottonnewrep1
+
+ [form:bottonnewrep1]
+ part:bottonnewrep1
+
+ WIDTH:30% PAGE
+
+ [part:bottonnewrep1]
+
+;; (Content truncated due to size limit)

@@ -1,0 +1,263 @@
+// Auto-generated from STOCKITEMMASTER2.TXT
+const tdl = `
+;===============================================================================
+; STOCKITEMMASTER2.TXT
+; Created By: Anil on 2023-07-18 17:33, ID:
+; Created By: Akshay on 2013-01-05 10:52, ID:
+; Purpose: Adds advanced custom field configuration for stock items in Tally,
+;          supporting up to 14 user-defined captions, table sources, and
+;          attribute storage, with dynamic enablement and cost tracking options.
+;===============================================================================
+
+;------------------------------------------------------------------------------
+; COMPANY OPERATIONS: Switch custom field config based on Tally version
+;------------------------------------------------------------------------------
+
+[#Form: Company Operations]
+    Switch   : cwCustomFldsLowerRel  : cwCustomFldsNotFor3.2  : ($$Number:$$ProdInfo:ProdReleaseAsStr) < 3.2
+    Switch   : cwCustomFldsCurrenRel : cwCustomFldsFor3.2     : ($$Number:$$ProdInfo:ProdReleaseAsStr) >= 3.2
+
+[!Form : cwCustomFldsNOTFor3.2]
+;; {12.Nov.16 11:22} Example: Add custom field lines to company features (for older Tally)
+
+[!Form : cwCustomFldsFor3.2]
+;; {12.Nov.16 11:22} Example: Add custom field lines to company features (for newer Tally)
+
+;------------------------------------------------------------------------------
+; MAIN CUSTOM FIELD CONFIGURATION LINE (Brand/Attribute 1)
+;------------------------------------------------------------------------------
+
+[Line : cwCustomFldsConfig]
+Field : cwCustomFldsConfigTitle,cwCustomFldsConfig
+Local: Field: short name field : info: "sales@circuitworld.in"
+Local: Field: short name field: case : normal
+Local: Field: short name field: Color : blue
+Local: Field: short name field: width : 0
+Local: Field: nf: info: ""
+Local: Field: sp: info: "Table From :"
+Local: Field: sp2: info: "Under :"
+Local: Field: nf2: storage:cwtableFrom1
+Local: Field: snf: storage:cwUnder1
+Local: Field: nf2: table:coltableFrom ,Not Applicable
+Local: Field: nf2: Show table: Always
+local: field:cwbcsp : inactive: not #cwCustomFldsConfig
+local: field:cwbcnf : inactive: not #cwCustomFldsConfig
+local: field:sp : inactive: not #cwCustomFldsConfig
+local: field:sp2 : inactive: not #cwCustomFldsConfig
+local: field: snf: inactive:$$issysname:#nf2
+local: field: nf2: inactive:$$issysname:#cwbcnf
+
+;------------------------------------------------------------------------------
+; ADDITIONAL ATTRIBUTE LINES (Style, Season, etc. up to 14)
+; Each line follows the same pattern, with its own storage fields.
+;------------------------------------------------------------------------------
+
+; Example for Caption 2 (Style)
+field:cwbcsp2,cwbcnf2,sp,nf3,sp2,snf2
+Local: Field: nf3: storage:cwtableFrom2
+Local: Field: snf2: storage:cwUnder2
+Local: Field: nf3: table:coltableFrom ,Not Applicable
+Local: Field: nf3: Show table: Always
+local: field:cwbcsp2 : inactive: not #cwCustomFldsConfig
+local: field:cwbcnf2 : inactive: not #cwCustomFldsConfig
+local: field:sp : inactive: not #cwCustomFldsConfig
+local: field:sp2 : inactive: not #cwCustomFldsConfig
+local: field:nf3 : inactive: not #cwCustomFldsConfig
+local: field:nf: inactive: not #cwCustomFldsConfig
+local: field: snf2: inactive:$$issysname:#nf3
+local: field: nf3: inactive:$$issysname:#cwbcnf2
+Local: field: nf: Width:30
+space top :0.5
+
+; Repeat similar blocks for lnCaption3 ... lnCaption14, each with their own fields and storage.
+
+;------------------------------------------------------------------------------
+; FIELD DEFINITIONS FOR CAPTION LABELS AND ATTRIBUTE STORAGE
+;------------------------------------------------------------------------------
+
+[field : cwbcsp]
+use : short prompt
+info: "Caption1:"
+
+[field : cwbcsp2]
+use : short prompt
+info: "Caption2:"
+
+[field : cwbcsp3]
+use : short prompt
+info: "Caption3:"
+
+[field : cwbcsp4]
+use : short prompt
+info: "Caption4:"
+
+[field : cwbcsp5]
+use : short prompt
+info: "Caption5:"
+
+[field : cwbcsp6]
+use : short prompt
+info: "Caption6:"
+
+[field : cwbcsp7]
+use : short prompt
+info: "Caption7:"
+
+; ... up to cwbcsp14, each with info for the respective caption.
+
+[field : cwbcnf]
+use : name field
+storage : cwsortnoStr
+
+[field : cwbcnf2]
+use : cwbcnf
+storage: cwsizeStr
+
+[field : cwbcnf3]
+use : cwbcnf
+storage : cwproductStr
+
+[field : cwbcnf4]
+use : cwbcnf
+storage : cwproductStr2
+
+[field : cwbcnf5]
+use : cwbcnf
+storage : cwproductStr3
+
+[field : cwbcnf6]
+use : cwbcnf
+storage : cwproductStr4
+
+[field : cwbcnf7]
+use : cwbcnf
+storage : cwproductStr5
+
+; ... up to cwbcnf14, each with storage for the respective attribute.
+
+;------------------------------------------------------------------------------
+; COLLECTION FOR TABLE SOURCES (LEDGER, GROUP, ETC.)
+;------------------------------------------------------------------------------
+
+[Collection: coltableFrom]
+title:"Table From "
+listname:@@cwforledger
+listname:@@cwforcostcentre
+listname:@@cwforcostcategory
+listname:@@cwforgroup
+listname:@@cwforstockgroup
+listname:@@cwforstockcategory
+
+;------------------------------------------------------------------------------
+; SYSTEM FORMULAS FOR ENABLEMENT, TABLE SOURCES, AND UNDER VALUES
+;------------------------------------------------------------------------------
+
+[System: Formula]
+cwCustomFldsEnabled :  $cwCustomFldsEnabled:COMPANY:##SVCURRENTCOMPANY
+cwforledger:"Ledger"
+cwforcostcentre:"Cost Centre"
+cwforcostcategory:"Cost Category"
+cwforgroup:"Group"
+cwforstockgroup:"Stock Group"
+cwforstockcategory:"Stock Category"
+
+forunder1:$cwUnder1:COMPANY:##SVCURRENTCOMPANY
+forunder2:$cwUnder2:COMPANY:##SVCURRENTCOMPANY
+forunder3:$cwUnder3:COMPANY:##SVCURRENTCOMPANY
+forunder4:$cwUnder4:COMPANY:##SVCURRENTCOMPANY
+forunder5:$cwUnder5:COMPANY:##SVCURRENTCOMPANY
+forunder6:$cwUnder6:COMPANY:##SVCURRENTCOMPANY
+forunder7:$cwUnder7:COMPANY:##SVCURRENTCOMPANY
+forunder8:$cwUnder8:COMPANY:##SVCURRENTCOMPANY
+forunder9:$cwUnder9:COMPANY:##SVCURRENTCOMPANY
+forunder10:$cwUnder10:COMPANY:##SVCURRENTCOMPANY
+forunder11:$cwUnder11:COMPANY:##SVCURRENTCOMPANY
+forunder12:$cwUnder12:COMPANY:##SVCURRENTCOMPANY
+forunder13:$cwUnder13:COMPANY:##SVCURRENTCOMPANY
+forunder14:$cwUnder14:COMPANY:##SVCURRENTCOMPANY
+
+; ... Additional formulas for fortableNled, fortableNgr, etc., for each attribute level.
+
+;------------------------------------------------------------------------------
+; STOCK ITEM FORM: Add custom attribute entry part after STKI Basic
+;------------------------------------------------------------------------------
+
+[#Form: Stock Item]
+    add : part : after : STKI Basic : prtItemCoal
+
+[part:prtItemCoal]
+    line:lnItemsortno,lnItemsortno2,lnItemsortno3,lnItemsortno4
+
+;------------------------------------------------------------------------------
+; STOCK ITEM ATTRIBUTE ENTRY LINES (BRAND, SIZE, PRODUCT, ETC.)
+;------------------------------------------------------------------------------
+
+[line:lnItemsortno]
+field: Sp,stksnf,sp2,stksnf2,sp3,stksnf3
+Local: Field: sp: info: $cwsortnoStr:COMPANY:##SVCURRENTCOMPANY
+Local: Field: sp2: info: $cwsizeStr:COMPANY:##SVCURRENTCOMPANY
+Local: Field: sp3: info: $cwproductStr:COMPANY:##SVCURRENTCOMPANY
+Local: Field: snf: storage:cwsortno
+Local: Field: snf2: storage:cwsize
+Local: Field: snf3: storage:cwproduct
+Local: Field: default: Color : blue
+local: field: sp: inactive: (not @@cwhascustomudf) or $$issysname:$cwsortnoStr:COMPANY:##SVCURRENTCOMPANY
+local: field: sp2: inactive: (not @@cwhascustomudf) or $$issysname:$cwsizeStr:COMPANY:##SVCURRENTCOMPANY
+local: field: sp3: inactive: (not @@cwhascustomudf) or $$issysname:$cwproductStr:COMPANY:##SVCURRENTCOMPANY
+
+; Repeat similar lines for lnItemsortno2, lnItemsortno3, lnItemsortno4, each with their own fields and inactive logic.
+
+;------------------------------------------------------------------------------
+; COST TRACKING CONFIGURATION LINE
+;------------------------------------------------------------------------------
+
+[line : cwCostTracking]
+field : long prompt,cwlogical2,medium prompt,snf, sp4,snf2,snf3,  sp3,numf,sp5,snf5
+Local: Field: long prompt: info: "Enable Cost Coding ?"
+Local: Field: cwlogical2: storage: cwCostTracking
+Local: Field: medium prompt: info: "Cost String [0-9] :"
+Local: Field: snf: storage: cwCostStr
+local: field: snf: Case: upper
+local: Field: SNF: max: 10
+local: Field: SNF: width: 12
+local: Field: SNF2: width: 10
+local: Field: SNf3: width: 10
+Local: Field: sp3: info: "Cost Multiplier:"
+Local: Field: numf: storage:cwCostMultiplier
+Local: Field: numf: Set As: if $$isempty:$$value then 1 else $$value
+local: field: snf: inactive: not #cwlogical2 = yes
+local: field: medium prompt: inactive: not #cwlogical2 = yes
+local: field: numf: inactive: not #cwlogical2 = yes
+local: field: snf2: inactive: not #cwlogical2 = yes
+Local: field: numf: Align: left
+Local: Field: sp4: info: "Cost From:"
+Local: Field: snf2: storage: cwCostFrom
+Local: Field: snf2: table: costfrom
+Local: Field: snf3: inactive: $cwCostFrom <>  @@cwCFPriceList
+Local: Field: snf3: storage: cwCostPL
+Local: Field: snf3: table: pricelevels,Not Applicable
+Local: Field: sp5: info: "Cost Code2:"
+Local: Field: snf5: table: pricelevels,Not Applicable
+Local: Field: snf5: storage: cwrtlpricelist
+
+;------------------------------------------------------------------------------
+; SYSTEM FORMULAS FOR COST TRACKING
+;------------------------------------------------------------------------------
+
+[System: Formula]
+cwcmpCostFrom : $cwCostFrom:COMPANY:##SVCURRENTCOMPANY
+cwCostPL : $cwCostPL:COMPANY:##SVCURRENTCOMPANY
+cwCFVoucherRate : "Voucher Rate"
+cwCFPriceList   : "Price List"
+cwCFStandardCost: "Standard Cost"
+cwCFStandardSale: "Standard Sale"
+
+[collection : costfrom]
+title:"Cost from"
+listname : @@cwCFVoucherRate
+listname : @@cwCFPriceList
+listname : @@cwCFStandardCost
+listname : @@cwCFStandardSale
+
+`;
+export default tdl;

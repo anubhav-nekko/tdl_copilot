@@ -1,0 +1,119 @@
+// Auto-generated from TermsConditions.txt
+const tdl = `
+;===============================================================================
+; TermsConditions.txt
+; Created By: Suman on 2013-03-16 16:56, ID:
+; Purpose: Implements a configurable "Terms & Conditions" feature in Tally,
+;          allowing company-level enabling, voucher-type default terms, and
+;          master-wise editing and listing of terms for bills and invoices.
+;===============================================================================
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; (Legacy collection definition for bill terms, commented out)
+;; [Collection:termcondition]
+;;     type :  mybillterms :voucher type
+;;     child of : ##SVVouchertype
+;;     format :  $billterms ,10*
+;;     format:$billsl,2*
+
+;;------------------------------------------------------------------------------
+;; COMPANY FEATURE: Enable/Disable Terms & Conditions at company level
+;;------------------------------------------------------------------------------
+
+[#Part: CMP TallyShopFeaturesTitle]
+    add:line:after:CMPTallyShopFeaturesTitle:cwcus
+
+[line:cwcus]
+    field:medium prompt,cwlogical
+    Local: Field:medium prompt: Set As:"Enable Terms & Conditions"
+    Local: Field: cwlogical: storage:cwcusdisc
+    Local: Field: medium prompt: Color : blue
+    Local: field: medium prompt : Width:32.5
+
+[System: Formula]
+    cwcusdisc : $cwcusdisc:COMPANY:##SVCURRENTCOMPANY
+
+;;------------------------------------------------------------------------------
+;; VOUCHER TYPE: Show "Default Terms & Conditions" field if enabled
+;;------------------------------------------------------------------------------
+
+[#Part: VTYP BehaviourMain]
+    add : option : newBehaviourMain:@@cwcusdisc
+
+[!part :newBehaviourMain]
+    add : line : at beginning : CustomBillTerms
+
+[line: CustomBillTerms]
+    field : sp,cwlogical
+    Local: Field: sp: info: "Default Terms & Conditions:"
+    Local: Field : cwlogical : SubForm : cwBillTerms: $$value
+    Local: field: sp: Width:@@namewidth
+    Local: Field:cwlogical : storage:cwvtchtermms
+
+[System: Formula]
+    forcwvtchtermms:$cwvtchtermms:Vouchertype:$Vouchertypename
+
+;;------------------------------------------------------------------------------
+;; BILL TERMS EDITING: Subform for entering terms & conditions
+;;------------------------------------------------------------------------------
+
+[Report: cwBillTerms]
+    form: FrmcwBillTerms
+
+[form: FrmcwBillTerms]
+    option: small size form
+    part: prtcwBillTerms
+    option: small size form
+
+;;------------------------------------------------------------------------------
+;; BILL TERMS COLLECTION: Aggregates terms for a ledger
+;;------------------------------------------------------------------------------
+
+[Collection: mybillterms]
+    type : mybillterms :ledger
+    child of : $name
+
+[part: prtcwBillTerms]
+    line: lncwBillTermsTitle,lncwBillTerms
+    repeat : lncwBillTerms : mybillterms
+    break on  : $$isempty:$billterms
+    scroll: vertical
+    option: small size part
+    height : 30% page
+
+[line : lncwBillTermsTitle]
+    use : lncwBillTerms
+    option: column titles
+    Local: Field: snf: info: "SL No"
+    local: field: nf: info : "Terms:"
+    local: field: snf: delete : storage
+    local: field: nf : delete : storage
+
+[line: lncwBillTerms]
+    field: snf,nf
+    Local: Field: snf : storage:billsl
+    Local: Field: nf: storage: billterms
+    Local: field: snf: Width: 4
+    local: field: nf: Case: normal
+    Local: field: nf: Width: @@namewidth * 3
+    Local: Field:nf:max:@@maxnarrwidth*2
+
+;;------------------------------------------------------------------------------
+;; UDF DEFINITIONS: Logical and aggregate fields for company and voucher type
+;;------------------------------------------------------------------------------
+
+[System: UDF]
+    cwcusdisc:logical:8001
+    cwvtchtermms:logical:8002
+
+[System: UDF]
+    mybillterms:aggregate:7001
+    billsl:string:7002
+    billterms:string:7003
+
+;===============================================================================
+; End of TermsConditions.txt (with documentation comments)
+;===============================================================================
+
+`;
+export default tdl;

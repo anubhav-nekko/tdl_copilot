@@ -1,0 +1,6 @@
+// Auto-generated from ALLSALESMANWISESALESRETURNREGITERREPORT.TXT
+const tdl = `
+; Created By: khokan on 2022-04-28 13:33, ID:
+
+`;
+export default tdl;

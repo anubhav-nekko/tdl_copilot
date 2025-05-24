@@ -1,0 +1,15 @@
+;===============================================================================
+; MYUDF.TXT
+; Created By: Taniya on 2019-11-29 13:42, ID:
+; Purpose: Declares a custom logical UDF for "Combined Stock Item" configuration,
+;          used in voucher type or company-level settings in Tally.
+;===============================================================================
+
+;------------------------------------------------------------------------------
+; UDF declaration for "Combined Stock Item" option
+;   - cwcomitem: Used as a logical flag (Yes/No) for enabling combined stock item
+;     printing or processing in Tally.
+;------------------------------------------------------------------------------
+
+[System: UDF]
+cwcomitem:logical:1880

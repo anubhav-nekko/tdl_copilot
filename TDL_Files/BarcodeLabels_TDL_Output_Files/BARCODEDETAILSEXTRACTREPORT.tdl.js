@@ -1,0 +1,302 @@
+// Auto-generated from BARCODEDETAILSEXTRACTREPORT.TXT
+const tdl = `
+;===============================================================================
+; BARCODEDETAILSEXTRACTREPORT.TXT
+; Created By: pg on 2012-02-11 17:50
+; Purpose: Provides a detailed barcode extraction report in Tally, listing
+;          voucher and inventory details for barcode generation and analysis.
+;===============================================================================
+
+;------------------------------------------------------------------------------
+; System formula for report title
+;------------------------------------------------------------------------------
+
+[System: formula]
+BarCodeReport: "BarCode"
+
+;------------------------------------------------------------------------------
+; (Optional) Menu integration for report access (currently commented)
+;------------------------------------------------------------------------------
+
+[#MENU : GATEWAY OF TALLY]
+;;add : option : fao: @@cwdebug... ;;[!menu : fao]
+;;ADD : ITEM :1R : DISPLAY : BarCodeVchDetailsx
+
+;------------------------------------------------------------------------------
+; Report for barcode voucher details (example: stock journal, date, etc.)
+;------------------------------------------------------------------------------
+
+[report : BarCodeVchDetailsx]
+    use : BarCodeVchDetails
+    SET : VOUCHERTYPENAME :"stock journal"
+    SET : SVFROMDATE : $$DATE:"01-04-2016"
+    SET : SVtODATE : $$DATE:"01-04-2016"
+    SET : STR1 : "1"
+
+;------------------------------------------------------------------------------
+; Main barcode details report
+;------------------------------------------------------------------------------
+
+[Report: BarCodeVchDetails]
+    use: Dsp Template
+    Title: @@BarCodeReport
+    Printset: Report Title: @@BarCodeReport
+    Form: FrmBarCode
+    Export: Yes
+    variable : str1
+    variable : vouchertypename
+
+;------------------------------------------------------------------------------
+; Barcode details form and layout
+;------------------------------------------------------------------------------
+
+[Form: FrmBarCode]
+    use: DSP Template
+    Part: PrtBarCode
+    Width: 100% Page
+    Height: 100% Page
+    Background: @@SV_STOCKSUMMARY
+    delete: page break
+    Bottom Toolbar Buttons: BottomToolBarBtn1, BottomToolBarBtn3, BottomToolBarBtn8, BottomToolBarBtn9, BottomToolBarBtn10, BottomToolBarBtn11, BottomToolBarBtn12
+    local : button : report config : action :modify variable: MyPLConfigure
+
+[Part: PrtBarCode]
+    Line: LnBarCode
+    repeat: LnBarCode: ColBarCode
+    scroll: both ;;Vertical
+    Common Border: Yes
+    Total: Qtyf, amtf
+    ; Field width and max settings for better export/display
+    Local: field: nf: Width: 100
+    Local: field: nf2: Width: 100
+    Local: field: nf3: Width: 100
+    Local: field: nf4: Width: 100
+    Local: field: nf5: Width: 100
+    Local: field: nf: Max: 100
+    Local: field: nf2: max: 100
+    Local: field: nf3: max: 100
+    Local: field: nf4: max: 100
+    Local: field: nf5: max: 100
+
+;------------------------------------------------------------------------------
+; Collection: Barcode voucher details, filtered by masterid
+;------------------------------------------------------------------------------
+
+[Collection: ColBarCode]
+    type : vouchers : vouchertype
+    child of : ##vouchertypename
+    Filter: ColBarCodeFilter
+    Fetch: guid,inventoryentries.GSTItemHSNCodeEx ,*.*
+    Fetch: allinventoryentries.GSTItemHSNCodeEx
+    fetch : masterid
+
+[system: Formula]
+ColBarCodeFilter: ($masterid = $$number:##str1)
+
+;------------------------------------------------------------------------------
+; Line: Main barcode details line (voucher-level)
+;------------------------------------------------------------------------------
+
+[Line: LnBarCode]
+    Fields: numf,d1,sdf,d2,nf,d3,nf2,d4,nf3,d5,nf4,d6,numf2,d7,nf5,d8,nf6,d9,nf7,D10,NF8,d11,nf9 ,d12,numf3 , +
+    d13,snf,d14,snf2,d15,snf3,d16,snf4,d17,snf5
+    Option: Alter on Enter
+    local:field: qtyf : Format : "NoSymbol, Short Form, No Compact,NoZero"
+    local: field: numf: alter : voucher : $$isvoucher
+    option : alter on enter
+    ; Voucher and party fields
+    Local: Field: numf: Set As: $$explodelevel
+    Local: Field: sdf: Set As: $date
+    Local: Field: nf: Set As: $vouchernumber
+    Local: Field: nf2: Set As: $partyledgername
+    Local: Field: nf3: Set As: $cwSupplierCode
+    Local: Field: nf4: Set As: $vouchertypename
+    Local: Field: numf2: set as : @@cwchk
+    ; Company-level custom fields
+    Local: Field: nf5: Set As: $cwsortnoStr:COMPANY:##SVCURRENTCOMPANY
+    Local: Field: nf6: Set As: $cwsizeStr:COMPANY:##SVCURRENTCOMPANY
+    Local: Field: nf7: Set As: $cwproductStr:COMPANY:##SVCURRENTCOMPANY
+    Local: Field: nf5: Color : blue
+    Local: Field: nf6: Color : green
+    Local: Field: nf7: Color : red
+    Local: Field: NF8: Set As: $$CMPUSERNAME
+    Local: field: nf9: Set As: $cwCostStr:COMPANY:##SVCURRENTCOMPANY
+    Local: Field: numf3: Set As: if ($$isempty:$cwCostMultiplier:COMPANY:##SVCURRENTCOMPANY or $cwCostMultiplier:COMPANY:##SVCURRENTCOMPANY = 0) then 1 else $cwCostMultiplier:COMPANY:##SVCURRENTCOMPANY
+    explode : MyBarCodeInvEntries
+    ; More custom fields
+    Local: Field: snf: Set As: $cwproductStr2:COMPANY:##SVCURRENTCOMPANY
+    Local: Field: snf2: Set As: $cwproductStr3:COMPANY:##SVCURRENTCOMPANY
+    Local: Field: snf3: Set As: $cwproductStr4:COMPANY:##SVCURRENTCOMPANY
+    Local: Field: snf4: Set As: $reference
+    Local: Field: snf5: Set As: $cwBarcodeTemplatename:Vouchertype:$VoucherTypename
+    ; Field width for export
+    Local: field: snf14: Width:80
+    Local: field: snf15: Width:80
+    Local: field: snf16: Width:80
+    Local: field: snf17: Width:80
+    Local: field: snf4: Width:80
+
+;------------------------------------------------------------------------------
+; Part: Inventory entries for barcode details (exploded from voucher)
+;------------------------------------------------------------------------------
+
+[part : MyBarCodeInvEntries]
+    line : MyBarCodeInvEntries
+    option : myBCOutInvEntries : $$isstockjrnl:$vouchertypename
+    option : myBCInvEntries : not $$isstockjrnl:$vouchertypename
+
+[!part : myBCOutInvEntries]
+    repeat : MyBarCodeInvEntries : inventoryentriesin
+
+[!part : myBCInvEntries]
+    repeat : MyBarCodeInvEntries : inventoryentries
+
+;------------------------------------------------------------------------------
+; Function: Calculate quantity for barcode (primary/secondary)
+;------------------------------------------------------------------------------
+
+[function : cwfqty]
+    parameter : qtys : number
+    parameter : forprimary : number ;; 1 for primary,2 for secondary
+    variable : divi : number : if $$isvoucher then $cwAutoQuantity:stockitem:$stockitemname else  $cwAutoQuantity:stockitem:$stockitemname
+    0x : if : ##divi = 0
+    0y : set : divi : 1
+    0z : end if
+    05 : if : ##forprimary =1
+    10 : if : @@cwbarcodebyfillqty and @@cwbarcodebyfillqtyPrimary and ##divi > 0
+    20 : return  : (##qtys /  ##divi)
+    30 : end if
+    40 : end if
+    105 : if : ##forprimary =2
+    110 : if : @@cwbarcodebyfillqty and not @@cwbarcodebyfillqtyPrimary and ##divi > 0
+    120 : return  : (##qtys / ##divi)
+    130 : end if
+    140 : end if
+    100 : return : ##qtys
+
+;------------------------------------------------------------------------------
+; System formula: Get retail price list name for company
+;------------------------------------------------------------------------------
+
+[System: Formula]
+MYcwrtlpricelistnew : $cwrtlpricelist:COMPANY:##SVCURRENTCOMPANY
+
+;------------------------------------------------------------------------------
+; Line: Inventory entry details for barcode (fields and logic)
+;------------------------------------------------------------------------------
+
+[line : MyBarCodeInvEntries]
+    ; Many fields for item, batch, qty, rates, etc. (see file for details)
+    field : numf,d1,nf,d2,nf2,d3,nf4,d4,ratepf,d11,numf6,d5,snf,d6,numf2,d7,snf2,d8,numf3,d9,numf4,d10,numf5,d12,numf7,d13,snf3,d14,snf4,d15,snf5 ,d16, snf6,d17,snf7,d18,snf8,d19,snf9,d20,snf10,d25,snf11,d21, ;; dont add more fields here
+    field : snfx4,d29,sdf,d26,snf12,d22,snf13,d23,SNF14,D30,SNF15,D27,SNF16,D28,SNF17,d32,snf18,d33,snf19,d34,snf20,d35,snf21,d36,snf22
+    Local: Field: nf: Set As: $stockitemname
+    Local: Field: nf2: Set As: $mailingname:stockitem:$stockitemname
+    Local: Field: nf4: Set As: $$ReptField:Name:2:STOCKITEM:$STOCKITEMNAME
+    Local: Field: numf6: Set As: if not $$isempty:$actualqty then $$cwfqty:($$number:($$string:$actualqty:"Primary")):1 else $$cwfqty:($$number:($$string:$billedqty:"Primary")):1
+    Local: Field: snf: Set As: $baseunits:stockitem:$stockitemname
+    Local: Field: numf2: Set As: if $$issysname:$additionalunits:stockitem:$stockitemname and not (@@cwbarcodebyfillqty and not @@cwbarcodebyfillqtyPrimary ) then 0 else $$cwfqty:($$number:($$string:$actualqty:"Secondary")):2
+    Local: Field: snf2: Set As: $additionalunits:stockitem:$stockitemname
+    Local: Field: ratepf: Set As: if @@cwcmpCostFrom = @@cwCFStandardCost then @@StdPurCost else if @@cwcmpCostFrom = @@cwCFPriceList then $$getpricefromlevel:$stockitemname:@@cwCostPL:$date:$startingfrom else if @@cwcmpCostFrom = @@cwCFStandardSale then @@StdSalesPrice else $rate
+    Local: Field: numf3: Set As: if $$number:$mrprate <> 0 then $$number:$mrprate else if not $$isempty:$$getpricefromlevel:$stockitemname:"MRP":$date:$startingfrom then $$getpricefromlevel:$stockitemname:"MRP":$date:$startingfrom else $$number:@@cwitemmrprate
+    Local: Field: numf4: Set As: $RateofMRP:StockItem:$StockItemName
+    Local: Field: numf5: Set As: if @@cwProductNumber < 5.0 then $rateofvat:stockitem:$stockitemname else $$GetVATItemDetails:$stockitemname:$date
+    Local: Field: numf7: Set As:  $$number:@@StdSellRate
+    Local: Field: snf3: Set As: $cwsortno:stockitem:$stockitemname
+    Local: Field: snf5: Set As: $cwproduct:stockitem:$stockitemname
+    Local: Field: snf6: Set As: $cwproduct2:stockitem:$stockitemname
+    Local: Field: snf7: Set As: $cwproduct3:stockitem:$stockitemname
+    Local: Field: snf8: Set As: $cwproduct4:stockitem:$stockitemname
+    Local: Field: snf9: Set As: $parent:stockitem:$stockitemname
+    Local: Field: snf10: Set As:$grandparent:stockitem:$stockitemname
+    Local: Field: snf11: Set As:$category:stockitem:$stockitemname
+    Local: Field: snf16: Set As:$DESCRIPTION:stockitem:$stockitemname
+    Local: Field: snf17: Set As:$$collectionfield:$basicuserdescription:1:basicuserdescription
+    Local: Field: snf18: Set As:$$GetPriceFromLevel:$StockItemName:@@cwwspricelist:$Date:$StartingFrom
+    Local: Field: snf19: Set As:$$GetPriceFromLevel:$StockItemName:@@MYcwrtlpricelistnew:$Date:$StartingFrom
+    local: field: snf18: type: number
+    Local: field: snf18: Format: "nocomma,nosymbol,decimals:0"
+    local: field: snf19: type: number
+    Local: field: snf19: Format: "nocomma,nosymbol,decimals:0"
+    Local: Field: snf22: Set As: @@cwtemplatenameBatch
+    Local: Field: snf3: width: 100
+    Local: Field: snf4: width: 100
+    Local: Field: snf5: width: 100
+    Local: Field: snf22: width: 100
+    Local: Field: snf6: width: 100
+    Local: Field: snf7: width: 100
+    Local: Field: snf8: width: 100
+    Local: Field: snf21: width: 100
+    Local: Field: snf9: width: 50
+    Local: Field: snf10: width: 50
+    Local: field: nf: Width: 200
+    Local: field: nf2: Width: 100
+    Local: field: nf4: Width: 100
+    ; Skip barcode label generation for certain stock groups or job material receive
+    empty : (@@chkSkipBarCodeL) or (($$IsJobMaterialReceive:$vouchertypename) and not $isdeemedpositive)
+    explode : GodBatchAllocations
+
+[System: Formula]
+chkSkipBarCodeL : if $cwSkipBarcodeLabelGeneration:stockgroup:$parent:stockitem:$stockitemname then (if $cwPrintSkippedCodes:COMPANY:##SVCURRENTCOMPANY then no else yes) else no
+cwtemplatenameBatch : $cwBarcodeTemplatename:vouchertype:$vouchertypename
+
+;------------------------------------------------------------------------------
+; Function: Parse date string into DD-MM-YYYY format
+;------------------------------------------------------------------------------
+
+[function : cwParseDate]
+    parameter : datestr : string
+    parameter: sep : string : "-"
+    variable : str : string : $$zerofill:($$dayofdate:##datestr):2
+    10 : log : "---"+##dateStr
+    20 : if : $$isempty:##dateStr
+    25 : return : ##dateStr
+    30 : else
+    41 : set : str : ##str + ##sep
+    42 : set : str : ##str + $$zerofill:($$monthofdate:##datestr):2
+    43 : set : str : ##str + ##sep
+    44 : set : str : ##str + $$string:@@myExpDateYear
+    45 : return : ##str
+    50 : end if
+
+[System: Formula]
+myExpDateYear :  $$yearofdate:##datestr
+cwGetUniExpiryDate : $$String:$ExpiryPeriod:UniversalDate
+
+;------------------------------------------------------------------------------
+; Part: Batch allocations for inventory entry (exploded from item line)
+;------------------------------------------------------------------------------
+
+[part : GodBatchAllocations]
+    line : GodBatchAllocations
+    repeat : GodBatchAllocations : Batch allocations
+
+[line : GodBatchAllocations]
+    use : MyBarCodeInvEntries
+    delete : explode
+    ; Batch/godown/serial/expiry fields
+    Local: Field: nf: Set As: $batchname
+    Local: Field: nf2: Set As: $godownname
+    Local: Field: nf4: Set As: @@cmpmailname
+    Local: Field: numf3 : Set As: 0
+    Local: Field: numf4: Set As: 0
+    Local: Field: snfx4: Set As: $cwCartonSerial
+    Local: Field: sdf: Set As: if $HasMfgDate:stockitem:$stockitemname then $mfdon else $date
+    Local: Field: snf12: Set As:$mfdon
+    Local: Field: snf13: Set As: if $$isempty:$expiryperiod then "" else $$cwparsedate:@@cwGetUniExpiryDate
+    Local: Field: SNF14: Set As:if $$isempty:$cwbatchcaption1 then ##svcurrentcompany else $cwbatchcaption1
+    Local: Field: SNF15: Set As:if $$isempty:$cwbatchcaption2 then @@cmpmailname else $cwbatchcaption2
+    Local: Field: SNF16: Set As:$cwbatchcaption3
+    Local: Field: SNF17: Set As:$cwmrpbatch
+    Local: Field: snf18: Set As:if @@cwbatchCostCodeFrom = @@cwCostCodeFromF1 then $cwbatchcaption1 else +
+        if @@cwbatchCostCodeFrom = @@cwCostCodeFromF2 then $cwbatchcaption2 else +
+        if @@cwbatchCostCodeFrom = @@cwCostCodeFromF3 then $cwbatchcaption3 else +
+        ""
+    Local: Field: snf20: Set As: $gsthsncode:stockitem:$stockitemname
+    Local: Field: snf21: Set As: if $$isempty:$cwCompanycode:COMPANY:##SVCURRENTCOMPANY then ##svcurrentcompany else $cwCompanycode:COMPANY:##SVCURRENTCOMPANY
+
+;===============================================================================
+; END OF FILE
+;===============================================================================
+
+`;
+export default tdl;

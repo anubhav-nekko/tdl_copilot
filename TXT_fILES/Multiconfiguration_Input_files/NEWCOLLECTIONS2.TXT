@@ -1,0 +1,129 @@
+;===============================================================================
+; NEWCOLLECTIONS2.TXT
+; Purpose: Provides dynamic, multi-level collections for Stock Groups, Stock Categories,
+;          Ledgers, Cost Centres, and Cost Categories in Tally, with company-level
+;          attribute titles (brand, style, season, size, color, etc.) for use in
+;          selection tables and dropdowns.
+;===============================================================================
+
+;------------------------------------------------------------------------------
+; FIELD KEY DEFINITIONS FOR TABLES
+;------------------------------------------------------------------------------
+
+[!field: keyled]
+    Key : Create Ledger, alter ledger
+    variable : svledger
+
+[!field: keygrp]
+    Key : Create Group
+
+[!field: keycsct]
+    Key : Create Cost Centre, Alter CstCtr
+    Variable : SV Cost Centre
+
+[!field: keycocat]
+    Key : Create Cost Category, Alter CstCat
+    Variable : SV Cost Category
+
+[!field: keystgrpt]
+    Key : Create Stock Group, Alter StkGrp
+    Variable : SV Stock Group
+
+[!field: keystcat]
+    Key : Create Stock Category, Alter StkCat
+    Variable : SV Stock Category
+
+;------------------------------------------------------------------------------
+; SYSTEM FORMULAS FOR DYNAMIC ATTRIBUTE TITLES
+;------------------------------------------------------------------------------
+
+[System: Formula]
+    cwbrandtitle   : $cwUnder1:company:##svcurrentcompany
+    cwstyletitle   : $cwUnder2:company:##svcurrentcompany
+    cwseasontitle  : $cwUnder3:company:##svcurrentcompany
+    cwsizetitle    : $cwUnder4:company:##svcurrentcompany
+    cwcolortitle   : $cwUnder5:company:##svcurrentcompany
+    cwfuturetitle  : $cwUnder6:company:##svcurrentcompany
+    ; ...and so on up to cwUnder14/company:##svcurrentcompany as needed
+
+;------------------------------------------------------------------------------
+; DYNAMIC COLLECTIONS FOR EACH ATTRIBUTE LEVEL (1–14)
+;------------------------------------------------------------------------------
+
+;--- Example for line 1 (Brand) ---
+[Collection : coltabstcat]
+    type : Stock Category
+    Child of : @@forunder1
+    format : $name,30
+    title:@@cwbrandtitle
+    belongs to : yes
+
+[Collection : coltabstgrp]
+    type : Stock Group
+    Child of : @@forunder1
+    format : $name,30
+    title:@@cwbrandtitle
+    belongs to : yes
+
+[Collection : coltabcostcat]
+    type : cost Category
+    Child of : @@forunder1
+    format : $name,30
+    title:@@cwbrandtitle
+    belongs to : yes
+
+[Collection : coltabcostcentre]
+    type : cost centre
+    Child of : @@forunder1
+    format : $name,30
+    title:@@cwbrandtitle
+    belongs to : yes
+
+[Collection : coltabledger]
+    type : Ledger
+    Child of : @@forunder1
+    format : $name,30
+    title:@@cwbrandtitle
+    belongs to : yes
+
+[Collection : coltabgroup1]
+    type : Group
+    Child of : @@forunder1
+    format : $name,30
+    title:@@cwbrandtitle
+    belongs to : yes
+
+;--- Example for line 2 (Style) ---
+[Collection : coltabledger2]
+    type : Ledger
+    Child of : @@forunder2
+    format : $name,30
+    Title :@@cwstyletitle
+    belongs to : yes
+
+[Collection : coltabgroup2]
+    type : Group
+    Child of : @@forunder2
+    format : $name,30
+    Title :@@cwstyletitle
+    belongs to : yes
+
+; ...repeat similar blocks for Stock Group, Stock Category, Cost Centre, Cost Category,
+; for each attribute line (3 to 14), using corresponding @@forunderN and @@cw...title.
+
+; Each collection:
+;   - Is filtered by "Child of" the relevant @@forunderN variable
+;   - Has a dynamic title (brand, style, season, size, color, etc.)
+;   - Uses a consistent format for display
+;   - Ensures only child objects are included (belongs to : yes)
+
+;------------------------------------------------------------------------------
+; USAGE
+;------------------------------------------------------------------------------
+; These collections are used as table sources in fields/lines/parts for selection
+; or lookup dialogs, providing a dynamic and scalable way to manage item attributes
+; like brand, style, season, size, color, etc., in Tally.
+
+;===============================================================================
+; END OF FILE
+;===============================================================================

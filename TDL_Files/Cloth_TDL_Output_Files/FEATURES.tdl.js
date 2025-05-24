@@ -1,0 +1,171 @@
+// Auto-generated from FEATURES.TXT
+const tdl = `
+;;=======================================================
+;; Created By: Khokan on 2021-02-08 18:51
+;; Description: CMP TallyShopFeatures Left Customization
+;;=======================================================
+
+;; Add custom line to CMP TallyShopFeatures Part
+[#Part  : CMP TallyShopFeatures Left]
+    Add : Line : MinuSareeConfig, detailsline, fndeline1, eunicledline, cwinvprintingline2newKham
+
+;;-------------------------------------------------------
+;; Line Definition: detailsline - Custom Details Section
+;;-------------------------------------------------------
+[line:detailsline]
+    field: sp, cwlogical
+
+    Local: Field: sp: Set As: "Details"
+    Local: Field: cwlogical: storage: cwDetails
+
+    Local: Field: cwlogical: SubForm: detailslinerep: $$value
+    Local: field: sp: Width: 20
+
+;; Report Definition for detailslinerep
+[report:detailslinerep]
+    form: detailslinerep
+
+[form:detailslinerep]
+    part: detailslinerep
+
+[part:detailslinerep]
+    ;; Defining caption lines from 0 to 10
+    line: caption0, caption1, caption2, caption3, caption4, caption5, caption6  ;; ,caption7,caption8,caption9,caption10
+
+;;-------------------------------------------------------
+;; Caption Line 0 - Header Titles
+;;-------------------------------------------------------
+[line:caption0]
+    field: SNFX, nf, nf1, nf2, snf, cwlogical
+
+    Local: Field: snfx: info: "Sl No."
+    Local: Field: nf: info: "Caption"
+    Local: Field: nf1: info: "Field Type"
+    Local: Field: nf2: info: "Field Value Type"
+    Local: Field: snf: info: "Under"
+    Local: Field: cwlogical: info: "Print ?"
+    local: field: cwlogical: type: String
+    Local: Field: default: Style: Normal Bold
+    border: thin TOP bottom
+
+;;=======================================================
+;; Caption Lines 1-10 - Data Input Lines
+;; Each caption line stores custom field definitions
+;;=======================================================
+
+;; -- Caption Line 1 --
+[line:caption1]
+    field: SNFX, NF, nf1, nf2, snf, cwlogical
+
+    Local: Field: snfx: info: "1"
+    Local: Field: NF: STORAGE: cwcaption1
+    Local: Field: NF1: STORAGE: cwFieldType1
+    Local: Field: NF2: STORAGE: cwcaption1table
+    Local: Field: sNF: STORAGE: cwcaption1tableunder
+    Local: Field: cwlogical: STORAGE: cwcaption1printyn
+
+    ;; Field Type Dropdown
+    Local: Field: nf2: table: colltable, Not Applicable
+    Local: Field: nf2: Show table: Always
+
+    Local: Field: nf1: table: collUserDefineList, Not Applicable
+    Local: Field: nf1: Show table: Always
+
+    ;; Skip if System Name
+    Local: Field: nf1: Skip: if $$issysname:#nf then "Yes" else "no"
+    Local: Field: nf2: Skip: if $$issysname:#nf then "Yes" else "no"
+    Local: Field: snf: Skip: if $$issysname:#nf then "Yes" else "no"
+
+    space bottom: 0.3
+
+
+;;=======================================================
+;; Collections for Drop-down List Options
+;;=======================================================
+
+[Collection: collUserDefineList]
+    title: "Field Type"
+    listname: @@cwUserDefine
+    listname: @@cwList
+
+[System: Formula]
+    cwUserDefine: "User Define"
+    cwList: "List"
+
+[Collection: colltable]
+    title: "Field Value Type"
+    listname: @@cwtablecostcentre
+    listname: @@cwtableCategory
+    listname: @@cwtableNA
+    listname: @@cwtableLedger
+
+[System: Formula]
+    cwtablecostcentre: "Cost Centre"
+    cwtableCategory: "Stock Category"
+    cwtableLedger: "Ledger"
+    ;; cwtableNA: "N/A"
+
+;;=======================================================
+;; Line: fndeline1 - F/N Details Form
+;;=======================================================
+[line:fndeline1]
+    field: sp, cwlogical
+    Local: Field: sp: Set As: "F/N Details"
+    Local: Field: cwlogical: SubForm: fnderep1: $$value
+    Local: field: sp: Width: 18
+
+[report:fnderep1]
+    form: fnderep1
+
+[form:fnderep1]
+    part: fnderep1
+
+[part:fnderep1]
+    line: fnmsline1, natureline1, valuinline1, fromtoline1
+
+;; F/N Lines
+[line:fnmsline1]
+    field: sp, snf
+    Local: Field: sp: Set As: "M/S Title"
+    Local: Field: snf: storage: cwmstitle
+    Local: field: sp: Width: 20
+    space bottom: 0.5
+    Local: Field: nf: Style: Normal Bold
+
+[line:natureline1]
+    field: sp, nf
+    Local: Field: sp: Set As: "Nature Of Goods"
+    Local: Field: nf: storage: cwNatureOfGoods
+    Local: field: sp: Width: 20
+    space bottom: 0.5
+    Local: Field: nf: Style: Normal Bold
+
+[line:valuinline1]
+    field: sp, snf
+    Local: Field: sp: Set As: "Value of Insurance"
+    Local: Field: snf: storage: cwValueofInsurance
+    Local: field: sp: Width: 20
+    local : field : numf : format :"Decimals:2,NoZero"
+    space bottom: 0.5
+    Local: Field: snf: Style: Normal Bold
+
+[line:fromtoline1]
+    field: sp, snf
+    Local: Field: sp: Set As: "From"
+    Local: Field: sp2: Set As: "To"
+    Local: Field: snf: storage: cwfromfn
+    Local: Field: snf: Style: Normal Bold
+    Local: field: sp: Width: 20
+
+;;=======================================================
+;; Line: eunicledline - Unique Party Ledger Indicator
+;;=======================================================
+[line:eunicledline]
+    field: sp, cwlogical
+    Local: Field: sp: Set As: "For unique Party Ledger?"
+    Local: Field: cwlogical: storage: cwenicforparty
+    Local: field: sp: Width: 20
+    space bottom: 0.5
+
+`;
+export default tdl;

@@ -1,0 +1,418 @@
+;; =====================================================================
+;; Report Definition: RepBajajExportPdf
+;; Created By: joy on 2021-12-02 17:39, ID: 
+;; Purpose: Defines the structure and formatting for Bajaj Export PDF report
+;; =====================================================================
+
+[Report : RepBajajExportPdf]
+form:RepBajajExportPdf
+
+;; =====================================================================
+;; Main Form Definition
+;; Defines the overall structure of the report with top, main, and bottom parts
+;; =====================================================================
+[form : RepBajajExportPdf]
+   Top parts :cwRepInvTitleLn        ;; Title section of the report
+   Part : RepBajajExportPdfInvACCPart ;; Main content part containing inventory and accounting details
+   bottom Part :  RepBajajExportPdfBottomPart ;; Bottom section with totals and footer
+   page Break : RepBajajExportPdfCLBreak, RepBajajExportPdfOPBreak ;; Page break definitions
+
+        Width  		: @@InvWidth Inch        ;; Report width from system variable
+        Height 		: @@InvHeight Inch       ;; Report height from system variable
+        Space Top   : @@InvSpace inch         ;; Top margin from system variable
+        Space Right : 0.5 inch                ;; Right margin fixed at 0.5 inch
+        Space Left  : @@InvSpaceLeft  inch    ;; Left margin from system variable
+        Space Bottom: 0.25 inch               ;; Bottom margin fixed at 0.25 inch
+
+;; =====================================================================
+;; Page Break Definitions
+;; Controls what happens when page breaks occur
+;; =====================================================================
+ [Part : RepBajajExportPdfCLBreak]
+   use : RepBajajExportPdfBottomPart    ;; Use bottom part at client break
+
+ [Part : RepBajajExportPdfOpBreak]
+  part : RepBajajExportPdfTopPart       ;; Use top part at operation break
+
+;; =====================================================================
+;; Title Section Definition
+;; Defines the title line of the report
+;; =====================================================================
+ [part : cwRepInvTitleLn]
+  line:cwRepInvTitleLn
+  [line: cwRepInvTitleLn]
+ field:fwfc
+ Local: Field: fwfc: Set As:$VCHPrintTitle:vouchertype:@@CWBajVchTypeName  ;; Sets title based on voucher type
+ Local: Field: fwfc: Border: thin Bottom                                   ;; Adds bottom border to title
+ Local: Field: fwfc: Style:Large Bold                                      ;; Sets title style to large and bold
+
+;; =====================================================================
+;; System Formulas
+;; Defines system variables and calculations used throughout the report
+;; =====================================================================
+ [System: Formula]
+CWBajVchTypeName:$$CollectionField:$vouchertypename:First:cwParentSelectedSrcx  ;; Gets voucher type name
+cwRepDoNoPrintopt:$cwdonoprint:vouchertype:@@CWBajVchTypeName                  ;; DO Number print option based on voucher type
+cwRepSerialPrintopt:$cwserialprint:vouchertype:@@CWBajVchTypeName              ;; Serial number print option based on voucher type
+
+;; =====================================================================
+;; Company Details Section
+;; Defines how company information is displayed in the report
+;; =====================================================================
+ [part :cwBajCmpDetailsPart]
+ line:cwBajCmpNameLn,cwBajCmpAddLn,cwBajCmpGrpCodeLn  ;; Lines for company name, address, and group code
+  repeat:cwBajCmpAddLn:CompanyAddressxy               ;; Repeats address line for each company address entry
+
+;; =====================================================================
+;; Company Address Collection Definition
+;; Specifies what company address information to include
+;; =====================================================================
+    [Collection: CompanyAddressxy]
+	
+    Type        : Address   : Company           ;; Collection type is company address
+    Child of    : ##SVCurrentCompany            ;; Child of current company
+ delete:Object      : Company State             ;; Exclude company state
+delete:Object  	: Company CINumber             ;; Exclude company CI number
+delete:	Object      : Company Contacts         ;; Exclude company contacts
+delete:	Object		: Company FaxNo            ;; Exclude company fax number
+delete:	Object      : Company Email            ;; Exclude company email
+delete:	Object		: Company Website          ;; Exclude company website
+Filter      : IsNotBlankAddr                    ;; Only include non-blank addresses
+	
+Option		: Company GSTINumber	: (##IsVoucher OR ##IsMultiVchReport) AND @@IsGSTOnAndAppl           ;; Include GST number conditionally
+Option		: Company TINTRNNumber	: (##IsVoucher OR ##IsMultiVchReport) AND @@IsVChGVATApplicable     ;; Include TIN/TRN number conditionally
+
+;; =====================================================================
+;; Company Name Line Definition
+;; Defines how company name is displayed
+;; =====================================================================
+ [line:cwBajCmpNameLn]
+ field:fwfc
+ Local: Field: fwfc: Set As:$Name:company:##svcurrentcompany  ;; Sets field to current company name
+ Local: Field: FWFc: Style:style1                            ;; Applies style1 to company name
+
+;; =====================================================================
+;; Style Definition for Company Name
+;; =====================================================================
+[style:style1]
+font:"Normal"     ;; Font family
+height:15         ;; Font height
+bold:yes          ;; Bold text
+
+;; =====================================================================
+;; Company Address Line Definition
+;; Defines how company address is displayed
+;; =====================================================================
+ [line:cwBajCmpAddLn]
+ field:fwfc
+ Local: Field:fwfc: Set As:$address    ;; Sets field to company address
+ Local: Field:fwfc:line:0              ;; Line number 0
+ SPACE BOTTOM:0.1                      ;; Space after address line
+
+;; =====================================================================
+;; Company Group Code Line Definition
+;; Defines how group code is displayed
+;; =====================================================================
+  [line:cwBajCmpGrpCodeLn]
+ field:fwfc
+ Local: Field: fwfc: Set As:"Group Code :  "  + $cwvchpartnerid:Vouchertype:$vouchertypename  ;; Sets field to group code
+ SPACE BOTTOM:0.2                                                                            ;; Space after group code line
+ border:thin bottom                                                                          ;; Bottom border for group code line
+
+;; =====================================================================
+;; Party Details Section
+;; Defines how party (customer/vendor) information is displayed
+;; =====================================================================
+ [part : cwBajPartyDetailsPart]
+ line :cwRepInvVchNoln,cwRepInvPartyLn,cwRepInvPartyAddLn  ;; Lines for voucher number, party name, and address
+ repeat:cwRepInvPartyAddLn:cwParty                         ;; Repeats address line for each party address entry
+;; {02.Dec.21 15:07}  border:thin box                      ;; Commented out border definition
+ Option	: EXPVCHBuyerAddressxx: NOT $$IsEmpty:$BasicBuyerAddress AND ##ICFGSupplementary  ;; Option for buyer address in export voucher
+ Option	: cwPosInvAddress:@@cwPosinv                                                     ;; Option for POS invoice address
+ Option	: cwBuyerAddressPos:@@cwPosinv and ##ICFGSupplementary                           ;; Option for buyer address in POS
+
+;; =====================================================================
+;; Conditional Part Definitions for Different Address Types
+;; =====================================================================
+[!Part: cwPosInvAddress]
+Repeat		: cwRepInvPartyAddLn: PosPartyLedgerAddress  ;; Use POS party ledger address
+
+[!Part: cwBuyerAddressPos]
+Repeat		: cwRepInvPartyAddLn: Address                ;; Use regular address
+
+[!Part: EXPVCHBuyerAddressxx]	
+Repeat		: cwRepInvPartyAddLn: BasicBuyerAddress      ;; Use basic buyer address for export vouchers
+
+;; =====================================================================
+;; Voucher Number Line Definition
+;; Defines how voucher number and date are displayed
+;; =====================================================================
+ [line: cwRepInvVchNoln]
+field: sp,nf
+right fields:sp2,sdf
+Local: Field: sp: Set As:"No."                  ;; Label for voucher number
+Local: Field: nf: Set As:$vouchernumber         ;; Sets field to voucher number
+Local: Field: sp2: Set As:"Date."               ;; Label for date
+Local: Field: sdf: Set As:$date                 ;; Sets field to voucher date
+Local: Field: nf: Style: Normal Bold            ;; Style for voucher number
+Local: Field: sdf: Style: Normal Bold           ;; Style for date
+space bottom:0.4                                ;; Space after this line
+Local: field: sp: Width:14                      ;; Width of label field
+
+;; =====================================================================
+;; Party Name Line Definition
+;; Defines how party name is displayed
+;; =====================================================================
+[line:cwRepInvPartyLn]
+field:sp,nf
+Local: Field: sp: Set As:"Party A/c Name"              ;; Label for party name
+Local: Field: nf: Set As:@@cwPOSNormalPartyName        ;; Sets field to party name from system variable
+Local: field: sp: Width:14                             ;; Width of label field
+Local: Field: nf: Style: Normal Bold                   ;; Style for party name
+
+;; =====================================================================
+;; Party Address Line Definition
+;; Defines how party address is displayed
+;; =====================================================================
+ [line:cwRepInvPartyAddLn]
+  field:snf,fwf
+  Local: Field: snf: Set As:if $$line =1 then "Address                 :" else ""  ;; Label for address only on first line
+  Local: Field:fwf: Set As:if @@cwPosinv then $Address else (if ##ICFGSupplementary then $BasicBuyerAddress else $Address)  ;; Sets address based on conditions
+
+  Local: field: snf: Width:14                          ;; Width of label field
+   space bottom:0.2                                    ;; Space after address line
+
+;; =====================================================================
+;; System Formulas for Party Information
+;; =====================================================================
+   [System: Formula]
+   cwBajPosPartyadd:If NOT ##ICFGSupplementary AND ##ICFGDefaultDet Then $$FullList:PosPartyLedgerAddress:$Address Else $$FullList:Address:$Address  ;; Formula for POS party address
+   cwBajposPartyName : if  $$issysname:$partyname then "Cash" else $partyname  ;; Formula for POS party name
+;;@@SaleTitle
+;;@@InvPartyName
+;; party address : cwParty collection, cwPartyFullAddress formula
+
+;; =====================================================================
+;; Main Inventory and Accounting Part Definition
+;; Main content section of the report
+;; =====================================================================
+ [part : RepBajajExportPdfINVACCPart]
+ line:cwmainLine
+ repeat:cwmainLine:cwParentSelectedSrcx  ;; Repeats main line for each selected source entry
+  CommonBorder: Yes                      ;; Common border for all lines
+Vertical    : Yes                        ;; Vertical orientation
+Scroll      : Vertical                   ;; Vertical scrolling
+Float       : No                         ;; No floating
+Total       :amtf                        ;; Total for amount field
+ border:thin box                         ;; Thin box border
+
+;; =====================================================================
+;; Main Line Definition
+;; Defines the structure of each main line in the report
+;; =====================================================================
+   [line : cwmainLine]
+   field : nf
+explode : cwBajCmpDetailsPart            ;; Include company details
+explode : cwBajPartyDetailsPart          ;; Include party details
+explode : RepBajajExportPdfInvPart       ;; Include inventory part
+explode : RepBajajExportPdfAccPart       ;; Include accounting part
+height:0.2                               ;; Line height
+
+;; {01.Dec.21 16:22} Parts       : RepBajajExportPdfInvPart, RepBajajExportPdfAccPart
+
+;; =====================================================================
+;; Parent Selected Source Collection Definition
+;; Defines the data source for the report
+;; =====================================================================
+  [Collection: cwParentSelectedSrcx]
+ Data Source: Parent Report: Selected    ;; Uses selected data from parent report
+
+;; =====================================================================
+;; Inventory Part Definition
+;; Defines the inventory section of the report
+;; =====================================================================
+ [part : RepBajajExportPdfInvPart]
+  line : RepBajajExportPdfInvLineTitle,RepBajajExportPdfInvLine,RepBajajExportPdfInvLineTotal  ;; Lines for title, items, and total
+repeat : RepBajajExportPdfInvLine : Inventory Entries  ;; Repeats item line for each inventory entry
+Scroll : vertical                                      ;; Vertical scrolling
+Common border : yes                                    ;; Common border for all lines
+ float : no                                            ;; No floating
+
+;; =====================================================================
+;; Inventory Line Definition
+;; Defines how each inventory item is displayed
+;; =====================================================================
+ [Line : RepBajajExportPdfInvLine]
+ field :fwf
+right fields :snf2,snf3,numf,numf2,amtf
+local : field : fwf : set as : @@invitemname           ;; Item name from system variable
+local : field: snf :set as : $$linenumber              ;; Line number
+ local: field: snf2 : set as :$cwdealid                ;; DO Number
+ local: field: snf3 : set as :$cwSerialNo              ;; Serial Number
+local : field : numf : set as : $billedqty             ;; Billed quantity
+local : field : numf2 : set as : $rate                 ;; Rate
+local : field : amtf : set as : $amount                ;; Amount
+Local: field: numf2: Format: "Decimal:2,NoZero"        ;; Format for rate field
+local: field: snf2: Invisible:not @@cwRepDoNoPrintopt  ;; Hide DO Number based on option
+local: field: snf3: Invisible:not @@cwRepSerialPrintopt ;; Hide Serial Number based on option
+
+;; {01.Dec.21 18:37} Local: Field: default: Border: thin right
+;; {01.Dec.21 18:37} Local: Field: amtf:delete: Border: thin right
+
+explode : RepBajajExportPdfBUDPart : $basicuserdescription != ''  ;; Include user description if not empty
+explode : RepBajajExportPdfBatchPart : $batchname != "Primary batch"  ;; Include batch part if not primary batch
+
+local : field : ratef : type : number                  ;; Rate field type
+local : field : ratef : align : right                  ;; Rate field alignment
+local : field : ratef : format :"Decimals:2,NoZero"    ;; Rate field format
+
+;; =====================================================================
+;; Inventory Line Title Definition
+;; Defines the header row for inventory items
+;; =====================================================================
+[line: RepBajajExportPdfInvLineTitle]
+ use : RepBajajExportPdfInvLine                        ;; Use inventory line as base
+delete : explode                                       ;; Remove explode directives
+   local : field: default : type : string              ;; Default field type
+
+   local : field : snf: set as : "SL"                  ;; Serial number header
+ local: field: fwf : set as : "Name of Item"           ;; Item name header
+ local: field: snf2 : set as : "DO Number"             ;; DO Number header
+ local: field: snf3 : set as : "Serial"                ;; Serial Number header
+ local : field : numf : set as : "Qty."                ;; Quantity header
+ local: field : numf2 : set as : "Rate"                ;; Rate header
+ local : field : amtf : set as :"Amount"               ;; Amount header
+
+ local : field : qtyf : align : right                  ;; Quantity field alignment
+ local: field : ratef : align : right                  ;; Rate field alignment
+ local : field : amtf : align : right                  ;; Amount field alignment
+ Local: Field: default: Style: Normal Bold             ;; Default style for header
+ border:thin top bottom                                ;; Border for header
+ height:1.5                                            ;; Header height
+
+;; =====================================================================
+;; Batch Part Definition
+;; Defines how batch information is displayed
+;; =====================================================================
+[part : RepBajajExportPdfBatchPart]
+line : RepBajajExportPdfBatchLine
+repeat : RepBajajExportPdfBatchLine : BatchAllocations  ;; Repeats batch line for each batch allocation
+
+;; =====================================================================
+;; Batch Line Definition
+;; Defines how each batch is displayed
+;; =====================================================================
+[line : RepBajajExportPdfBatchLine]
+  use : RepBajajExportPdfBUDLine                       ;; Use user description line as base
+local : field : fwf : set as : $batchname              ;; Batch name
+ local : field : numf : set as :"" ;; "Qty."           ;; Empty quantity
+ local: field : numf2 : set as : "" ;;"Rate"           ;; Empty rate
+ local : field : amtf : set as :"" ;;"Amount"          ;; Empty amount
+  local: field: snf2 : set as :"" ;; "DO Number"       ;; Empty DO Number
+ local: field: snf3 : set as :"" ;; "Serial"           ;; Empty Serial Number
+
+;; =====================================================================
+;; Basic User Description Part Definition
+;; Defines how user descriptions are displayed
+;; =====================================================================
+[part : RepBajajExportPdfBUDPart]
+line: RepBajajExportPdfBUDLine
+repeat : RepBajajExportPdfbudline : basicuserdescription  ;; Repeats line for each user description
+
+;; =====================================================================
+;; Basic User Description Line Definition
+;; Defines how each user description is displayed
+;; =====================================================================
+[line : RepBajajExportPdfBudLine]
+ use  : RepBajajExportPdfINVLINE                       ;; Use inventory line as base
+delete : explode                                       ;; Remove explode directives
+local : field : snf : set as : ""                      ;; Empty serial number
+local : field : fwf : set as : $basicuserdescription   ;; User description
+ local : field : numf : set as :"" ;; "Qty."           ;; Empty quantity
+ local: field : numf2 : set as : "" ;;"Rate"           ;; Empty rate
+ local : field : amtf : set as :"" ;;"Amount"          ;; Empty amount
+   local: field: snf2 : set as :"" ;; "DO Number"      ;; Empty DO Number
+ local: field: snf3 : set as :"" ;; "Serial"           ;; Empty Serial Number
+
+;; =====================================================================
+;; Inventory Line Total Definition
+;; Defines how the inventory total line is displayed
+;; =====================================================================
+[line : RepBajajExportPdfInvLineTotal]
+ use  : RepBajajExportPdfINVLINE                       ;; Use inventory line as base
+delete : explode                                       ;; Remove explode directives
+local : field : snf : set as : ""                      ;; Empty serial number
+local : field : fwf : set as : ""                      ;; Empty item name
+ local : field : numf : set as :"" ;; "Qty."           ;; Empty quantity
+ local: field : numf2 : set as : "" ;;"Rate"           ;; Empty rate
+   local: field: snf2 : set as :"" ;; "DO Number"      ;; Empty DO Number
+ local: field: snf3 : set as :"" ;; "Serial"           ;; Empty Serial Number
+local : field : amtf : set as : $$collamttotal:inventoryentries:$amount  ;; Total amount from inventory entries
+local : field : amtf : border :thin top                ;; Top border for total amount
+space bottom : 0.05                                    ;; Space after total line
+
+;; =====================================================================
+;; Accounting Part Definition
+;; Defines the accounting section of the report
+;; =====================================================================
+ [part : RepBajajExportPdfACCPart]
+  line : RepBajajExportPdfACCLine
+repeat : RepBajajExportPdfACCLine : Ledger Entries     ;; Repeats line for each ledger entry
+Scroll : vertical                                      ;; Vertical scrolling
+Common border : yes                                    ;; Common border for all lines
+ float : no                                            ;; No floating
+
+;; =====================================================================
+;; Accounting Line Definition
+;; Defines how each accounting entry is displayed
+;; =====================================================================
+ [Line : RepBajajExportPdfACCLine]
+   use : RepBajajExportPdfINVLine                      ;; Use inventory line as base
+empty : $ledgername = $partyledgername or $$issysname:$ledgername or $$isempty:$amount  ;; Skip if conditions met
+local : field : ratef : type : number                  ;; Rate field type
+local : field : ratef : align : right                  ;; Rate field alignment
+local : field : ratef : format :"NoZero,Percentage"    ;; Rate field format
+local : field : ratef  : set as : $basicrateofinvoicetax  ;; Tax rate
+local : field : snf : set as : ""                      ;; Empty serial number
+local : field : fwf : set as : $ledgername             ;; Ledger name
+ local : field : numf : set as :"" ;; "Qty."           ;; Empty quantity
+ local: field : numf2 : set as : "" ;;"Rate"           ;; Empty rate
+
+delete : explode                                       ;; Remove explode directives
+
+;; =====================================================================
+;; Bottom Part Definition
+;; Defines the bottom section of the report
+;; =====================================================================
+  [part : RepBajajExportPdfBottomPart]
+   line : RepBajajExportPdfTotLine,cwRepForLn          ;; Lines for total and footer
+
+;; =====================================================================
+;; Total Line Definition
+;; Defines how the total line is displayed
+;; =====================================================================
+  [line : RepBajajExportPdfTotLine]
+    use : RepBajajExportPdfACCLine                     ;; Use accounting line as base
+ delete : empty                                        ;; Remove empty directive
+  local : field : ratef  : set as :""                  ;; Empty rate
+  local : field : fwf : set as : "Total:"              ;; Total label
+  Local: Field: amtf: Set As:$$CollectionField:$amount:First:cwParentSelectedSrcx  ;; Total amount
+;; {01.Dec.21 16:59}   local : field : fwf : align : right
+  local : field : amtf : format : "ShowBaseSymbol"     ;; Format with currency symbol
+  Local: Field: default: Style: Normal Bold            ;; Bold style for total
+  height:1.5                                           ;; Line height
+    border:thin left right bottom                      ;; Border for total line
+
+;; =====================================================================
+;; Footer Line Definition
+;; Defines how the footer is displayed
+;; =====================================================================
+     [line:cwRepForLn]
+   right fields:nf
+   Local: Field:nf: Set As:@@FORCMPMAIL2               ;; Footer text from system variable
+  Local: Field:nf: Style: Normal Bold                  ;; Bold style for footer
+  Local: field: nf: Align:centre                       ;; Center alignment
+   Local: field:nf: Width:35                           ;; Field width
+   space top:1                                         ;; Space before footer
+
+   ;;=========================================

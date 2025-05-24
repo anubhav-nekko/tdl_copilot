@@ -1,0 +1,262 @@
+;===============================================================================
+;  “LR Report” Menu & Report customisation                                       ;
+;  --------------------------------------------------------------------------  ;
+;  • Original Snippet Date : 25-Aug-2021                                         ;
+;-------------------------------------------------------------------------------;
+
+
+
+;===============================================================================
+; 1.  MAIN MENU HOOKS                                                            ;
+;===============================================================================;
+
+     [#menu: Gateway of Tally]                     ;<– top-level Gateway menu
+;; {25.Aug.21 17:28}         add: Option: LrreportLock ;; : @@LrreportDemoLock
+;   – When active, will create a child menu “LrreportLock” (see section 1.2).   ;
+;     Demo lock logic can be re-enabled by setting @@LrreportDemoLock formula.  ;
+
+
+;------------------------- 1.1  Debug Menu hook --------------------------------;
+     [#menu : cw_Debug_menu]                       ;<– an existing custom menu
+;; {25.Aug.21 17:28}         add: Item: before: @@locQuit: @@LrreportReport: Display: RepLrreport
+;   – Adds “LR Report” item just above the quit option inside debug menu.       ;
+
+
+;------------------------- 1.2  Child Menu definition --------------------------;
+     [!menu: LrreportLock]                        ;<– shows when option added
+        add: Item: before: @@locQuit: @@LrreportReport: Display: RepLrreport
+        add: Item: before: @@locQuit: Blank
+;   – Provides “LR Report” and a blank spacer right before Quit                 ;
+
+
+;-------------------------------------------------------------------------------;
+; 1.3  Formula names for menu captions / demo lock                              ;
+;-------------------------------------------------------------------------------;
+    [System: formula]
+   LrreportReport  : "LR Report"                      ; caption text
+;; LrreportDemoLock: $$MachineDate < $$Date:"01/04/2013"  ; demo expiry logic
+
+
+
+;===============================================================================
+; 2.  REPORT SHELL & BASIC PROPERTIES                                           ;
+;===============================================================================;
+     
+    [Report: RepLrreport]
+        Use       : Dsp Template
+        Title     : @@LrreportReport
+        Printset  : Report Title : @@LrreportReport
+        Form      : FrmLrreport
+        Export    : Yes
+        Set       : svfromdate : ##svcurrentdate
+        Set       : svTodate   : ##svcurrentdate
+        Local     : Button : RelReports : Inactive : Yes
+;      – Uses default display template but locks “Related Reports” button.      ;
+
+
+;===============================================================================
+; 3.  MAIN FORM LAYOUT                                                           ;
+;===============================================================================;
+
+      [Form: FrmLrreport]
+        Use      : DSP Template
+        Part     : DspAccTitles, PrtTitle0Lrreport, PrtLrreport
+        Width    : 100% Page
+        Height   : 100% Page
+        Background : @@SV_STOCKSUMMARY
+        Delete   : page break
+        Add      : page break : Lrreportbotbrk, LrreportbotOpbrk
+        Bottom Toolbar Buttons : BottomToolBarBtn1, BottomToolBarBtn3, BottomToolBarBtn8, BottomToolBarBtn9, BottomToolBarBtn10, BottomToolBarBtn11, BottomToolBarBtn12
+;; BottomToolBarBtn2, BottomToolBarBtn4, BottomToolBarBtn5,BottomToolBarBtn6, BottomToolBarBtn7,
+;;                        1 Quit, 2 Accept, 3 Delete, 4 Cancel, 5 Duplicate Voucher, 6 Add Voucher, 7 Insert Voucher, 8 Remove Line, 9 Restore Line, 10 Restore all, 11 Select, 12 Select All
+;;    local : button : report config : action :modify variable: MyPLConfigure
+
+;— Custom print styles for company-name / address / titles —;
+local:Part:DSPCompanyName     : local:line:DSPCompanyName     : Local: Field: DSP CompanyName     : PrintStyle: styleCalisto2
+local:Part:DSPCompanyAddress  : local:line:DSPCompanyAddress  : Local: Field: DSPCompanyAddress   : PrintStyle: style2n
+local:Part:DSPReportTitle     : local:line:DSPReportName      : Local: Field: DSPReportName       : PrintStyle: style3n
+local:Part:DSPReportSubTitle  : local:line:DSPReportSubTitle  : Local: Field: DSPReportSubTitle   : PrintStyle: style2n
+local:Part:DSPReportTitle     : local:line:DSPReportPeriod    : Local: Field: DSPReportPeriod     : PrintStyle: style2n  ;; Local: Field: DSPReportPeriod:border:thin box
+local:Part:DSPPageNo          : local:line:DSPPageNo          : Local: Field:DSPPageNo            : PrintStyle: style2n
+
+
+
+;===============================================================================
+; 4.  FOOTER & TITLE PARTS                                                      ;
+;===============================================================================;
+
+      [part: LrreportbotBrk]
+       Line  : EXPINV PageBreak
+       Border: thin top
+
+      [part: Lrreportbotopbrk]
+        Use  : dspacctitles
+        Add  : part : LrreportTitlePart
+
+      [part: LrreportTitlePart]
+       Line  : LnLrreportTitle
+       
+      [line: LnLrreportCurrPeriod]
+      Field : fwf, fwf2
+      Local : Field: fwf2 : Align : Right
+      Local : Field: fwf  : Style : style3x
+      Local : Field: fwf2 : Style : style3x
+      Local : Field: fwf2 : Set As: @@dspDateStr
+      Invisible : $$inprintmode
+
+      [part: PrtTitle0Lrreport]
+      Line : LnLrreportCurrPeriod
+
+
+
+;===============================================================================
+; 5.  BODY PART – TABULAR DETAILS                                               ;
+;===============================================================================;
+
+      [Part: PrtLrreport]
+       Line       : LnLrreportTitle, LnLrreport
+       Bottom Line: LnLrreportTotals
+       Repeat     : LnLrreport : ColLrreport
+       Scroll     : Vertical
+       Common Border: Yes
+       Total      : Qtyf, amtf
+
+
+;----------------------- 5.1  Data Collection ----------------------------------;
+[Collection: ColLrreport]
+       Use    : Vouchers of Company
+       Delete : Filter : daybookfilter
+       Filter : ColLrreportFilter, ColLrreportFilter2, IsNonOptionalCancelledVchs
+       Fetch  : BASICFINALDESTINATION, BILLOFLADINGNO, BILLOFLADINGDATE, CWTEMPGSTEWAYTRANSPORTERNAME
+
+    [System: Formula]
+ColLrreportFilter  : $$issales:$vouchertypename
+ColLrreportFilter2 : not $$isempty:$CWTEMPGSTEWAYTRANSPORTERNAME
+
+
+
+;----------------------- 5.2  Title Row Layout ----------------------------------;
+      [Line: LnLrreportTitle]
+        Use   : LnLrreport
+        Option: titleopt
+        ; field captions
+local: field: sdf   : Set As: "Date"
+local: field: Snf   : Set As: "Invoice No."
+local: field: fwf   : Set As: "Party Name"
+local: field: SNF2  : Set As: "Area"
+local: field: SNF3  : Set As: "Booked To"
+local: field: SNF4  : Set As: "B/L"
+local: field: qtyf  : Set As: "Pcs"
+local: field: SNF5  : Set As: "Transport Name"
+local: field: SNF6  : Set As: "Dispatch From"
+local: field: SNF7  : Set As: "LR No"
+local: field: SDF2  : Set As: "LR Date"
+
+;  — remove storage for header line fields — ;
+local : field : snf7 : delete : storage
+local : field : sdf2 : delete : storage
+
+;  — styling & alignment — ;
+local: field: default : style : Normal Bold
+Local: field: default : Align : Centre
+Local: field: fwf     : Align : Left
+
+;  — apply “style2x” to each header field — ;
+local: field: sdf    : style: style2x
+local: field: sdf2   : style: style2x
+local: field: snf    : style: style2x
+local: field: fwf    : style: style2x
+local: field: snf2   : style: style2x
+local: field: snf3   : style: style2x
+local: field: snf4   : style: style2x
+local: field: snf5   : style: style2x
+local: field: snf6   : style: style2x
+local: field: snf7   : style: style2x
+local: field: qtyf   : style: style2x
+local: field: qtyf2  : style: style2x
+
+
+
+;----------------------- 5.3  Detail Row Layout --------------------------------;
+      [Line: LnLrreport]
+Fields      : sdf, snf, fwf
+Right Field : snf2, snf3, SNF4, qtyf, snf5, snf6, snf7, sdf2
+Option      : Alter on Enter
+
+;  — numeric formats & rate/pcs calc — ;
+local: field: qtyf  : Format : "NoSymbol, Short Form, No Compact,NoZero"
+local: field: qtyf2 : Format : "NoSymbol, Short Form, No Compact,NoZero"
+local: field: ratepf: Set As : #amtf / #qtyf
+
+;  — double-click alter voucher on party-name — ;
+local: field: fwf : alter : voucher : $$isvoucher
+option : alter on enter
+local : field : fwf : alter : voucher : $$isvoucher
+;; local : field : fwf : alter : ledger : $$isledger
+
+;  — populate column values from voucher — ;
+local: field: sdf   : Set As : $date
+local: field: snf   : Set As : $vouchernumber
+local: field: fwf   : Set As : $partyledgername
+local: field: snf2  : Set As : $cwledcity:ledger:$partyledgername
+local: field: snf3  : Set As : $BASICFINALDESTINATION
+;; {25.Aug.21 16:58} local:field: SNF4: set as:""
+local: field: snf4  : Set As : $cwnofobales
+local: field: qtyf  : Set As : $$CollQtyTotal:inventoryentries:$billedqty
+local: field: snf5  : Set As : $CWTEMPGSTEWAYTRANSPORTERNAME
+local: field: snf6  : Set As : $$CollectionField:$godownname:First:inventoryentries
+local: field: snf7  : Set As : $BILLOFLADINGNO
+local: field: sdf2  : Set As : $BILLOFLADINGDATE
+
+;  — skip fields to freeze input in report mode — ;
+Local: Field: fwf  : Skip : Yes
+Local: Field: sdf  : Skip : Yes
+Local: Field: snf  : Skip : Yes
+Local: Field: snf1 : Skip : Yes
+Local: Field: snf2 : Skip : Yes
+Local: Field: snf3 : Skip : Yes
+Local: Field: snf4 : Skip : Yes
+Local: Field: qtyf : Skip : Yes
+Local: Field: snf5 : Skip : Yes
+Local: Field: snf6 : Skip : Yes
+Local: Field: snf7 : Storage : BILLOFLADINGNO
+Local: Field: sdf2 : Storage : BILLOFLADINGDATE
+
+;  — styling & borders — ;
+Local: Field: default : Border : thin right
+local: field: DEFAULT : style : style3x
+local: field: qtyf2   : type  : Secondary units
+border : thin bottom
+
+
+
+;----------------------- 5.4  Totals Row ---------------------------------------;
+      [line: LnLrreportTotals]
+        Use    : LnLrreport
+        Option : totalOpt
+        local: field: fwf   : Align : Right
+        local: field: default: style : Normal Bold
+        local: field: qtyf  : Set As : $$total:qtyf
+        local: field: fwf   : Set As : "Total"
+        local: field: fwf   : Set As : ""
+        local: field: amtf  : Set As : $$total:amtf
+
+;  — repeat header styling so totals match visual theme — ;
+local: field: qtyf2  : type : String
+local: field: sdf    : style: style2x
+local: field: sdf2   : style: style2x
+local: field: snf    : style: style2x
+local: field: fwf    : style: style2x
+local: field: snf2   : style: style2x
+local: field: snf3   : style: style2x
+local: field: snf4   : style: style2x
+local: field: snf5   : style: style2x
+local: field: snf6   : style: style2x
+local: field: snf7   : style: style2x
+local: field: qtyf   : style: style2x
+
+
+
+;===============================================================================
+;                               END OF FILE                                     ;
+;===============================================================================

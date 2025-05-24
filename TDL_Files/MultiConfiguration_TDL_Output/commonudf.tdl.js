@@ -1,0 +1,139 @@
+// Auto-generated from commonudf.txt
+const tdl = `
+;===============================================================================
+; COMMONUDF.TXT
+; Purpose: Declares a wide range of UDFs (User Defined Fields) for use in Tally
+;          customizations, covering voucher, broker, address, agent, pricing,
+;          alternate units/qty, branch, transport, and audit fields.
+;===============================================================================
+
+;------------------------------------------------------------------------------
+; VOUCHER, BROKER, AND CUSTOM FIELDS
+;------------------------------------------------------------------------------
+
+[system : udf]
+cwVoucherId         : number  : 898
+BrokerStr           : string  : 899
+cwLEDTANNo          : string  : 900   ;; Ledger TAN
+cwLEDCSTNo          : string  : 901   ;; Ledger CST
+cwiecno             : string  : 902
+cwiecno2            : string  : 903
+cwWayBillNo         : string  : 904
+cwWaybillDate       : date    : 905
+cwEndorsementNo     : string  : 906
+CwEndorsementDate   : date    : 907
+cwExtra1            : string  : 908
+cwextra2            : string  : 909
+cwlrnNo             : string  : 910
+cwlRDate            : date    : 911
+cwBroker            : string  : 912
+cwEnableBroker      : Logical : 913
+
+;------------------------------------------------------------------------------
+; ADDITIONAL ADDRESS LINES (cmpaddladdr)
+;------------------------------------------------------------------------------
+
+odet1               : string  : 914
+odet2               : string  : 915
+odet3               : string  : 916
+odet4               : string  : 917
+odet5               : string  : 918
+
+;------------------------------------------------------------------------------
+; SIGNATORY AND CUSTOMIZATION FLAGS
+;------------------------------------------------------------------------------
+
+cwSig               : string  : 919
+cwv1                : string  : 920
+cwv2                : string  : 921
+cwv3                : string  : 922
+cwv4                : string  : 923
+cwv5                : string  : 924
+cwEnableCustomization : logical : 936
+
+;------------------------------------------------------------------------------
+; VAT/PRICING/INVENTORY FIELDS
+;------------------------------------------------------------------------------
+
+cwInvVAtIncRate     : rate    : 925
+cwInvVAtRate        : number  : 926
+cwpack              : string  : 927
+exchvatst           : number  : 928
+exchangeitem        : string  : 929
+Amttrdx             : number  : 930
+
+;------------------------------------------------------------------------------
+; AGENT/COMMISSION FIELDS
+;------------------------------------------------------------------------------
+
+cwsignatory         : string  : 935
+IsCommAgent         : logical : 937
+AgentCommPercentage : number  : 938
+IsCommOnNet         : logical : 939
+IsCommOnNet1        : logical : 940
+cwAgentAmount       : amount  : 941
+AgentCommVchPercentage : number : 942
+IsCommOnQty         : logical : 943
+IsCommOnQty1        : logical : 944
+cwDiscinMaster      : number  : 945
+cwDefPriceLevel     : string  : 946
+
+;------------------------------------------------------------------------------
+; AUDIT, CREATION, AND MODIFICATION FIELDS
+;------------------------------------------------------------------------------
+
+cwCreateDate        : date    : 948
+cwCreateTime        : string  : 949
+cwMasterId          : string  : 9020
+cwModifiedOnDate    : string  : 9021
+cwModifiedOnTime    : string  : 9022
+cwModifieduser      : string  : 9023
+cwisvchtypewisealtqty : logical : 9024
+cwCreatedby         : string  : 9025
+cwModifiedOn        : date    : 9021
+
+;------------------------------------------------------------------------------
+; ALTERNATE UNITS AND QUANTITY FIELDS
+;------------------------------------------------------------------------------
+
+cwUNIT1             : string  : 950
+cwUNIT2             : string  : 951
+cwQTY1              : number  : 952
+cwQTY2              : number  : 953
+cwUNIT3             : string  : 4000
+cwUNIT4             : string  : 4001
+cwQTY3              : number  : 4002
+cwQTY4              : number  : 4003
+
+;------------------------------------------------------------------------------
+; PREFIX/SUFFIX, BANK, BRANCH, SUPPLIER, LOCATION
+;------------------------------------------------------------------------------
+
+cwPrefix            : string  : 954
+cwSuffix            : string  : 955
+cwbank              : string  : 956
+cwisBranch          : logical : 957
+cwBranchName        : string  : 958
+cwSupplierCode      : string  : 959
+cwAppLocation       : string  : 960
+cwCartonSerial      : string  : 1019
+
+;------------------------------------------------------------------------------
+; TRANSPORT FIELDS
+;------------------------------------------------------------------------------
+
+[System: UDF]
+cwTransEnabled      : logical : 4004
+cwTransGroupName    : string  : 4005
+cwTransporter       : string  : 4006
+
+;------------------------------------------------------------------------------
+; BROKER STATUS FIELDS
+;------------------------------------------------------------------------------
+
+cwBrokerInactive        : logical : 9312
+cwBrokerInactiveFrom    : date    : 9313
+
+
+`;
+export default tdl;

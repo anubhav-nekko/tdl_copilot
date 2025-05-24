@@ -1,0 +1,50 @@
+;===============================================================================
+; F11DOCFILE.TXT
+; Created By: Taniya on 2019-11-29 10:59, ID:
+; Purpose: Adds an "Enable Image" option and image base path configuration
+;          to the barcode application location form in Tally, with UDFs to
+;          store and reference these settings at the company level.
+;===============================================================================
+
+;------------------------------------------------------------------------------
+; Add a line after the "Include MRP Line" in the barcode app location form
+;   - Allows enabling image management and setting the image base path.
+;------------------------------------------------------------------------------
+
+[#Part:frmbarcodeapplocation]
+add:line:after:cwincmrpline:cwenablelinex
+
+;------------------------------------------------------------------------------
+; Line definition for image enablement and base path input
+;------------------------------------------------------------------------------
+
+[line:cwenablelinex]
+field:sp,cwlogical,sp2,nf
+
+Local: Field: sp: Set As:"Enable Image?"
+Local: Field: sp2: Set As:"Image Base Path :"
+Local: Field: cwlogical: storage:cwEnableDoc
+Local: Field: nf: storage:cwBasePath
+local: field:nf: inactive:not #cwlogical
+local: field:sp2: inactive:not #cwlogical
+Local: Field: nf: Style: Normal Bold
+
+Local: field: sp: Width:25
+Local: field: sp2: Width:25
+
+;------------------------------------------------------------------------------
+; System formulas to retrieve enablement flag and base path for the current company
+;------------------------------------------------------------------------------
+
+[System: Formula]
+cwdocManagementEnable:$cwEnableDoc:COMPANY:##SVCURRENTCOMPANY
+cwBasePath : $cwBasePath:COMPANY:##SVCURRENTCOMPANY
+
+;------------------------------------------------------------------------------
+; UDF declarations for image/document management settings
+;------------------------------------------------------------------------------
+
+[System: UDF]
+cwEnableDoc:logical:1990
+cwBasePath:string:1991
+cwdoc:string:1992

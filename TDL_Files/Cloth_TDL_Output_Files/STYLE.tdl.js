@@ -1,0 +1,73 @@
+// Auto-generated from STYLE.TXT
+const tdl = `
+;===============================================================================
+; STYLE.TXT
+; Created By: Khokan on 2021-02-10 12:39, ID:
+; Purpose: Defines reusable text styles for Tally TDL reports and printouts,
+;          supporting consistent font, size, and boldness across all layouts.
+;===============================================================================
+
+;;------------------------------------------------------------------------------
+;; Times New Roman Styles
+;;------------------------------------------------------------------------------
+
+[style:style1x]
+    font   : "Times New Roman"
+    height : 15
+    bold   : yes
+
+[style:style2x]
+    font   : "Times New Roman"
+    height : 10
+    bold   : yes
+
+[style:style3x]
+    font   : "Times New Roman"
+    height : 10
+    bold   : no
+
+[style:style4x]
+    font   : "Times New Roman"
+    height : 11
+    bold   : yes
+
+[style:style5x]
+    font   : "Times New Roman"
+    height : 11
+    bold   : no
+
+;;------------------------------------------------------------------------------
+;; Calisto MT Styles (for compact, professional print)
+;;------------------------------------------------------------------------------
+
+[style:styleCalisto]
+    font   : "Calisto MT" ;; "Times New Roman"
+    height : 9.3          ;; 10.5
+    bold   : no
+
+[style:styleCalisto2]
+    font   : "Calisto MT" ;; "Times New Roman"
+    height : 8            ;; 10.5
+    bold   : yes
+
+[style:styleCalistox]
+    font   : "Calisto MT" ;; "Times New Roman"
+    height : 9.8
+    bold   : no
+
+[style:styleCalistox2]
+    font   : "Calisto MT" ;; "Times New Roman"
+    height : 9.8
+    bold   : yes
+
+[style:styleCalistox3]
+    font   : "Calisto MT" ;; "Times New Roman"
+    height : 10
+    bold   : yes
+
+;===============================================================================
+; End of STYLE.TXT (with documentation comments)
+;===============================================================================
+
+`;
+export default tdl;

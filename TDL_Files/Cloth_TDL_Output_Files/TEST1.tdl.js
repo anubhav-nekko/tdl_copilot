@@ -1,0 +1,156 @@
+// Auto-generated from TEST1.TXT
+const tdl = `
+;===============================================================================
+; TEST1.TXT
+; Purpose: Implements a basic Tally TDL report "TEST1" with menu integration,
+;          period setup, a simple report layout, and running totals.
+;===============================================================================
+
+;;------------------------------------------------------------------------------
+;; MENU INTEGRATION: Add report option to Gateway of Tally and Debug menu
+;;------------------------------------------------------------------------------
+
+[#menu: Gateway of Tally]
+    add: Option: TEST1Lock ;; : @@TEST1DemoLock
+
+[#menu : cw_Debug_menu]
+    add: Item: before: @@locQuit: @@TEST1Report: Display: RepTEST1
+
+[!menu: TEST1Lock]
+    ;; Optionally, use PRINT or Display as required (Display is active here)
+    ;; add: Item: before: @@locQuit: @@TEST1Report: PRINT: RepTEST1
+    add: Item: before: @@locQuit: @@TEST1Report: Display: RepTEST1
+    add: Item: before: @@locQuit: Blank
+
+[System: formula]
+    TEST1Report: "TEST1"
+;; TEST1DemoLock: $$MachineDate < $$Date:"01/04/2013"
+
+;;------------------------------------------------------------------------------
+;; MAIN REPORT DEFINITION
+;;------------------------------------------------------------------------------
+
+[Report: RepTEST1]
+    USE: AllLedgerOutstandings
+    /*
+    use: Dsp Template
+    Title: @@TEST1Report
+    Printset: Report Title: @@TEST1Report
+    Form: FrmTEST1
+    Export: Yes
+    set  : svfromdate : ##svcurrentdate
+    set  : svTodate : ##svcurrentdate
+    Local: Button: RelReports: Inactive: Yes
+    */
+
+;;------------------------------------------------------------------------------
+;; FORM LAYOUT: Main form for the TEST1 report
+;;------------------------------------------------------------------------------
+
+[Form: FrmTEST1]
+    use: DSP Template
+    Part: DspAccTitles, PrtTitle0TEST1, PrtTEST1
+    Width: 100% Page
+    Height: 100% Page
+    Background: @@SV_STOCKSUMMARY
+    delete: page break
+    add: page break: TEST1botbrk, TEST1botOpbrk
+    Bottom Toolbar Buttons: BottomToolBarBtn1, BottomToolBarBtn3, BottomToolBarBtn8, BottomToolBarBtn9, BottomToolBarBtn10, BottomToolBarBtn11, BottomToolBarBtn12
+    ;; BottomToolBarBtn2, BottomToolBarBtn4, BottomToolBarBtn5, BottomToolBarBtn6, BottomToolBarBtn7,
+    ;; Standard Tally navigation and action buttons
+
+[part: TEST1botBrk]
+    line: EXPINV PageBreak
+    border: thin top
+
+[part: TEST1botopbrk]
+    use: dspacctitles
+    add: part: TEST1TitlePart
+
+[part: TEST1TitlePart]
+    line: LnTEST1Title
+
+[line: LnTEST1CurrPeriod]
+    field: fwf,fwf2
+    Local: field: fwf2: Align: Right
+    Local: Field: fwf: Style: normal bold
+    Local: Field: fwf2: Style: normal bold
+    Local: Field: fwf2: Set As: @@dspDateStr
+    invisible: $$inprintmode
+
+[part: PrtTitle0TEST1]
+    line : LnTEST1CurrPeriod
+
+;;------------------------------------------------------------------------------
+;; MAIN DATA PART: Table of voucher details
+;;------------------------------------------------------------------------------
+
+[Part: PrtTEST1]
+    Line: LnTEST1Title, LnTEST1
+    bottom Line: LnTEST1Totals
+    repeat: LnTEST1: ColTEST1
+    scroll: Vertical
+    Common Border: YEs
+    Total: Qtyf, amtf
+
+[Collection: ColTEST1]
+    Use: Vouchers of Company
+    delete: filter : daybookfilter
+    Filter: ColTEST1Filter, IsNonOptionalCancelledVchs
+
+[system: Formula]
+    ColTEST1Filter: Yes
+
+;;------------------------------------------------------------------------------
+;; HEADER LINE: Column titles for the TEST1 report
+;;------------------------------------------------------------------------------
+
+[Line: LnTEST1Title]
+    use: LnTEST1
+    option: titleopt
+    ;; local: field:default: set as: $$DescName
+    local:field: sdf: set as: "Date"
+    local:field: nf: set as: "Name"
+    local:field: fwf: set as: "Description"
+    local:field: qtyf: set as: "Qty."
+    local:field: amtf: set as: "Value"
+    local:field: ratepf : set as : "Rate"
+    local: field: default : style: normal bold
+
+;;------------------------------------------------------------------------------
+;; DATA LINE: Main line showing all calculated columns per voucher
+;;------------------------------------------------------------------------------
+
+[Line: LnTEST1]
+    Fields: sdf, nf, fwf
+    right field: ratepf, Qtyf, Amtf
+    Option: Alter on Enter
+    local:field: qtyf : Format : "NoSymbol, Short Form, No Compact,NoZero"
+    ;; local:field: qtyf : Format : "NoSymbol, Short Form, No Compact,NoZero,decimals:0"
+    local:field: ratepf : setas  : #amtf/#qtyf
+    local: field: fwf: alter : voucher : $$isvoucher
+    option: alter on enter
+    local : field : fwf : alter : voucher : $$isvoucher
+    ;; local : field : fwf : alter : ledger : $$isledger
+    local : field : sdf : set as : $date
+
+;;------------------------------------------------------------------------------
+;; TOTALS LINE: Running totals for all columns
+;;------------------------------------------------------------------------------
+
+[line: LnTEST1Totals]
+    use: LnTEST1
+    option: totalOpt
+    local: field: fwf: align: right
+    local: field: default : style: normal bold
+    local: field: qtyf: set as: $$total:qtyf
+    local: field: fwf: set as: "Total"
+    local: field: fwf: set as: ""
+    local: field: amtf : set as :  $$total:amtf
+
+;===============================================================================
+; End of TEST1.TXT (with documentation comments)
+;===============================================================================
+
+`;
+export default tdl;

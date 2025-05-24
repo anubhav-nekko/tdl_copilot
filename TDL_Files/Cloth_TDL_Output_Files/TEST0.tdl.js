@@ -1,0 +1,23 @@
+// Auto-generated from TEST0.TXT
+const tdl = `
+; Created By: khokan on 2022-05-31 10:38, ID: 
+
+
+[report:r1]
+Form :f1
+
+[Form :f1]
+part:p1
+
+[part:p1]
+line:l1
+
+[line:l1]
+field:f1
+
+[field:f1]
+ Use : Name Field
+
+
+`;
+export default tdl;

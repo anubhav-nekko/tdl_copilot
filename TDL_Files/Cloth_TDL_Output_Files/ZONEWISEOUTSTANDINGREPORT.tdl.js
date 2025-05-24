@@ -1,0 +1,291 @@
+// Auto-generated from ZONEWISEOUTSTANDINGREPORT.TXT
+const tdl = `
+;===============================================================================
+; ZONEWISEOUTSTANDINGREPORT.TXT
+; Created By: Khokan on 2021-08-24 11:57, ID:
+; Purpose: Implements a "Zone Wise Outstanding Report" in Tally, allowing users
+;          to select a zone (cost centre) and view party-wise outstanding bills,
+;          with due days, bill/credit amounts, and professional formatting.
+;===============================================================================
+
+;;------------------------------------------------------------------------------
+;; MENU INTEGRATION: Add report option to Gateway of Tally and Debug menu
+;;------------------------------------------------------------------------------
+
+[#menu: Gateway of Tally]
+    ;; add: Option: ZoneWISEOutstandingReportLock ;; : @@ZoneWISEOutstandingReportDemoLock
+
+[#menu : cw_Debug_menu]
+    add: Item: before: @@locQuit: @@ZoneWISEOutstandingReportReport: Display: RepZoneWISEOutstandingReport
+    add: Item: before: @@locQuit: @@ZoneWISEOutstandingReportReport: Display Collection: collRepZoneWISEOutstandingReport
+    add: Item: before: @@locQuit: Blank
+
+;;------------------------------------------------------------------------------
+;; ZONE SELECTION: Popup for selecting a cost centre (zone)
+;;------------------------------------------------------------------------------
+
+[Collection: collRepZoneWISEOutstandingReport]
+    Use         : Extract Alias Collection
+    Source Collection : List of Cost Centres
+    Title       : $$LocaleString:"List of Cost Centres"
+    Format      : $CstCatName
+    Filter      : CostCentreFilter
+    Report      : RepZoneWISEOutstandingReport
+    Variable    : SCostCentre
+    Trigger     : SCostCentrex1
+
+[Report: SCostCentrex1]
+    Use     : Collection Variable
+    Title   : $$LocaleString:"Select Cost Centre"
+    Local   : Line : Collection Variable : Field : SCostCentrex1
+    Local   : Field: MV Title : Info : $$LocaleString:"Name of Cost Centre"
+
+[Field: SCostCentrex1]
+    Use         : Name Field
+    Table       : cwcaption4tableundercc
+    Show Table  : Always
+    Key         : Create Cost Centre
+    Modifies    : SCostCentre
+
+[System: formula]
+    ZoneWISEOutstandingReportReport: @@cwcaption4tableundernew + " wise outstanding report"
+;; ZoneWISEOutstandingReportDemoLock: $$MachineDate < $$Date:"01/04/2013"
+
+;;------------------------------------------------------------------------------
+;; MAIN REPORT DEFINITION
+;;------------------------------------------------------------------------------
+
+[Report: RepZoneWISEOutstandingReport]
+    use: Dsp Template
+    Title: @@ZoneWISEOutstandingReportReport
+    Printset: Report Title: @@ZoneWISEOutstandingReportReport
+    Form: FrmZoneWISEOutstandingReport
+    Export: Yes
+    set  : svfromdate : ##svcurrentdate
+    Local: Button   : RelReports : Inactive : Yes
+    variable: str1
+    set: str1: ""
+
+;;------------------------------------------------------------------------------
+;; MAIN FORM LAYOUT
+;;------------------------------------------------------------------------------
+
+[Form: FrmZoneWISEOutstandingReport]
+    use: DSP Template
+    Part: DspAccTitles, PrtTitle0ZoneWISEOutstandingReport, PrtZoneWISEOutstandingReport, PrtZoneWISEOutstandingReport2
+    Width: 100% Page
+    Height: 100% Page
+    Background: @@SV_STOCKSUMMARY
+    delete: page break
+    add: page break: ZoneWISEOutstandingReportbotbrk, ZoneWISEOutstandingReportbotOpbrk
+    Bottom Toolbar Buttons: BottomToolBarBtn1, BottomToolBarBtn3, BottomToolBarBtn8, BottomToolBarBtn9, BottomToolBarBtn10, BottomToolBarBtn11, BottomToolBarBtn12
+    add:button:agentbotton
+    local:Part:DSPCompanyName:local:line:DSPCompanyName: Local: Field: DSP CompanyName:PrintStyle:styleCalisto2
+    local:Part:DSPCompanyAddress:local:line:DSPCompanyAddress: Local: Field: DSPCompanyAddress:PrintStyle:style2n
+    local:Part:DSPReportTitle:local:line:DSPReportName: Local: Field: DSPReportName:PrintStyle:style3n
+    local:Part:DSPReportSubTitle:local:line:DSPReportSubTitle: Local: Field: DSPReportSubTitle:PrintStyle:style2n
+    local:Part:DSPReportTitle:local:line:DSPReportPeriod:Local: Field: DSPReportPeriod:PrintStyle:style2n
+    local:Part:DSPPageNo:local:line:DSPPageNo: Local: Field:DSPPageNo:PrintStyle:style2n
+
+[part: ZoneWISEOutstandingReportbotBrk]
+    line: EXPINV PageBreak
+    border: thin top
+
+[part: ZoneWISEOutstandingReportbotopbrk]
+    use: dspacctitles
+    add: part: ZoneWISEOutstandingReportTitlePart
+
+[part: ZoneWISEOutstandingReportTitlePart]
+    line: LnZoneWISEOutstandingReportTitle
+
+[line: LnZoneWISEOutstandingReportCurrPeriod]
+    field: fwf, nf, fwf2
+    Local: field: fwf2: Align: Right
+    Local: Field: fwf: Style: normal bold
+    Local: Field: fwf2: Style:styleCalisto
+    Local: Field: fwf: Style:styleCalisto
+    Local: Field: fwf: Set As: ##SCostCentre
+    Local: Field: nf: Set As: $$ReptField:Name:2:ledger:##LedgerName
+    Local: Field: fwf2: Set As: @@dspDateStr
+    Local: Field: fwf2:invisible: $$inprintmode
+
+[part: PrtTitle0ZoneWISEOutstandingReport]
+    line : LnZoneWISEOutstandingReportCurrPeriod, LnoutstandingreportTitleaddress, partyphline
+    repeat: LnoutstandingreportTitleaddress:collcwLedgeraddress
+
+;;------------------------------------------------------------------------------
+;; MAIN DATA PART: Dr. (Debit) Outstanding Bills for the Zone
+;;------------------------------------------------------------------------------
+
+[Part: PrtZoneWISEOutstandingReport]
+    Part: PrtZoneWISEOutstandingReporta
+    Part: PrtZoneWISEOutstandingReportb
+
+[Part: PrtZoneWISEOutstandingReporta]
+    Line: LnZoneWISEOutstandingReportTitle, LnZoneWISEOutstandingReport
+    repeat: LnZoneWISEOutstandingReport: ColZoneWISEOutstandingReport
+    scroll: Vertical
+    Common Border: Yes
+    Total: Qtyf, amtf
+    Border: thin left
+    Width: 50% page
+
+[Collection: ColZoneWISEOutstandingReport]
+    type: bills
+    filter: ColZoneWISEOutstandingReportFilter, cwparentagfilter
+    fetch: BillCreditPeriod, cwcaption1vch, cwcaption2vch, cwcaption3vch, cwcaption4vch, cwcaption5vch, cwcaption6vch
+
+[system: Formula]
+    ColZoneWISEOutstandingReportFilter: $$isdr:$closingbalance and $cwcaption4vch = ##SCostCentre
+
+[Line: LnZoneWISEOutstandingReportTitle]
+    use: LnZoneWISEOutstandingReport
+    option: titleopt
+    local: field: sdf: set as: "Date"
+    local: field: snf: set as: "Bill No"
+    local: field: fwf: set as: "Party"
+    local: field: numf: set as: "Due Days"
+    local: field: amtf: set as: "Bill Amt"
+    local: field: default : style: normal bold
+    Local: field: default: Align: centre
+    Local: field: fwf: Align: left
+    local: field: sdf : style:styleCalisto2
+    local: field: snf : style:styleCalisto2
+    local: field: fwf : style:styleCalisto2
+    local: field: numf : style:styleCalisto2
+    local: field: amtf : style:styleCalisto2
+
+[Line: LnZoneWISEOutstandingReport]
+    Fields: sdf, snf, fwf
+    right field: numf, Amtf
+    Option: Alter on Enter
+    local: field: qtyf : Format : "NoSymbol, Short Form, No Compact, NoZero"
+    local: field: ratepf : setas  : #amtf/#qtyf
+    local: field: fwf: alter : voucher : $$isvoucher
+    option : alter on enter
+    local : field : fwf : alter : voucher : $$isvoucher
+    local: field: sdf: set as: $billdate
+    local: field: snf: set as: $name
+    local: field: fwf: set as: $parent
+    local: field: numf: set as: @@DSPToDate - $BillDate
+    local: field: amtf: set as: $closingbalance
+    Local: Field: default: Border: thin right
+    local: field: default : style:styleCalisto
+    Local: field: snf: Width: 8
+    border: thin bottom
+
+;;------------------------------------------------------------------------------
+;; TOTALS LINE: Dr. (Debit) Outstanding Totals
+;;------------------------------------------------------------------------------
+
+[part: PrtZoneWISEOutstandingReport2a]
+    Width: 50% page
+    line: LnZoneWISEOutstandingReportTotals, LnZoneWISEoutstandingreportTotalsnettolat
+
+[line: LnZoneWISEOutstandingReportTotals]
+    use: LnZoneWISEOutstandingReport
+    option: totalOpt
+    local: field: fwf: align: right
+    local: field: default : style: normal bold
+    local: field: qtyf: set as: $$total:qtyf
+    local: field: fwf: set as: "Dr.Total"
+    local: field: amtf : set as : $$CollAmtTotal:ColZoneWISEOutstandingReport:$closingbalance
+    local: field: sdf : style:styleCalisto2
+    local: field: fwf : style:styleCalisto2
+    local: field: amtf : style:styleCalisto2
+
+[line: LnZoneWISEoutstandingreportTotalsnettolat]
+    use: LnZoneWISEOutstandingReport
+    option: totalOpt
+    local: field: fwf: align: right
+    local: field: default : style: normal bold
+    local: field: qtyf: set as: $$total:qtyf
+    local: field: fwf: set as: "NET O/S"
+    local: field: amtf : set as : $$CollAmtTotal:ColZoneWISEOutstandingReport:$closingbalance - $$CollAmtTotal:ColZoneWISEOutstandingReportb:$closingbalance
+    Local: field: amtf: Format: "drcr"
+    local: field: sdf : style:styleCalisto2
+    local: field: fwf : style:styleCalisto2
+    local: field: amtf : style:styleCalisto2
+
+;;------------------------------------------------------------------------------
+;; MAIN DATA PART: Cr. (Credit) Outstanding Bills for the Zone
+;;------------------------------------------------------------------------------
+
+[Part: PrtZoneWISEOutstandingReportb]
+    Width: 50% page
+    Line: LnZoneWISEOutstandingReportTitleb, LnZoneWISEOutstandingReportb
+    repeat: LnZoneWISEOutstandingReportb: ColZoneWISEOutstandingReportb
+    scroll: Vertical
+    Common Border: Yes
+    Total: Qtyf, amtf
+    Border: thin left right
+
+[Collection: ColZoneWISEOutstandingReportb]
+    type: bills
+    filter: ColZoneWISEOutstandingReportFilterb, cwparentagfilter
+    fetch: BillCreditPeriod, cwcaption1vch, cwcaption2vch, cwcaption3vch, cwcaption4vch, cwcaption5vch, cwcaption6vch
+
+[system: Formula]
+    ColZoneWISEOutstandingReportFilterb: not $$isdr:$closingbalance and $cwcaption4vch = ##SCostCentre
+
+[Line: LnZoneWISEOutstandingReportTitleb]
+    use: LnZoneWISEOutstandingReportb
+    option: titleopt
+    local: field: sdf: set as: "Date"
+    local: field: fwf: set as: "Party"
+    local: field: amtf: set as: "Cr. Amount"
+    local: field: snf: set as: "Mode of credit"
+    local: field: snf : style:styleCalisto2
+    Local: field: fwf: Align: LEFT
+    local: field: default : style: normal bold
+    Local: field: DEFAULT: Align: centre
+    local: field: sdf : style:styleCalisto2
+    local: field: fwf : style:styleCalisto2
+    local: field: amtf : style:styleCalisto2
+    Local : field : snf: Lines : 0
+
+[Line: LnZoneWISEOutstandingReportb]
+    Fields: sdf, SNF, fwf
+    right field: Amtf
+    Option: Alter on Enter
+    local: field: qtyf : Format : "NoSymbol, Short Form, No Compact, NoZero"
+    local: field: ratepf : setas  : #amtf/#qtyf
+    local: field: fwf: alter : voucher : $$isvoucher
+    option : alter on enter
+    local : field : fwf : alter : voucher : $$isvoucher
+    local: field: sdf: set as: $billdate
+    local: field: snf: set as: if @@cwrecvchtype="Receipt" then (if not $$isempty:@@cwTransactionTypec then @@cwTransactionTypec else "Cash") else @@cwModeofcredit
+    local: field: fwf: set as: $PARENT
+    local: field: amtf: set as: $closingbalance
+    Local: Field:DEFAULT: Border: thin right
+    local: field: DEFAULT : style:styleCalisto
+    Local: field: snf: Width: 10
+    border: thin bottom
+
+;;------------------------------------------------------------------------------
+;; TOTALS LINE: Cr. (Credit) Outstanding Totals
+;;------------------------------------------------------------------------------
+
+[part: PrtZoneWISEOutstandingReport2b]
+    Width: 50% page
+    line: LnZoneWISEOutstandingReportTotalsb
+
+[line: LnZoneWISEOutstandingReportTotalsb]
+    use: LnZoneWISEOutstandingReportb
+    option: totalOpt
+    local: field: fwf: align: right
+    local: field: default : style: normal bold
+    local: field: qtyf: set as: $$total:qtyf
+    local: field: fwf: set as: "Cr.Total"
+    local: field: snf: set as: ""
+    local: field: sdf : style:styleCalisto2
+    local: field: fwf : style:styleCalisto2
+    local: field: amtf : style:styleCalisto2
+    local: field: amtf : set as: $$CollAmtTotal:ColZoneWISEOutstandingReportb:$closingbalance
+
+;===============================================================================
+; End of ZONEWISEOUTSTANDINGREPORT.TXT (with documentation comments)
+;===============================================================================
+
+`;
+export default tdl;

@@ -1,0 +1,268 @@
+;===============================================================================
+; SALESVOUCHER.TXT
+; Created By: Khokan on 2021-02-09 12:18, ID:
+; Purpose: Customizes the Sales Voucher entry and print experience in Tally,
+;          adding custom fields (e.g., Net Sales, Transporter, Delivered From, City),
+;          advanced caption support, and enhanced item/ledger details for
+;          professional, business-specific documentation.
+;===============================================================================
+
+;;------------------------------------------------------------------------------
+;; DATE FIELDS: Set default date fields to system date for sales voucher
+;;------------------------------------------------------------------------------
+
+[#Field: Plain VCH Date]
+    Add : Option : Plain VCH Date Control Field :@@cwSystemdatemsopt
+
+[!Field : Plain VCH Date Control Field]
+    Skip : Yes
+    Setas:$$MachineDate
+
+[#Field: Plain VCH EffDate]
+    Add : Option : Plain VCH EffDate Control Field : @@cwSystemdatemsopt
+
+[!Field : Plain VCH EffDate Control Field]
+    Skip : Yes
+    Setas:$$MachineDate
+
+;;------------------------------------------------------------------------------
+;; VOUCHER TITLE AND TYPE: Add Net Sales toggle and custom fields to title/left part
+;;------------------------------------------------------------------------------
+
+[#Part: VCHTitleLeft]
+    add:option: eiconsigneeoptpart:@@issales and @@MinuSareeEnabled
+
+[!part:eiconsigneeoptpart]
+    ;; (Customizations for the left part of the voucher title)
+
+[#Line: VCH Type]
+    add:option:cwvchtypeopt:(@@isCreditNote or @@issales) and @@MinuSareeEnabled
+
+[!line:cwvchtypeopt]
+    add: field:SNF,sp,cwlogical
+    Local: Field: SNF: info: ""
+    Local: Field: sp: Set As:"Net Sales?"
+    Local: Field:cwlogical: storage:cwnetsales
+    Local: field: sp: Width:16
+    space TOP:0.5
+
+;;------------------------------------------------------------------------------
+;; PORT DESTINATION: Set destination city from party ledger
+;;------------------------------------------------------------------------------
+
+[#Field: EI PortDestination]
+    add:option: eiPortDestinationopt:@@issales and @@MinuSareeEnabled
+
+[!field:eiPortDestinationopt]
+    set as:$cwledcity:ledger:$partyledgername
+
+;;------------------------------------------------------------------------------
+;; DELIVERY NOTE INFO: Add Transporter Name and Delivered From fields
+;;------------------------------------------------------------------------------
+
+[#Part: EI DelNoteInfo]
+    add:option: EImDelNoteInfoopt:(@@issales or @@ispurchase) and @@MinuSareeEnabled
+
+[!part:EImDelNoteInfoopt]
+    add:Line:cwTransporternameline,cwdelieveredfromline
+
+[Line:cwTransporternameline]
+    Field	: Medium Prompt,nf
+    Local   : Field : Medium Prompt     : Set as	: $$LocaleString:"Transporter Name"
+    Local: Field: nf: storage:cwtempGSTewayTransporterName
+    Local: Field: NF: Set As:$cwtempGSTewayTransporterName:LEDGER:$PARTYLEDGERNAME
+    Local: Field: nf: Style: Normal Bold
+    Local: Field: nf: table:collTransporterled,Not Applicable
+    Local: Field: nf: Show table: Always
+    Local: Field: nf:Key      :Create Ledger, Alter Ledger
+    Local: Field: nf:Variable :SV Ledger
+
+[Collection: collTransporterled]
+    type:ledger
+    title:"List of Transporter Name"
+    child of:"Transporter"
+
+[Line:cwdelieveredfromline]
+    Field	: Medium Prompt,nf
+    Local   : Field : Medium Prompt     : Set as	: $$LocaleString:"Delievered From"
+    Local: Field: nf: storage:cwDelieveredFrom
+    Local: field: NF: Width:40
+    Local: field: NF:Max     	: @@MaxNarrWidth * 2
+    Local: field: NF:Lines   	: 2
+
+;;------------------------------------------------------------------------------
+;; CONSIGNEE ADDITIONAL DETAILS: Consignee City (Tally Prime)
+;;------------------------------------------------------------------------------
+
+[#Part: Consignee Additional Details]
+    add : option : cwmseiConsigneeCity :  @@issales and @@MinuSareeEnabled
+    Height      : 10
+
+[!part:cwmseiConsigneeCity]
+    add :line : at beginning: cwmsconsiCity
+
+[line : cwmsconsiCity]
+    field : medium prompt,nf
+    Local: Field: medium prompt: info: "City:"
+    Local: Field: nf: storage: cwmsconsCity
+    Local: Field: nf: Set As:$cwledcity:ledger:#eibuyer
+    Local: Field: nf: Set As: if not @@IsMultiAddressOn or (@@IsMultiAddressOn and $$issysname:#eibuyeraddresstype) then (if $$isempty:$cwledcity:ledger:#eibuyer then $$value else $cwledcity:ledger:#eibuyer) else $$funcwCityFromAddressType:#eibuyeraddresstype:#eibuyer:"city"
+    local: field: nf: type: String:forced
+    Local: Field: nf: Style: Normal Bold
+
+;;------------------------------------------------------------------------------
+;; PARTY ADDITIONAL DETAILS: Buyer City (Tally Prime)
+;;------------------------------------------------------------------------------
+
+[#part:Party Additional Details]
+    add :option : cwmsBuyerCity : @@issales and @@MinuSareeEnabled
+    Height      : 10
+
+[!part : cwmsBuyerCity]
+    add : line : at beginning: cwmsBuyerCity
+
+[line : cwmsBuyerCity]
+    field : medium prompt,nf
+    Local: Field: medium prompt: info: "City:"
+    Local: Field: nf: storage: cwmsBuyerCity
+    Local: Field: nf: Set As:$cwledcity:ledger:#eipartyledger
+    local: field: nf: type: String:forced
+    Local: Field: nf: Style: Normal Bold
+    Local: Field: nf: Set As: if not @@IsMultiAddressOn or (@@IsMultiAddressOn and $$issysname:$PARTYADDRESSTYPE) then if $$isempty:$cwledcity:ledger:#eipartyledger then $$value else $cwledcity:ledger:#eipartyledger else $$funcwCityFromAddressType:$PARTYADDRESSTYPE:#eipartyledger:"city"
+
+;;------------------------------------------------------------------------------
+;; MULTI-ADDRESS CITY/PIN: Utility collection and function for multi-address
+;;------------------------------------------------------------------------------
+
+[collection : colcwMultiAddressCityPin]
+    type : LedMultiAddressList : ledger
+    child of : ##cwpartyledger
+
+[System: Formula]
+    cwAddressNameSamems : $addressname  = ##mytype
+
+[function : funcwCityFromAddressType]
+    parameter : mytype : string
+    parameter: cwpartyledger: string
+    parameter: cwmode  : string
+    11 : walk collection : colcwMultiAddressCityPin
+    12 : if : @@cwAddressNameSamems
+    12a: do if : ##cwmode = "City" : return : $cwPartymultiAddressCity
+    12b: do if : ##cwmode = "pincode" : return : $pincode
+    12c: end if
+    33 : end walk
+
+;;------------------------------------------------------------------------------
+;; CONSIGNEE FIELDS: No. of Bales and custom captions
+;;------------------------------------------------------------------------------
+
+[#Line: EI Consignee]
+    add:option:cwmuleiconsigopt:@@issales and @@MinuSareeEnabled
+
+[!line:cwmuleiconsigopt]
+    add:field:sp6,snf1
+    Local: Field: sp6: Set As:"No. of Bales"
+    Local: Field: snf1: storage:cwnofobales
+    Local: field: sp6: Width:15
+    Local: Field: snf1: Style: Normal Bold
+
+;;------------------------------------------------------------------------------
+;; OPTIONAL FIELDS: Not Show in Report, Cash Discount, etc.
+;;------------------------------------------------------------------------------
+
+[#Part: EI Optional]
+    add:option:cwmuleieioptopt :(@@issales OR @@IsCreditNote )and @@MinuSareeEnabled
+
+[!part:cwmuleieioptopt]
+    add:line:notshrep
+
+[line:notshrep]
+    add:right field:sp7,cwlogical
+    Local: Field: sp7: Set As:"Not Show in Report?"
+    Local: Field:cwlogical : storage:cwShowinReport
+    Local: field: sp7: Width:23
+    Local: Field: snf1: Style: Normal Bold
+    Local: field: EI Consignee: Width:60
+
+;;------------------------------------------------------------------------------
+;; GST TRANSPORTER NAME: Set from custom field
+;;------------------------------------------------------------------------------
+
+[#Field: GST ewayTransporterName]
+    add:option: EImewayTransporterNameopt:@@issales and @@MinuSareeEnabled
+
+[!field:EImewayTransporterNameopt]
+    Set As:$$owner:$$owner:$cwtempGSTewayTransporterName
+
+;;------------------------------------------------------------------------------
+;; CUSTOM CAPTIONS: Add up to six custom captions to voucher lines
+;;------------------------------------------------------------------------------
+
+[#Line: VCHBILL MainLine]
+    add:option:VCHBILLMainLineopt:(@@issales or @@ispurchase or @@IsCreditNote or @@IsDebitNote) and @@MinuSareeEnabled and @@cwnewEnableInvoiceCostopt
+
+[!line:VCHBILLMainLineopt]
+    add : fields : after : VCHBILLName :snf,snf2, snf3, snf4, snf5, snf6
+    ;; (Custom caption logic for each field, see full code for details)
+
+;;------------------------------------------------------------------------------
+;; ITEM/INVENTORY FIELDS: Add HSN, GST%, Discount, Selling Rate, etc.
+;;------------------------------------------------------------------------------
+
+[#Line: EI InvInfo]
+    add:option:cweiinvopt:@@issales and @@MinuSareeEnabled
+
+[!line:cweiinvopt]
+    Local       : Field : Vch StockItem    : Width    : @@LongWidth+25
+    Local       : Field :nf    : Width    : @@LongWidth+25
+    add:right field: At Beginning:nf,numf3,SNF1,snf,numf,snfx
+    add:right field:before:VCH Value:snfx2,numf2,amtf
+    Local: Field: nf: storage:cwminuitem
+    Local: Field: numf2: storage:cwminudisc
+    Local: Field: numf3: storage:cwSellingRates
+    Local: Field:amtf: storage:cwminudiscamt
+    Local: Field:amtf: Set As:$$asamount:#vchbilledqty*#numf2
+    local: field: amtf: Invisible: yes
+    Local: Field: numf2: Set As:$$CollectionField:$cwminudisc:First:batchallocations
+    Local: Field: nf: Set As:$stockitemname
+    Local: Field: nf: Style: Normal Bold
+    Local: Field: snf: Set As:$$cwGetHSNCodeFor:$stockitemname
+    Local: Field: numf: Set As:@@cwgstitemrate
+    Local: Field: snf: Skip: Yes
+    Local: Field: numf: Skip: Yes
+    local: field: numf: Format: "nozero,percentage"
+    local: field: numf2: Format: "nozero,decimals:2"
+    local: field: numf3: Format: "nozero,decimals:2"
+    Local: Field: snf: storage:cwhsncode
+    Local: Field: numf3: Set As:$$number:@@StdSellRate
+
+;;------------------------------------------------------------------------------
+;; ADDITIONAL FIELDS: F/N Details, Value of Insurance, Special Instructions, etc.
+;;------------------------------------------------------------------------------
+
+[#Part: GST TransAdditionalDetails]
+    add:option:newDBLLINENarrationXnew:@@issales and @@MinuSareeEnabled
+
+[!part:newDBLLINENarrationXnew]
+    add:Line:before: GST TransAdditionalDetails:fndeline
+
+[line:fndeline]
+    field:sp,cwlogical
+    Local: Field: sp: Set As:"F/N Details"
+    Local: Field : cwlogical : SubForm : fnderep: $$value
+    Local: field: sp: Width:18
+
+[report:fnderep]
+    form:fnderep
+
+[form:fnderep]
+    part:fnderep
+
+[part:fnderep]
+    line:noofline,natureline,pmline,valuinline,spinline,trnmalline,fromtoline
+
+;; (Each line above adds a specific field for F/N details, nature of goods, packages, insurance, etc.)
+
+;===============================================================================
+; End of SALESVOUCHER.TXT (with documentation comments)
+;===============================================================================

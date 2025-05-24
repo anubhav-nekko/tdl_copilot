@@ -1,0 +1,266 @@
+// Auto-generated from SALESREPORT.TXT
+const tdl = `
+;===============================================================================
+; SALESREPORT.TXT
+; Created By: Khokan on 2021-12-09 10:04, ID:
+; Purpose: Implements a "Sales Report" in Tally, summarizing gross sales,
+;          sales returns, net sales, and collections for each date, with
+;          quantity and amount columns, totals, and professional formatting.
+;===============================================================================
+
+;;------------------------------------------------------------------------------
+;; MENU INTEGRATION: Add report option to Gateway of Tally and Debug menu
+;;------------------------------------------------------------------------------
+
+[#menu: Gateway of Tally]
+    ;; Optionally lock demo access by date if needed
+    ;; add: Option: salesreportLock ;; : @@salesreportDemoLock
+
+[#menu : cw_Debug_menu]
+    ;; Add the report to the debug menu for quick access
+    add: Item: before: @@locQuit: @@salesreportReport: Display: Repsalesreport
+
+[!menu: salesreportLock]
+    add: Item: before: @@locQuit: @@salesreportReport: Display: Repsalesreport
+    add: Item: before: @@locQuit: Blank
+
+[System: formula]
+    salesreportReport: "Sales Report"
+;; salesreportDemoLock: $$MachineDate < $$Date:"01/04/2013"
+
+;;------------------------------------------------------------------------------
+;; MAIN REPORT DEFINITION
+;;------------------------------------------------------------------------------
+
+[Report: Repsalesreport]
+    use        : Dsp Template
+    Title      : @@salesreportReport
+    Printset   : Report Title: @@salesreportReport
+    Form       : Frmsalesreport
+    Export     : Yes
+    set        : svfromdate : ##svcurrentdate
+    set        : svTodate   : ##svcurrentdate
+    Local      : Button   : RelReports : Inactive : Yes
+
+;;------------------------------------------------------------------------------
+;; MAIN FORM LAYOUT
+;;------------------------------------------------------------------------------
+
+[Form: Frmsalesreport]
+    use     : DSP Template
+    Part    : DspAccTitles,PrtTitle0salesreport,Prtsalesreport
+    Width   : 100% Page
+    Height  : 100% Page
+    Background: @@SV_STOCKSUMMARY
+    delete  : page break
+    add     : page break: salesreportbotbrk,salesreportbotOpbrk
+    Bottom Toolbar Buttons: BottomToolBarBtn1, BottomToolBarBtn3, BottomToolBarBtn8, BottomToolBarBtn9, BottomToolBarBtn10, BottomToolBarBtn11,BottomToolBarBtn12
+    ;; Style company name, address, and report title for print
+    local:Part:DSPCompanyName:local:line:DSPCompanyName: Local: Field: DSP CompanyName:PrintStyle:styleCalisto2
+    local:Part:DSPCompanyAddress:local:line:DSPCompanyAddress: Local: Field: DSPCompanyAddress:PrintStyle:style2n
+    local:Part:DSPReportTitle:local:line:DSPReportName: Local: Field: DSPReportName:PrintStyle:style3n
+    local:Part:DSPReportSubTitle:local:line:DSPReportSubTitle: Local: Field: DSPReportSubTitle:PrintStyle:style2n
+    local:Part:DSPReportTitle:local:line:DSPReportPeriod:Local: Field: DSPReportPeriod:PrintStyle:style2n
+    local:Part:DSPPageNo:local:line:DSPPageNo: Local: Field:DSPPageNo:PrintStyle:style2n
+
+[part: salesreportbotBrk]
+    line: EXPINV PageBreak
+    border: thin top
+
+[part: salesreportbotopbrk]
+    use: dspacctitles
+    add: part: salesreportTitlePart
+
+[part: salesreportTitlePart]
+    line: LnsalesreportTitle
+
+[line: LnsalesreportCurrPeriod]
+    field: fwf,fwf2
+    Local: field: fwf2: Align: Right
+    Local: Field: fwf: Style: normal bold
+    Local: Field: fwf2: Style: normal bold
+    Local: Field: fwf2: Set As: @@dspDateStr
+    invisible: $$inprintmode
+    Local: Field: fwf2: Style:styleCalisto
+    Local: Field: fwf: Style:styleCalisto
+
+[part: PrtTitle0salesreport]
+    line : LnsalesreportCurrPeriod
+
+;;------------------------------------------------------------------------------
+;; MAIN DATA PART: Table of sales summary by date
+;;------------------------------------------------------------------------------
+
+[Part: Prtsalesreport]
+    Line: LnsalesreportTitle,LnsalesreportTitle1,Lnsalesreport
+    bottom Line: LnsalesreportTotals
+    repeat: Lnsalesreport: Colsalesreport
+    scroll: Vertical
+    Common Border: YEs
+    Total: Qtyf,amtf,amtf1,amtf2,amtf3,numf,numf1,numf2,numf3
+
+;;------------------------------------------------------------------------------
+;; DATA COLLECTION: Aggregates sales, returns, and collections by date
+;;------------------------------------------------------------------------------
+
+[Collection: Colsalesreport]
+    source Collection: sourColsalesreport
+    by:date:$date
+    by:parent1:$parent:ledger:$ledgername
+    by:parent2:$grandparent:ledger:$ledgername
+
+    aggr compute:billedqtysalesamt:sum:if $$issales:$vouchertypename then @@cwinvamt else $$initvalue:"AMOUNT"
+    aggr compute:billedqtysalesb:sum:if $$issales:$vouchertypename then @@cwinvBqtyN else $$initvalue:"number"
+    aggr compute:billedqtysalesretamt:sum:if $$iscreditnote:$vouchertypename then @@cwinvamt else $$initvalue:"AMOUNT"
+    aggr compute:billedqtysalesretb:sum:if $$iscreditnote:$vouchertypename then @@cwinvBqtyN else $$initvalue:"number"
+    aggr compute:recamount:sum:if $$isreceipt:$vouchertypename then $amount else $$initvalue:"number"
+    filter:cwGroupsundrydebtorsfilter
+
+[Collection: sourColsalesreport]
+    Use: Vouchers of Company
+    delete: filter : daybookfilter
+    Filter: ColsalesreportFilter,IsNonOptionalCancelledVchs
+
+[system: Formula]
+    ColsalesreportFilter:$$issales:$vouchertypename or $$iscreditnote:$vouchertypename or $$isreceipt:$vouchertypename
+    cwGroupsundrydebtorsfilter:$parent1="sundrydebtors" or $parent2="sundrydebtors"
+
+;;------------------------------------------------------------------------------
+;; HEADER LINES: Main column headers and subheaders
+;;------------------------------------------------------------------------------
+
+[Line: LnsalesreportTitle]
+    use: Lnsalesreport
+    option: titleopt
+    local:field: sdf: set as: "DATE"
+    local : field : grosssales : delete : field
+    local : field : salesrtn : delete : field
+    local : field : netsales : delete : field
+    Local: Field:grosssales : Set As:"GROSS SALES"
+    Local: Field:salesrtn : Set As:"SALES RTN"
+    Local: Field:netsales : Set As:"NET SALE"
+    Local: Field:AMTF3 : Set As:"COLLECTION"
+    Local: Field: grosssales: Sub title : Yes
+    Local: Field: salesrtn: Sub title : Yes
+    Local: Field: netsales: Sub title : Yes
+    Local: field: sdf: Align:left
+    Local: field: grosssales: Align:centre
+    Local: field: salesrtn: Align:centre
+    Local: field: netsales: Align:centre
+    local: field: default : style: normal bold
+    local: field: fwf : style:styleCalisto2
+    local: field: sdf : style:styleCalisto2
+    local: field: netsales : style:styleCalisto2
+    local: field: grosssales : style:styleCalisto2
+    local: field: salesrtn : style:styleCalisto2
+    local: field: numf3 : style:styleCalisto2
+    local: field: amtf : style:styleCalisto2
+    local: field: amtf1 : style:styleCalisto2
+    local: field: amtf2 : style:styleCalisto2
+    local: field: amtf3 : style:styleCalisto2
+
+[Line: LnsalesreportTitle1]
+    use: Lnsalesreport
+    option: titleopt
+    local:field: sdf: set as: ""
+    local:field: numf: set as: "Pcs"
+    local:field: numf1: set as: "Pcs"
+    local:field: numf2: set as: "Pcs"
+    local:field:amtf: set as: "Amount"
+    local:field:amtf1: set as: "Amount"
+    local:field:amtf2: set as: "Amount"
+    local:field:amtf3: set as: "Rs."
+    Local: field: default: Align:centre
+    local: field: default : style: normal bold
+    local: field: sdf : style:styleCalisto2
+    local: field: fwrf : style:styleCalisto2
+    local: field: numf : style:styleCalisto2
+    local: field: numf1 : style:styleCalisto2
+    local: field: numf2 : style:styleCalisto2
+    local: field: numf3 : style:styleCalisto2
+    local: field: amtf : style:styleCalisto2
+    local: field: amtf1 : style:styleCalisto2
+    local: field: amtf2 : style:styleCalisto2
+    local: field: amtf3 : style:styleCalisto2
+
+[field:grosssales]
+    field:numf,amtf
+    width:width:17.9
+
+[field:salesrtn]
+    field:numf1,amtf1
+    width:width:17.9
+
+[field:netsales]
+    field:numf2,amtf2
+    width:width:17.9
+
+;;------------------------------------------------------------------------------
+;; DATA LINE: Main line showing all calculated columns per date
+;;------------------------------------------------------------------------------
+
+[Line: Lnsalesreport]
+    Fields: sdf,fwf
+    right field:grosssales,salesrtn,netsales,AMTF3
+    Option: Alter on Enter
+    local:field: qtyf : Format : "NoSymbol, Short Form, No Compact,NoZero"
+    local:field: ratepf : setas  : #amtf/#qtyf
+    local: field: fwf: alter : voucher : $$isvoucher
+    option : alter on enter
+    local : field : fwf : alter : voucher : $$isvoucher
+    local:field: fwf: set as:""
+    local:field: sdf: set as:$date
+    local:field: numf: set as:$billedqtysalesb
+    local:field:amtf: set as:$billedqtysalesamt
+    local:field:amtf1: set as:$billedqtysalesretamt
+    local:field: numf1: set as:$billedqtysalesretb
+    local:field:amtf2: set as:#amtf-#amtf1
+    local:field: numf2: set as:#numf-#numf1
+    local:field:amtf3: set as:$recamount
+    Local: field: numf: Width:7
+    Local: field: numf2: Width:7
+    Local: field: numf1: Width:7
+    Local: field: amtf: Width:10
+    Local: field: amtf2: Width:10
+    Local: field: amtf1: Width:10
+    Local: field: nf: Width:30
+    Local: Field: default: Border: thin right
+    Local: Field: sdf: Border: thin left right
+    local: field: DEFAULT : style:styleCalisto
+    border:thin bottom
+
+;;------------------------------------------------------------------------------
+;; TOTALS LINE: Running totals for all columns
+;;------------------------------------------------------------------------------
+
+[line: LnsalesreportTotals]
+    use: Lnsalesreport
+    option: totalOpt
+    local: field: fwf: align: right
+    local: field: default : style: normal bold
+    local:field: fwf: set as:""
+    local:field: sdf: set as:"Total"
+    local:field: numf: set as:$$total:numf
+    local:field: numf1: set as:$$total:numf1
+    local:field: numf2: set as:$$total:numf2
+    local:field:amtf: set as:$$total:amtf
+    local:field:amtf1: set as:$$total:amtf1
+    local:field:amtf2: set as:$$total:amtf2
+    local:field:amtf3: set as:$$total:amtf3
+    local: field: sdf: type: String
+    local: field: sdf : style:styleCalisto2
+    local: field: numf : style:styleCalisto2
+    local: field: numf1 : style:styleCalisto2
+    local: field: numf2 : style:styleCalisto2
+    local: field: numf3 : style:styleCalisto2
+    local: field: amtf : style:styleCalisto2
+    local: field: amtf1 : style:styleCalisto2
+    local: field: amtf2 : style:styleCalisto2
+    local: field: amtf3 : style:styleCalisto2
+
+;===============================================================================
+; End of SALESREPORT.TXT (with documentation comments)
+;===============================================================================
+
+`;
+export default tdl;

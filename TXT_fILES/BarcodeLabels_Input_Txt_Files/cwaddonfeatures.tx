@@ -1,0 +1,436 @@
+; Created By: Khokan on 2024-11-22 12:38, ID: 
+
+[#Part  : CMP TallyShopFeatures Left]
+add:line:transferdetailsline
+
+[line:transferdetailsline]
+field:sp,cwlogical
+Local: Field: sp: Set As:"Transfer Details"
+Local: Field: cwlogical: storage:cwTransferDetails
+Local: Field : cwlogical : SubForm : cwTransferDetailsrep: $$value
+Local: field: sp: Width:20
+
+[report:cwTransferDetailsrep]
+form:cwTransferDetailsrep
+
+[form:cwTransferDetailsrep]
+part:cwTransferDetailsrep
+
+[part:cwTransferDetailsrep]
+line:Sourcegodownline,cwTargetgodownline1,cwtarvtypeline,cwdateline
+
+[line:Sourcegodownline]
+field:sp,nf
+
+Local: Field: sp: Set As:"Source Godown"
+Local: Field: nf: table: collsourgodown ;;,Not Applicable
+Local: Field: nf: Show table: Always
+Local: Field: nf: storage:cwSourceGodownaddon
+Local: field: sp: Width:15
+Local: Field: sp: Style: small
+Local: Field: nf: Style: small Bold
+
+[Collection: collsourgodown]
+title:"List fo Godown"
+type:godown
+
+[line:cwTargetgodownline1]
+field:sp,nf
+Local: Field: sp: Set As:"Target Godown"
+
+Local: Field: nf: table: collsourgodown  ;;,Not Applicable
+Local: Field: nf: Show table: Always
+Local: Field: nf: storage:cwTargetGodownaddon
+Local: field: sp: Width:15
+Local: Field: sp: Style: small
+Local: Field: nf: Style: small Bold
+
+
+[line:cwtarvtypeline]
+field:sp,nf
+Local: Field: sp: Set As:"Voucher type"
+Local: Field:nf : storage:cwtarVouchertypeaddon
+Local: Field: nf: table:cwVouchertypes
+Local: Field: nf: Show table: Always
+Local: field: sp: Width:15
+Local: Field: sp: Style: small
+Local: Field: nf: Style: small Bold
+
+
+[line:cwdateline]
+field:sp,sdf
+Local: Field: sp: Set As:"Date"
+Local: Field:sdf : storage:cwdateaddon
+Local: field: sdf: Align:left
+Local: field: sp: Width:15
+
+Local: Field: sp: Style: small
+Local: Field: sdf: Style: small Bold
+
+
+;;===================================================================
+
+ [#Menu: gateway of tally]
+ add:button:cwfileitemGodownBarcode
+
+[button:cwfileitemGodownBarcode]
+key:alt+G
+TITLE:"Godown Transfer"
+action:modify variable:cwTransfergodownrep
+
+[report:cwTransfergodownrep]
+form:cwTransfergodownrep
+
+list variable :cwmygodown2
+list variable :cwmygodown3
+
+[form:cwTransfergodownrep]
+part:cwTransfergodownrep
+
+ on : form accept : yes : call :cwgodownTransferfun ;;:#nf:#nf4  ;;:#nf3:#nf4:#sdf
+
+[part:cwTransfergodownrep]
+line:Sourcegodownline2,cwTargetgodownline2,cwtarvtypeline2,cwtarstockitemline,cwdateline2
+
+[line:Sourcegodownline2]
+field:sp,nf
+
+Local: Field: sp: Set As:"+ ive Source Godown"
+Local: Field: nf: table: collsourgodown ;;,Not Applicable
+Local: Field: nf: Show table: Always
+Local: Field: nf: SETAS:$cwSourceGodownaddon:COMPANY:##SVCURRENTCOMPANY
+Local: field: sp: Width:15
+Local: Field: sp: Style: small
+Local: Field: nf: Style: small Bold
+
+
+
+[line:cwTargetgodownline2]
+field:sp,nf2
+Local: Field: sp: Set As:"- ive Target Godown"
+
+Local: Field: nf2: table: collsourgodown  ;;,Not Applicable
+Local: Field: nf2: Show table: Always
+Local: Field: nf2: SETAS:$cwTargetGodownaddon:COMPANY:##SVCURRENTCOMPANY
+Local: field: sp: Width:15
+Local: Field: sp: Style: small
+Local: Field: nf2: Style: small Bold
+
+
+[line:cwtarvtypeline2]
+field:sp,nf3
+Local: Field: sp: Set As:"Voucher type"
+Local: Field:nf3 : SETAS:$cwtarVouchertypeaddon:COMPANY:##SVCURRENTCOMPANY
+Local: Field: nf3: table:cwVouchertypes
+Local: Field: nf3: Show table: Always
+Local: field: sp: Width:15
+Local: Field: sp: Style: small
+Local: Field: nf3: Style: small Bold
+
+
+[line:cwtarstockitemline]
+field:sp,nf4
+Local: Field: sp: Set As:"Item Name"
+
+Local: Field: nf4: table:stockitem
+Local: Field: nf4: Show table: Always
+Local: field: sp: Width:15
+Local: Field: sp: Style: small
+Local: Field: nf4: Style: small Bold
+
+
+[line:cwdateline2]
+field:sp,sdf  ;;,nf12
+Local: Field: nf12: table:collItembatchNegative ,Not Applicable
+Local: Field: nf12: Show table: Always
+
+
+Local: Field: sp: Set As:"Date"
+Local: Field:sdf : SETAS:$cwdateaddon:COMPANY:##SVCURRENTCOMPANY
+Local: field: sdf: Align:left
+Local: field: sp: Width:15
+
+Local: Field: sp: Style: small
+Local: Field: sdf: Style: small Bold
+
+
+
+
+[variable:cwmygodown2]
+variable: cwSourcegodown : string
+variable: cwTargetgodown : string
+variable: cwVouchertypes : string
+variable: cwmyitem : string
+variable: cwmydate : string
+
+variable: cwmybatch : string
+variable:cwMyActualQty : quantity
+variable:cwMyrate : rate
+variable:cwMyamount : amount
+
+variable : myitem : string
+variable : mybatch : string
+variable : myqty : quantity
+variable : myrate : rate
+variable : myamount : amount
+
+
+
+[variable:cwmygodown3]
+variable: cwSourcegodown1 : string
+variable: cwTargetgodown : string
+variable: cwVouchertypes : string
+variable: cwmyitem : string
+variable: cwmydate : string
+
+variable: cwmybatch : string
+variable:cwMyActualQty : quantity
+variable:cwMyrate : rate
+variable:cwMyamount : amount
+
+
+variable : myitem1 : string
+variable : mybatch1 : string
+variable : myqty1 : quantity
+variable : myrate1 : rate
+variable : myamount1 : amount
+
+
+[system : variable]
+list variable :cwmygodown2
+
+
+[system : variable]
+list variable :cwmygodown3
+
+
+[collection : cwCollgodownitem]
+data source : variable : cwmygodown2
+
+format:$cwSourcegodown,10
+format:$cwTargetgodown,10
+format:$cwVouchertypes,10
+format:$cwmyitem,10
+format:$cwmydate,10
+
+format:$cwmygodown ,10
+format:$cwmybatch,10
+format:$cwMyActualQty,10
+format:$cwMyrate,10
+format:$cwMyamount,10
+
+format:$myitem,10
+format:$mybatch,10
+format:$myqty,10
+format:$myrate,10
+format:$myamount,10
+
+format:$myitem1,10
+format:$mybatch1,10
+format:$myqty1,10
+format:$myrate1,10
+format:$myamount1,10
+
+fetch:cwSourcegodown,cwTargetgodown,cwVouchertypes,cwmyitem,cwmydate
+fetch:myitem1,mybatch1,myqty1,myrate1,myamount1,myitem,mybatch,myqty,myrate,myamount
+
+[collection : cwCollgodownitem2]
+data source : variable : cwmygodown3
+
+format:$cwSourcegodown,10
+format:$cwSourcegodown1,10
+format:$cwTargetgodown,10
+format:$cwVouchertypes,10
+format:$cwmyitem,10
+format:$cwmydate,10
+
+format:$cwmygodown ,10
+format:$cwmybatch,10
+format:$cwMyActualQty,10
+format:$cwMyrate,10
+format:$cwMyamount,10
+
+format:$myitem1,10
+format:$mybatch1,10
+format:$myqty1,10
+format:$myrate1,10
+format:$myamount1,10
+
+fetch:cwSourcegodown,cwTargetgodown,cwVouchertypes,cwmyitem,cwmydate
+fetch:myitem1,mybatch1,myqty1,myrate1,myamount1,cwSourcegodown1
+
+
+[Function: cwgodownTransferfun]
+;; {22.Nov.24 17:10} parameter:mytemplatename:string
+
+variable : myitem : string:#nf4
+variable: cwSourcegodown : string:#nf
+variable: cwSourcegodown1 : string:#nf
+variable: cwTargetgodown : string :#nf2
+
+variable : mybatch : string
+variable : myqty : quantity
+variable : myrate : rate
+variable : myamount : amount
+
+variable : mybatch1 : string
+variable : myqty1 : quantity
+variable : myrate1 : rate
+variable : myamount1 : amount
+
+variable : myvchtype : string
+
+variable : lvTestIndexVar : string
+variable : lvTestIndexVar2 : string
+variable : cwVouchertypes : string
+variable : cwmydate : date
+
+variable : lineindex : number
+
+01:list delete: cwmygodown3
+
+100:walk collection:collItembatchNegative2
+
+325 : set :lvTestIndexVar2 :  $parent + $godownname+$Name
+	
+;; {23.Nov.24 12:57} 330 : if : not $$listfind:cwmygodown2:##lvTestIndexVar
+	
+340 : list add : cwmygodown3 : ##lvTestIndexVar2
+	
+;; {23.Nov.24 12:57} 350 : set : LineIndex : $$listIndex:cwmygodown2:##lvTestIndexVar
+	
+	
+370 : set : cwmygodown3[##LineIndex].myitem1 :$parent
+380 : set : cwmygodown3[##LineIndex].mybatch1 : $name
+385 : set : cwmygodown3[##LineIndex].cwSourcegodown1 : $godownname
+	
+;; {23.Nov.24 12:56} 390 : else
+	
+400 :set: LineIndex : $$listIndex:cwmygodown3:##lvTestIndexVar	
+	
+;; {23.Nov.24 12:56} 410 :end if	
+
+425 :set:cwmygodown3[##LineIndex].myqty1 : $closingbalance
+
+430 :set:cwmygodown3[##LineIndex].myrate1:$closingrate
+440 :set:cwmygodown3[##LineIndex].myamount1:$closingvalue
+
+;; {23.Nov.24 12:56} 450 :SET:cwmygodown2[##LineIndex].cwVouchertypes1 :#nf3
+
+;; {23.Nov.24 12:56} 460 :SET:cwmygodown2[##LineIndex].cwmydate1 :#sdf
+
+
+470:log :$$Sprintf:"%s%s%s%s%s":$parent:$name:$godownname:$closingbalance   ;;:$closingrate:$closingvalue
+500:end walk
+
+;;======================================================================================
+
+999:list delete: cwmygodown2
+1000:walk collection:collItembatchNegative
+
+3250 : set :lvTestIndexVar :  $parent + $godownname+$Name
+	
+;; {23.Nov.24 13:02} 3300 : if : not $$listfind:cwmygodown2:##lvTestIndexVar
+	
+3400 : list add : cwmygodown2 : ##lvTestIndexVar
+	
+3500 : set : LineIndex : $$listIndex:cwmygodown2:##lvTestIndexVar
+	
+	
+3700 : set : cwmygodown2[##LineIndex].myitem :$parent
+3800 : set : cwmygodown2[##LineIndex].mybatch : $name
+3850 : set : cwmygodown2[##LineIndex].cwSourcegodown : $godownname
+	
+;; {23.Nov.24 13:01} 3900 : else
+	
+;; {23.Nov.24 13:01} 4000 :set: LineIndex : $$listIndex:cwmygodown2:##lvTestIndexVar	
+	
+;; {23.Nov.24 13:01} 4100 :end if	
+
+4250 :set:cwmygodown2[##LineIndex].myqty : $closingbalance
+        
+4300 :set:cwmygodown2[##LineIndex].myrate:$closingrate
+4400 :set:cwmygodown2[##LineIndex].myamount:$closingvalue
+
+;;4500 :SET:cwmygodown2[##LineIndex].cwVouchertypes :#nf3
+
+;;4600 :SET:cwmygodown2[##LineIndex].cwmydate :#sdf
+        
+
+4700:log :$$Sprintf:"%s%s%s%s%s":$parent:$name:$godownname:$closingbalance   ;;:$closingrate:$closingvalue
+
+
+5500:end walk
+
+25000 : return
+
+;;=================================================================================
+
+[Collection:collItembatchNegative]
+Collection:collbatchNegative:collStockItemNegative
+
+by:parent:$parent
+by:name:$name
+by:godownname:$godownname
+aggr compute:closingbalance:sum:$closingbalance
+compute:closingrate:$closingrate
+aggr compute:closingvalue:sum:$closingvalue
+
+add:format:$parent,10
+add:format:$godownname,10
+add:format:$name,10
+add:format:$closingbalance,10
+
+[Collection:collStockItemNegative]
+type:StockItem
+fetch:name,parent,godownname,closingbalance,closingrate
+
+[Collection: collbatchNegative]
+type : batch
+child of :##myitem  ;; #nf4
+
+filter:cwitemnegativefilter,cwgodownnamefilter
+fetch:name,parent,godownname,closingbalance,closingrate
+
+[System: Formula]
+cwstockitemnamefilter:$parent="CH02 CHOKRA"
+cwgodownnamefilter:$godownname=##cwSourcegodown
+cwitemnegativefilter:not $$isempty:$closingbalance and $$isNegative:$closingBalance
+
+
+
+
+[Collection:collItembatchNegative2]
+Collection:collbatchNegative2:collStockItemNegative2
+
+by:parent:$parent
+by:name:$name
+by:godownname:$godownname
+aggr compute:closingbalance:sum:$closingbalance
+aggr compute:closingvalue:sum:$closingvalue
+
+add:format:$parent,10
+add:format:$godownname,10
+add:format:$name,10
+add:format:$closingbalance,10
+
+[Collection:collStockItemNegative2]
+type:StockItem
+fetch:name,parent,godownname,closingbalance
+
+[Collection: collbatchNegative2]
+type : batch
+child of :##myitem  ;; #nf4
+
+filter:cwitemnegativefilter2,cwgodownnamefilter2
+fetch:name,parent,godownname,closingbalance
+
+[System: Formula]
+
+cwgodownnamefilter2:$godownname=##cwSourcegodown1  ;;##cwTargetgodown
+cwitemnegativefilter2:not $$isempty:$closingbalance and not $$isNegative:$closingBalance
+
+
+;;=================================================================================
+
+

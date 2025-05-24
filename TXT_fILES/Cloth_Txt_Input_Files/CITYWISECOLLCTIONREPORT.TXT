@@ -1,0 +1,147 @@
+;===============================================================================
+; CITYWISECOLLCTIONREPORT.TXT
+; Created By: Khokan on 2021-08-26 19:46, ID:
+; Purpose: Provides a "City Wise Collection Report" in Tally,
+;          showing receipts grouped by city, with party, cheque number,
+;          mode of payment, and totals.
+;===============================================================================
+
+[#menu: Gateway of Tally]
+;; {26.Aug.21 19:54}         add: Option: CitywisecollctionreportLock ;; : @@CitywisecollctionreportDemoLock
+
+[#menu : cw_Debug_menu]
+    add: Item: before: @@locQuit: @@CitywisecollctionreportReport: Display: RepCitywisecollctionreport
+    add: Item: before: @@locQuit: @@CitywisecollctionreportReport: Display: RepCitywisecollctionreport
+    add: Item: before: @@locQuit: Blank
+
+[System: formula]
+    CitywisecollctionreportReport: "City wise collction report"
+;; CitywisecollctionreportDemoLock: $$MachineDate < $$Date:"01/04/2013"
+
+[Report: RepCitywisecollctionreport]
+    use: Dsp Template
+    Title: @@CitywisecollctionreportReport
+    Printset: Report Title: @@CitywisecollctionreportReport
+    Form: FrmCitywisecollctionreport
+    Export: Yes
+    set  : svfromdate : ##svcurrentdate
+    set  : svTodate : ##svcurrentdate
+    Local: Button: RelReports: Inactive: Yes
+    variable: str1, str2
+    set: str1: ""
+    set: str2: ""
+
+[Form: FrmCitywisecollctionreport]
+    use: DSP Template
+    Part: DspAccTitles, PrtTitle0Citywisecollctionreport, PrtCitywisecollctionreport
+    Width: 100% Page
+    Height: 100% Page
+    Background: @@SV_STOCKSUMMARY
+    delete: page break
+    add: page break: Citywisecollctionreportbotbrk, CitywisecollctionreportbotOpbrk
+    Bottom Toolbar Buttons: BottomToolBarBtn1, BottomToolBarBtn3, BottomToolBarBtn8, BottomToolBarBtn9, BottomToolBarBtn10, BottomToolBarBtn11, BottomToolBarBtn12
+    add: button: citybotton
+    local:Part:DSPCompanyName:local:line:DSPCompanyName: Local: Field: DSP CompanyName:PrintStyle:styleCalisto2
+    local:Part:DSPCompanyAddress:local:line:DSPCompanyAddress: Local: Field: DSPCompanyAddress:PrintStyle:style2n
+    local:Part:DSPReportTitle:local:line:DSPReportName: Local: Field: DSPReportName:PrintStyle:style3n
+    local:Part:DSPReportSubTitle:local:line:DSPReportSubTitle: Local: Field: DSPReportSubTitle:PrintStyle:style2n
+    local:Part:DSPReportTitle:local:line:DSPReportPeriod:Local: Field: DSPReportPeriod:PrintStyle:style2n
+    local:Part:DSPPageNo:local:line:DSPPageNo: Local: Field:DSPPageNo:PrintStyle:style2n
+
+[part: CitywisecollctionreportbotBrk]
+    line: EXPINV PageBreak
+    border: thin top
+
+[part: Citywisecollctionreportbotopbrk]
+    use: dspacctitles
+    add: part: CitywisecollctionreportTitlePart
+
+[part: CitywisecollctionreportTitlePart]
+    line: LnCitywisecollctionreportTitle
+
+[line: LnCitywisecollctionreportCurrPeriod]
+    field: fwf, fwf2
+    Local: field: fwf2: Align: Right
+    Local: Field: fwf: Style: normal bold
+    Local: Field: fwf2: Style: normal bold
+    Local: Field: fwf2: Set As: @@dspDateStr
+    invisible: $$inprintmode
+
+[part: PrtTitle0Citywisecollctionreport]
+    line: LnCitywisecollctionreportCurrPeriod
+
+[Part: PrtCitywisecollctionreport]
+    Line: LnCitywisecollctionreportTitle, LnCitywisecollctionreport
+    bottom Line: LnCitywisecollctionreportTotals
+    repeat: LnCitywisecollctionreport: ColCitywisecollctionreport
+    scroll: Vertical
+    Common Border: Yes
+    Total: Qtyf, amtf
+
+[Collection: ColCitywisecollctionreport]
+    type: bills
+    compute: cwledcity1: $cwledcity:ledger:$parent
+    filter: ColCitywisecollctionreportFilter, ColCitywiseoutstandingreportFilter2, cwpartycityfilter, cwcityfilter
+    fetch: ledgerentries.ledgerentries.cwnetsales
+    fetch: ledgerentries.ledgerentries.vouchertypename
+    fetch: ledgerentries.BANKALLOCATIONS.INSTRUMENTNUMBER
+    fetch: cwcaption1item
+
+[system: Formula]
+    ColCitywisecollctionreportFilter: @@cwrecvchtype = "Receipt"
+
+[Line: LnCitywisecollctionreportTitle]
+    use: LnCitywisecollctionreport
+    option: titleopt
+    local: field: sdf: set as: "Date"
+    local: field: fwf: set as: "Party"
+    local: field: SNF: set as: "Chq No"
+    local: field: NF: set as: "Mode of Payment"
+    local: field: amtf: set as: "Receipt"
+    local: field: snf2: set as: "City"
+    local: field: sdf: style: style2x
+    local: field: fwf: style: style2x
+    local: field: SNF: style: style2x
+    local: field: SNF1: style: style2x
+    local: field: SNF2: style: style2x
+    local: field: NF: style: style2x
+    local: field: amtf: style: style2x
+    Local: field: default: Align: centre
+    Local: field: fwf: Align: left
+
+[Line: LnCitywisecollctionreport]
+    Fields: sdf, fwf
+    right field: snf2, SNF, nf, Amtf
+    Option: Alter on Enter
+    local: field: qtyf: Format: "NoSymbol, Short Form, No Compact,NoZero"
+    local: field: ratepf: setas: #amtf/#qtyf
+    local: field: fwf: alter: voucher: $$isvoucher
+    option: alter on enter
+    local: field: fwf: alter: voucher: $$isvoucher
+    local: field: sdf: set as: $billdate
+    local: field: fwf: set as: $parent
+    local: field: SNF: set as: @@recmyNewChqNoa
+    local: field: NF: set as: $name
+    local: field: NF2: set as: $$CollectionField:$vouchertypename:First:ledgerentries
+    local: field: snf2: set as: $cwledcity1
+    local: field: amtf: set as: $closingbalance
+    local: field: DEFAULT: style: style3x
+    Local: field: default: Border: thin right
+    border: thin bottom
+
+[line: LnCitywisecollctionreportTotals]
+    use: LnCitywisecollctionreport
+    option: totalOpt
+    local: field: fwf: align: right
+    local: field: default: style: normal bold
+    local: field: qtyf: set as: $$total:qtyf
+    local: field: fwf: set as: "Total"
+    local: field: sdf: set as: ""
+    local: field: SNF: set as: ""
+    local: field: NF: set as: ""
+    local: field: amtf: set as: $$total:amtf
+    local: field: sdf: style: style2x
+    local: field: fwf: style: style2x
+    local: field: SNF: style: style2x
+    local: field: NF: style: style2x
+    local: field: amtf: style: style2x

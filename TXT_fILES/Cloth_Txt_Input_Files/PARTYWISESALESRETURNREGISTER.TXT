@@ -1,0 +1,62 @@
+; Created By: Khokan on 2021-06-21 12:34
+; ID: 
+
+;;===========================================================
+;; FIELD CONFIGURATION: Setting conditional options for the 'eiconsignee' field
+;;===========================================================
+
+[#field:eiconsignee]
+; Conditionally add the option 'vchrefpurcopt' to the field
+; This is added only if:
+;   - The voucher type is a purchase (i.e., @@ispurchase is true)
+;   - The feature flag @@MinuSareeEnabled is enabled
+add:option:vchrefpurcopt:@@ispurchase and @@MinuSareeEnabled
+
+[!field:vchrefpurcopt]
+; Add a validation control 'msgaSupplierInvoice' to check for duplicate supplier invoice numbers
+; This is triggered:
+;   - Only in create mode ($$increatemode)
+;   - If the condition @@refnoppt is true (i.e., a duplicate reference is found)
+add:control:msgaSupplierInvoice:if @@refnoppt and $$increatemode then yes else no
+
+;;===========================================================
+;; SYSTEM FORMULAS: Logical conditions and checks
+;;===========================================================
+
+[System: Formula]
+; Define 'refnoppt' formula:
+;   - Checks if the current Reference ($Reference) matches any existing one
+;   - Comparison is done using the filtered collection 'Colsuppinv'
+refnoppt: $Reference = $$FilterValue:$Reference:Colsuppinv:1:ColsuppFilter
+
+;;===========================================================
+;; COLLECTION DEFINITION: 'Colsuppinv' gathers relevant vouchers
+;;===========================================================
+
+[Collection: Colsuppinv]
+Type        : Vouchers  : Ledger              ; Specifies this is a collection of Voucher objects filtered by Ledger
+Child of    : #eiconsignee                    ; Filters vouchers related to the selected consignee
+format      : $Reference,10                   ; Format to show Reference field (width 10 characters)
+format      : $ledgername,30                  ; Format to show Ledger Name (width 30 characters)
+fetch       : Reference, ledgername           ; Fetch these specific fields for processing
+filter      : ColsuppFilter2                  ; Apply an additional filter to include only purchase vouchers
+
+;;===========================================================
+;; ADDITIONAL FORMULAS: Filters and message text
+;;===========================================================
+
+[system: Formula]
+; 'ColsuppFilter' - used to compare current reference with a given voucher reference
+ColsuppFilter   : $Reference = #vchref
+
+; 'colsupp' - retrieves the filtered Reference value from the collection
+colsupp         : $$FilterValue:$Reference:Colsuppinv:1:ColsuppFilter
+
+; 'ColsuppFilter2' - ensures that only purchase vouchers are considered in the collection
+ColsuppFilter2  : $$ispurchase:$vouchertypename
+
+; 'SupplierInvoiceNo' - alias for the reference value (i.e., invoice number)
+SupplierInvoiceNo : $Reference
+
+; 'msgaSupplierInvoice' - warning message shown on detecting a duplicate supplier invoice number
+msgaSupplierInvoice : "Supplier Invoice No. Duplicate !"

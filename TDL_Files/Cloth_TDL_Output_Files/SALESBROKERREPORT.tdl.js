@@ -1,0 +1,247 @@
+// Auto-generated from SALESBROKERREPORT.TXT
+const tdl = `
+;===============================================================================
+; SALESBROKERREPORT.TXT
+; Created By: Khokan on 2021-02-09 18:53, ID:
+; Purpose: Implements a "Sales Broker Wise Outstanding" report in Tally,
+;          allowing users to view outstanding, sales, return, GST, and collection
+;          details broker-wise, with detailed totals and professional formatting.
+;===============================================================================
+
+;;------------------------------------------------------------------------------
+;; Menu Integration: Add the report option to Gateway of Tally main menu
+;;------------------------------------------------------------------------------
+
+[#menu: Gateway of Tally]
+    ;; Add an option to open the Agent Wise Outstanding report menu
+    add: Option: AgentWiseOutstanding2Lock
+
+[!menu: AgentWiseOutstanding2Lock]
+    ;; Add menu items for displaying the broker-wise outstanding report
+    ;; (You can enable/disable these as required)
+    ;; Display a collection of agent ledgers (not used in this implementation)
+    ;; add: Item: before: @@locQuit: @@AgentWiseOutstanding2Report: Display collection: collAgentLedger
+    ;; Display the main report (collection-driven selection)
+    add: Item: before: @@locQuit: @@AgentWiseOutstanding2Report: Display Collection: collledstatement
+    add: Item: before: @@locQuit: Blank
+
+;;------------------------------------------------------------------------------
+;; Collection: Ledger selection for broker-wise report
+;;------------------------------------------------------------------------------
+
+[Collection: collledstatement]
+    Use               : Extract Alias Collection
+    Source Collection : List of Ledgers
+    Variable          : Ledger Name
+    Report            : RepAgentWiseOutstanding2
+    Trigger           : LedgerNamex
+    Fetch             : Name
+
+;;------------------------------------------------------------------------------
+;; Ledger selection popup (auto report for variable selection)
+;;------------------------------------------------------------------------------
+
+[Report: LedgerNamex]
+    Use   : Collection Variable
+    Local : Line : Collection Variable : Field : LedgerNamex
+    Local : Field: MV Title            : Info  : $$LocaleString:"Name of Ledger"
+
+[Field: LedgerNamex]
+    Use        : Name Field
+    Key        : Create Ledger
+    Modifies   : LedgerName
+    Table      : cwBrokerTableLedger   ;; List of ExtractLedgers
+    Show Table : Always
+    CommonTable: No
+
+;;------------------------------------------------------------------------------
+;; System Formulas for report title and filtering
+;;------------------------------------------------------------------------------
+
+[System: formula]
+    AgentWiseOutstanding2Report : "Sales Broker Wise Outstanding"
+    cwagentfilternew            : $parent=@@cwbroker
+
+;;------------------------------------------------------------------------------
+;; Main Report Definition
+;;------------------------------------------------------------------------------
+
+[Report: RepAgentWiseOutstanding2]
+    use        : Dsp Template
+    Title      : @@AgentWiseOutstanding2Report
+    Printset   : Report Title: @@AgentWiseOutstanding2Report
+    Form       : FrmAgentWiseOutstanding2
+    Export     : Yes
+    set        : svfromdate : ##svcurrentdate
+    set        : svTodate   : ##svcurrentdate
+    Local      : Button: RelReports: Inactive: Yes
+
+;;------------------------------------------------------------------------------
+;; Main Form and Layout
+;;------------------------------------------------------------------------------
+
+[Form: FrmAgentWiseOutstanding2]
+    use     : DSP Template
+    Part    : DspAccTitles, PrtTitle0AgentWiseOutstanding2, PrtAgentWiseOutstanding2
+    Width   : 100% Page
+    Height  : 100% Page
+    Background: @@SV_STOCKSUMMARY
+    delete  : page break
+    add     : page break: AgentWiseOutstanding2botbrk, AgentWiseOutstanding2botOpbrk
+    Bottom Toolbar Buttons : BottomToolBarBtn1, BottomToolBarBtn3, BottomToolBarBtn8, BottomToolBarBtn9, BottomToolBarBtn10, BottomToolBarBtn11, BottomToolBarBtn12
+
+[part: AgentWiseOutstanding2botBrk]
+    line   : EXPINV PageBreak
+    border : thin top
+
+[part: AgentWiseOutstanding2botopbrk]
+    use    : dspacctitles
+    add    : part: AgentWiseOutstanding2TitlePart
+
+[part: AgentWiseOutstanding2TitlePart]
+    line   : LnAgentWiseOutstanding2Title
+
+[line: LnAgentWiseOutstanding2CurrPeriod]
+    field  : fwf, fwf2
+    Local  : field: fwf2: Align: Right
+    Local  : Field: fwf: Style: style3
+    Local  : Field: fwf2: Style: style3
+    Local  : Field: fwf2: Set As: @@dspDateStr
+    Local  : Field: fwf: Set As: "Name    :  " + ##LedgerName
+    Local  : Field: fwf2:invisible: $$inprintmode
+
+[part: PrtTitle0AgentWiseOutstanding2]
+    line : LnAgentWiseOutstanding2CurrPeriod
+
+;;------------------------------------------------------------------------------
+;; Main Data Part: Table of broker-wise outstanding details
+;;------------------------------------------------------------------------------
+
+[Part: PrtAgentWiseOutstanding2]
+    Line        : LnAgentWiseOutstanding2Title, LnAgentWiseOutstanding2
+    bottom Line : LnAgentWiseOutstanding2Totals
+    repeat      : LnAgentWiseOutstanding2: ColAgentWiseOutstanding2
+    scroll      : Vertical
+    Common Border: Yes
+    Total       : Qtyf, amtf, amtf2, amtf3, amtf4, amtf5, amtf6
+
+;;------------------------------------------------------------------------------
+;; Data Collection: Broker-wise outstanding details
+;;------------------------------------------------------------------------------
+
+[Collection: ColAgentWiseOutstanding2]
+    ;; Main collection for broker-wise outstanding
+    Collection : ColAgentWiseOutstanding2A
+    Collection : ColAgentWiseOutstanding2B
+    sort       : @@default : $name
+    filter     : ColAgentWiseOutstanding2Filter
+
+[Collection: ColAgentWiseOutstanding2A]
+    type   : bills
+    cleared: yes
+    filter : ColAgentWiseOutstanding2Filter
+
+[Collection: ColAgentWiseOutstanding2B]
+    use    : ColAgentWiseOutstanding2A
+    cleared: no
+
+[system: Formula]
+    ColAgentWiseOutstanding2Filter : ##LedgerName = $cwbroker
+    cwsalesfilternew               : $$issales:$vouchertypename
+    cwcreditnotefilternew          : $$iscreditnote:$vouchertypename
+    cwrecptfilternew               : $$isreceipt:$vouchertypename
+    cwBillGSTValue                 : $$FilterAmtTotal:LedgerEntries:cwsalesfilternew:@@cwVCHGSTVAlue
+
+;;------------------------------------------------------------------------------
+;; Title Line: Table headers
+;;------------------------------------------------------------------------------
+
+[Line: LnAgentWiseOutstanding2Title]
+    use   : LnAgentWiseOutstanding2
+    option: titleopt
+    local : field: sdf: set as: "Date"
+    local : field: snf: set as: "Vch No."
+    local : field: fwf: set as: "Party Name"
+    local : field: amtf: set as: "Gross Sale"
+    local : field: amtf2: set as: "Nett Sale"
+    local : field: amtf3: set as: "Total GST Amount"
+    local : field: amtf4: set as: "Gross Sales Return"
+    local : field: amtf5: set as: "Receipt Amount"
+    local : field: amtf6: set as: "Outstanding"
+    local : field: numf: set as: "Due Days"
+    local : field: sdf: style: style1
+    local : field: snf: style: style1
+    local : field: fwf: style: style1
+    local : field: amtf: style: style1
+    local : field: amtf2: style: style1
+    local : field: amtf3: style: style1
+    local : field: amtf4: style: style1
+    local : field: amtf5: style: style1
+    local : field: amtf6: style: style1
+    local : field: numf: style: style1
+    Local : field : amtf3: Lines : 2
+    Local : field : amtf4: Lines : 2
+    Local : field : amtf5: Lines : 2
+    Local : field:default: Align: centre
+    Local : field:fwf:delete: Align:centre
+
+;;------------------------------------------------------------------------------
+;; Calculation Formulas for Amounts, GST, Receipts, etc.
+;;------------------------------------------------------------------------------
+
+[System: Formula]
+    cwDiscLedger  : $cwIsDiscount:ledger:$ledgername = "yes"
+    cwDiscValue   : $$filteramttotal:LedgerEntries:cwDiscLedger:$amount
+    cwDiscValue2  : $$FilterAmtTotal:LedgerEntries:cwsalesfilternew:@@cwDiscValue
+    cwDiscValue3  : $$FilterAmtTotal:LedgerEntries:cwcreditnotefilternew:@@cwDiscValue
+    cwinvamtnew   : $$FilteramtTotal:ledgerentries:cwsalesfilternew:@@cwinvamt
+    cwGrossSalesReturn : $$FilteramtTotal:ledgerentries:cwcreditnotefilternew:@@cwinvamt
+
+;;------------------------------------------------------------------------------
+;; Data Line: One line per bill/party with all columns
+;;------------------------------------------------------------------------------
+
+[Line: LnAgentWiseOutstanding2]
+    Fields      : sdf, snf, fwf
+    right fields: amtf, amtf2, amtf3, amtf4, amtf5, amtf6, numf, nf8
+    ;; Formatting and calculation for each field
+    local:field: qtyf : Format : "NoSymbol, Short Form, No Compact,NoZero"
+    local:field: ratepf : setas  : #amtf/#qtyf
+    local:field: sdf: set as: $billdate
+    local:field: snf: set as: $name
+    local:field: fwf: set as: $ledgername
+    local:field: amtf: set as: $$FilteramtTotal:ledgerentries:cwsalesfilternew:$amount
+    local:field: amtf2: set as: @@cwinvamtnew
+    local:field: amtf3: set as: @@cwBillGSTValue
+    local:field: amtf4: set as: @@cwGrossSalesReturn
+    local:field: amtf5: set as: $$filtervalue:(@@cwFNBillAllocTotal):LedgerEntries:1:cwrecptfilternew
+    local:field: amtf6: set as: $closingbalance
+    local:field: numf : set as : @@DSPtoDate - $billdate
+    local : field : nf8 : invisible: yes
+    Local: Field: default: Border: thin right
+    Local: Field: default: Style: style2
+
+;;------------------------------------------------------------------------------
+;; Totals Line: Sums for all columns
+;;------------------------------------------------------------------------------
+
+[line: LnAgentWiseOutstanding2Totals]
+    use: LnAgentWiseOutstanding2
+    option: totalOpt
+    local: field: fwf: align: right
+    local: field: default : style: style1
+    local: field: qtyf: set as: $$total:qtyf
+    local: field: fwf: set as: "Total : "
+    local: field: amtf : set as :  $$total:amtf
+    local: field: amtf2 : set as :  $$total:amtf2
+    local: field: amtf3 : set as :  $$total:amtf3
+    local: field: amtf4 : set as :  $$total:amtf4
+    local: field: amtf5 : set as :  $$total:amtf5
+    local: field: amtf6 : set as :  $$total:amtf6
+
+;;===============================================================================
+;; End of SALESBROKERREPORT.TXT (with documentation comments)
+;;===============================================================================
+
+`;
+export default tdl;

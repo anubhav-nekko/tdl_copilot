@@ -1,0 +1,216 @@
+;; Created By: Khokan on 2021-05-25 13:00
+;; Entry Point: Adds MIS Menu to Gateway of Tally
+
+[#menu: Gateway of Tally]
+add:item :before:@@locquit:"1. MIS":menu:mismenu1ms
+
+;; Main MIS Menu
+[menu:mismenu1ms]
+title:"Mis Menu"
+
+;; NOTE: Following section is commented and left for legacy or reference purposes
+/*
+add: Item:@@supplierpartyaddressbookReportReport: Display Collection:collRepsupplierpartyaddressbookReport
+add: Item: Blank
+add: Item: Blank
+add: Item:@@LRpendingUpdatereportReport: alter: RepLRpendingUpdatereport
+add: Item: Blank
+add: Item:@@salesRegisterReport: Display: RepsalesRegister
+add: Item: Blank
+add: Item:@@salesReturnRegisterReport: Display: RepsalesReturnRegister
+add: Item: Blank
+add: Item:@@AgentWiseAgeingReportReport: Display Collection: collRepAgentWiseAgeingReport
+add: Item: Blank
+add: Item:@@DailyCollectionReportReport: Display: RepDailyCollectionReport
+add: Item: Blank
+*/
+
+;; Key Items added to MIS Menu
+add: Item:@@NetsalesreportReport: Display: RepNetsalesreport
+add : key item :"Outstanding Report" : O: menu : OutstandingReport
+add: Item: Blank
+add : key item :"Outstanding Ageing Wise" : A: menu : OutstandingAgeingWiseReport
+add: Item: Blank
+add : key item :"Net Sales  Report" : N: menu : NetSalesReport
+add: Item: Blank
+add : key item :"Sales  Register Report" : S: menu : SalesRegisterReport
+add: Item: Blank
+add : key item :"Sales Return Register Report" : R: menu : SalesReturnRegisterReport
+add: Item: Blank
+add : key item :"Collction Report" : C: menu : Collction Report
+add: Item: Blank
+add : key item :"Multi Print Outstanding " : M: menu : Multi Print Outstanding
+add: Item: Blank
+
+;; LR and Logistics Related Reports
+add: Item: @@LRPendingReportReport: alter: RepLRPendingReport
+add: Item: Blank
+add: Item:@@LrreportReport: Display: RepLrreport
+add: Item: Blank
+
+;; Additional Reports (commented with date stamps)
+;; {30.Aug.21 11:46} Agent Wise Ageing
+;; {02.Sep.21 16:10} Alternate Agent Wise Ageing
+;; {16.Apr.22 14:46} Ageing Wise Outstanding
+
+add: Item: @@khamprintReport: Display Collection: collledRepkhamprint
+add: Item: Blank
+add: Item: @@multiprintkhamprintReport: print Collection: collRepmultiprintkhamprint
+add: Item: Blank
+
+;; Vouchers & Sales Analysis
+add: Item: @@vchregreportReport: Display: Repvchregreport
+add: Item: Blank
+add: Item: @@TopNitemsaleReport: Display: RepTopNitemsale
+add: Item: Blank
+add: Item: @@salesreportReport: Display: Repsalesreport
+add: Item: Blank
+add:item:@@CustomerMasterreportReport: Display collection : collRepCustomerMasterreport
+add: Item: Blank
+add: Item: @@ComperativeNetsaleCollectionReport: Display Collection: collRepComperativeNetsaleCollection
+add: Item: Blank
+add: Item:@@SalemanComperativeNetsaleandCollectionReport: Display Collection: collRepSalemanComperativeNetsaleCollection
+add: Item: Blank
+add: Item: @@TopSellersReport:Display collection : collRepTopSellers
+add: Item: Blank
+
+;; Sub Menu for Top Sales Products
+add : key item :"Top Sales Products" : P: menu : TopSalesProducts
+
+[menu : TopSalesProducts]
+add: Item: @@TopSalesProductsQtyWiseReport: Display Collection:collRepTopSalesProductsQtyWise
+add: Item: Blank
+add: Item: @@TopSalesProductsValuewiseReport: Display Collection:collRepTopSalesProductsValuewise
+add: Item: Blank
+
+;; Outstanding Ageing Wise Reports Menu
+[MENU:OutstandingAgeingWiseReport]
+add: Item: @@AgeingWiseOutstandingReport: Display collection: colRepAgeingWiseOutstandingxx
+add: Item: Blank
+;; {16.Apr.22 17:55} All Agent Wise Ageing Outstanding (Commented)
+add: Item: @@PartyWiseAgeingWiseOutstandingReport: Display : RepPartyWiseAgeingWiseOutstanding
+add: Item: Blank
+add: Item: @@salesmanWiseAgeingReportReport: Display collection : colRepsalesmanWiseAgeingReport
+add: Item: Blank
+
+;; Outstanding Report Menu with various groupings
+[MENU:OutstandingReport]
+add: Item:@@outstandingreportReport: Display Collection: collledos
+add: Item: Blank
+add: Item: @@AllpartywiesoutstandingreportReport: Display: RepAllpartywiesoutstandingreport
+add: Item: Blank
+add: Item: @@AGENTWISEOutstandingReportReport: Display Collection: collRepAGENTWISEOutstandingReport
+add: Item: Blank
+add: Item: @@allAGENTWISEOutstandingReportReport: Display: RepallAGENTWISEOutstandingReport
+add: Item: Blank
+add: Item: @@SalesmanTWISEOutstandingReportReport: Display Collection: collRepSalesmanTWISEOutstandingReport
+add: Item: Blank
+add: Item: @@allSALESMANWISEOutstandingReportReport: Display: RepallSALESMANWISEOutstandingReport
+add: Item: Blank
+add: Item: @@AreaTWISEOutstandingReportReport: Display Collection: collRepAreaTWISEOutstandingReport
+add: Item: Blank
+add: Item:@@allAREAWISEOutstandingReportReport: Display: RepallAREAWISEOutstandingReport
+add: Item: Blank
+add: Item: @@ZoneWISEOutstandingReportReport: Display Collection: collRepZoneWISEOutstandingReport
+add: Item: Blank
+add: Item: @@ALLZONEWISEOutstandingReportReport: Display: RepALLZONEWISEOutstandingReport
+add: Item: Blank
+add: Item: @@CitywiseoutstandingreportReport: Display: RepCitywiseoutstandingreport
+add: Item: Blank
+add: Item: @@sundrycreitorsoutsandingReport: Display Collection: collRepsundrycreitorsoutsanding
+add: Item: Blank
+
+;; Net Sales Report Menu
+[menu:NetSalesReport]
+add: Item:@@PartywisenetsalesreportReport: Display Collection: colllRepPartywisenetsalesreport
+add: Item: Blank
+add: Item:  @@allPartywisenetsalesreportReport: Display: RepallPartywisenetsalesreport
+add: Item: Blank
+add: Item:  @@ItemwisenetsalesreportReport: Display collection:collRepstockitemrep3new
+add: Item: Blank
+add: Item:  @@allItemwisenetsalesreportReport: Display: RepallItemwisenetsalesreport
+add: Item: Blank
+add: Item: @@AGENTWISEnetsalesreportnewReport: Display Collection: colllRepAGENTWISEnetsalesreportnew
+add: Item: Blank
+add: Item:  @@allAGENTWISEnetsalesreportnewReport: Display: RepallAGENTWISEnetsalesreportnew
+add: Item: Blank
+add: Item: @@SALESMANWISEnetsalesreportnewReport: Display Collection: dispcolllRepSALESMANWISEnetsalesreportnew
+add: Item: Blank
+add: Item: @@allSALESMANWISEnetsalesreportnewReport: Display: RepallSALESMANWISEnetsalesreportnew
+add: Item: Blank
+add: Item:@@AREAWISEnetsalesReportnewReport: Display Collection: collRepAREAWISEnetsalesReportnew
+add: Item: Blank
+add: Item:@@allAREAWISEnetsalesReportnewReport: Display: RepallAREAWISEnetsalesReportnew
+add: Item: Blank
+add: Item:@@ZONEwisenetsalesreportReport: Display Collection: colllRepZONEwisenetsalesreport
+add: Item:Blank
+add: Item:@@allZONEWISEnetsalesReportReport: Display: RepallZONEWISEnetsalesReport
+add: Item:Blank
+add: Item:@@CitywisenetreportReport: Display: RepCitywisenetreport
+add: Item: Blank
+add: Item: @@SalesmanwisesalescollectionsummeryrepReport: Display: RepSalesmanwisesalescollectionsummeryrep
+add: Item:Blank
+add: Item:@@agentwisesalescollectionsummaryreportReport: Display: Repagentwisesalescollectionsummaryreport
+add: Item:Blank
+add: Item:@@MonthtomonthnetsalesreportReport: Display: RepMonthtomonthnetsalesreport
+add: Item:Blank
+
+;; Sales Register Menu
+[menu : SalesRegisterReport]
+add: Item:@@PartywisesalesregisterreportReport: Display Collection: colllRepPartywisesalesregisterreport
+add: Item: Blank
+add: Item: @@AGENTWISEsalesregiterreportReport:Display Collection: colllRepAGENTWISEsalesregiterreport
+add: Item: Blank
+add: Item: @@salesmanWISEsalesregiterreportReport:Display Collection: colllRepsalesmanWISEsalesregiterreport
+add: Item: Blank
+add: Item: @@AREAWISEsalesregiterReportReport: Display Collection: collRepAREAWISEsalesregiterReport
+add: Item: Blank
+add: Item: @@ZONEWISEsalesregiterReportReport: Display Collection: colllRepZONEWISEsalesregiterReport
+add: Item: Blank
+add: Item: @@CitywisesalesregisterreportReport: Display: RepCitywisesalesregisterreport
+add: Item: Blank
+add: Item: @@DailySalesRegisterReport: Display: RepDailySalesRegister
+add: Item: Blank
+
+;; Sales Return Register Menu
+[menu :SalesReturnRegisterReport]
+add: Item:@@AGENTWISEsalesReturnregiterreportReport: Display Collection: colllRepAGENTWISEsalesReturnregiterreport
+add: Item:Blank
+add: Item:@@AllWISEsalesReturnregiterreportReport: Display :RepAllWISEsalesReturnregiterreport
+add: Item:Blank
+add: Item:@@salesReturnmanWISEsalesReturnregiterreportReport: Display Collection: colllRepsalesReturnmanWISEsalesReturnregiterreport
+add: Item:Blank
+add: Item:@@ALLSALSEMENWISEsalesReturnreportReport: Display: RepALLSALSEMENWISEsalesReturnreport
+add: Item:Blank
+add: Item:@@AREAWISEsalesReturnregiterReportReport: Display Collection: collRepAREAWISEsalesReturnregiterReport
+add: Item:Blank
+add: Item:@@AllAREAWISEsalesReturnregiterReportReport: Display :RepAllAREAWISEsalesReturnregiterReport
+add: Item:Blank
+add: Item:@@SALERETURNREGISTERReport: Display: RepSALERETURNREGISTER
+add: Item:Blank
+add: Item:@@SALERETURNSUMMARYReport: Display: RepSALERETURNSUMMARY
+
+;; Collection Report Menu
+[menu :CollctionReport]
+add: Item:@@partywisecollctionreportReport: Display Collection: colllReppartywisecollctionreport
+add: Item: Blank
+add: Item:@@AGENTWISEollctionreportReport: Display Collection: colllRepAGENTWISEollctionreport
+add: Item: Blank
+add: Item:@@SALESMANWISEcollctionreportReport: Display Collection: collRepSALESMANWISEcollctionreport
+add: Item: Blank
+add: Item: @@AREAWISEcollctionreportReport: Display Collection: collRepAREAWISEcollctionreport
+add: Item: Blank
+add: Item:@@ZONEWISEcollctionreportReport: Display Collection: colllRepZONEWISEcollctionreport
+add: Item: Blank
+add: Item: @@CitywisecollctionreportReport: Display: RepCitywisecollctionreport
+
+;; Multi Print Outstanding Menu
+[menu :Multi Print Outstanding]
+add: Item:@@multiprintAGENTWISEOutstandingReportReport: print Collection: collRepmultiprintAGENTWISEOutstandingReport
+add: Item: Blank
+add: Item:@@multiprintSALESMANWISEOutstandingReportReport: print Collection: collRepmultiprintSALESMANWISEOutstandingReport
+add: Item: Blank
+add: Item: @@multiprintAREAWISEOutstandingReportReport: print Collection: collRepmultiprintAREAWISEOutstandingReport
+add: Item: Blank
+add: Item: @@multiprintZONEWISEOutstandingReportReport: print Collection: collRepmultiprintZONEWISEOutstandingReport
+add: Item: Blank

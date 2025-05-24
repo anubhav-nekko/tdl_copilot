@@ -1,0 +1,477 @@
+; =====================================================================
+; AUTHOR INFORMATION AND VERSION HISTORY
+; =====================================================================
+; Created By: suman on 2021-08-28 17:45, ID: 
+; Created By: suman on 2021-07-29 14:15, ID:
+; Created By: Taniya on 2020-09-11 18:51, ID:
+; Created By: Pg on 2018-09-12 11:01, ID:
+
+
+; =====================================================================
+; COLLECTION DEFINITION: cwSelectedColy
+; Purpose: Defines a collection for selected vouchers/invoices
+; =====================================================================
+[collection : cwSelectedColy]
+Data Source: Report: Selected
+
+;; {14.Nov.19 17:04} Fetch		: *.*
+;; {27.Mar.21 13:28} fetch:vouchernumber
+ /* ss
+; =====================================================================
+; FUNCTION: cwExportforSigningBulkx
+; Purpose: Exports selected invoices in bulk for digital signing
+; =====================================================================
+[function : cwExportforSigningBulkx]
+	Variable	: Counter	: Number	: $$numitems:cwSelectedColy  ; Total number of items in collection
+	variable : pcount : number : 1                               ; Progress counter
+        variable : mydate : date                                     ; Date variable for voucher
+        variable : myid : number                                     ; ID variable for voucher
+        variable : myvchtypename : string                            ; Voucher type name
+	VARIABLE : VCHID  : STRING                                   ; Voucher ID string
+
+
+;;05 : log : ##Counter	
+
+
+0030		: Start Progress				: ##Counter	: "Exporting Invoices"  ; Initialize progress bar
+
+10 : walk collection : cwSelectedColy                                    ; Loop through selected collection
+0050		:	Show Progress				: ##PCount  ; Update progress indicator
+11 : if : $cwDSEnabled:Vouchertype:$vouchertypename                      ; Check if digital signing is enabled for this voucher type
+;; {27.Mar.21 13:29} 11a: log : $$string:$date + " " +$$string:$masterid + " " +$$string:$vouchertypename
+
+11b : set : mydate : $date                                               ; Store current voucher date
+11c : set : myid : $masterid                                             ; Store current voucher master ID
+11d : set : myvchtypename : $vouchertypename                             ; Store current voucher type name
+
+11f : walk : cwBulkCollx                                                 ; Walk through bulk collection
+11g : log : $vouchernumber                                               ; Log voucher number
+
+
+	01 : SET : VCHID  : $$SPrintf:"ID:%s":$myid                      ; Format voucher ID string
+	05	 : SET OBJECT 	: (Voucher, ##VchId).                    ; Set current voucher object
+
+
+12 : call : cwExportforSigningy:yes                                      ; Call export function with 'yes' parameter
+
+13 : end walk                                                            ; End bulk collection walk
+14 : end if                                                              ; End voucher type check
+20 : end walk                                                            ; End selected collection walk
+25 : end progress                                                        ; End progress tracking
+
+
+; =====================================================================
+; COLLECTION: cwBulkCollx
+; Purpose: Defines collection for bulk voucher processing with filters
+; =====================================================================
+[collection: cwBulkCollx]
+        Use: Vouchers of Company                                         ; Base collection to use
+     delete: filter : daybookfilter                                      ; Remove daybook filter
+     Filter: ColdddFilter                                                ; Apply custom filter
+     parmvar : svfromdate : date : ##mydate                              ; Parameter for from date
+     parmvar : svtodate : date :   ##mydate                              ; Parameter for to date
+     fetch : *.*, AllInventoryEntries.*, AllLedgerEntries.*,             ; Fetch all fields and related entries
+
+     fetch:vouchernumber                                                 ; Specifically fetch voucher number
+
+; =====================================================================
+; SYSTEM FORMULA: ColdddFilter
+; Purpose: Filter formula for voucher selection
+; =====================================================================
+[System: Formula]
+ColdddFilter : $vouchertypename = ##myvchtypename and $masterid = ##myid  ; Match voucher type and master ID
+                ss */
+
+; =====================================================================
+; SYSTEM FORMULA SECTION
+; Purpose: Defines various system formulas and configuration settings
+; =====================================================================
+[System: Formula]
+cwemailid2 : "" ; 2nd Email Id, e.g: Broker Email-Id
+cwemailStr2: "" ; Caption of 2nd Email Id, e.g:Broker Name
+
+; To be used in future, or with other tcp.
+cwOthers1 : ""  ; Additional custom field 1
+cwOthers2 : ""  ; Additional custom field 2
+cwOthers3 : ""  ; Additional custom field 3
+cwOthers4 : ""  ; Additional custom field 4
+cwOthers5 : ""  ; Additional custom field 5
+
+; Export Location
+cwExportLocation :  if @@cwsperateparnewridenbopt then  $cwpathsavefile:Vouchertype:##SVVoucherType +"\" else  @@cwDSConfigPath  +"\"  ; Primary export location path
+cwExportLocation2 :  if @@cwsperateparnewridenbopt then  $cwpathsavefile:Vouchertype:$vouchertypename +"\" else  @@cwDSConfigPath  +"\"  ; Secondary export location path
+;; {30.Jul.21 13:16} cwExportLocation :@@cwlocationpath  +"\"
+;; {30.Jul.21 13:03} cwExportLocation :@@cwlocationpathvchtype  +"\"
+
+; Export File Name
+cwExportFileName :if $$isempty:$vouchernumber then #fsnf else $vouchernumber  ; Set file name based on voucher number or fallback
+
+; Export Function Version
+cwESigningVersion : "1.0"  ; Version of the e-signing functionality
+
+; Signature on page
+cwOnPage : if $$issysname:$cwPutSignatureOn:Vouchertype:$vouchertypename or $$isempty:$cwPutSignatureOn:Vouchertype:$vouchertypename then @@cwDSLastPage else $cwPutSignatureOn:Vouchertype:$vouchertypename  ; Determine signature page placement
+
+; =====================================================================
+; SYSTEM FORMULA: Location Path Settings
+; Purpose: Defines paths for file storage
+; =====================================================================
+ [System: Formula]
+ cwlocationpath:if not $$isempty:@@cwlocationpath then @@cwlocationpath else @@cwlocationpathvchtype  ; Primary location path
+ cwlocationpathvchtype:$cwpathsavefile:Vouchertype:$vouchertypename  ; Location path based on voucher type
+
+; =====================================================================
+; LINE DEFINITION: VCH Display Number
+; Purpose: Defines display number field for vouchers
+; =====================================================================
+ [#Line: VCH Display Number]
+ add:field:fsnf  ; Add field for voucher display number
+
+ Local: Field: fsnf: Set As:$vouchernumber  ; Set field value to voucher number
+ Local: Field: fsnf:storage:cwdisvouchernumber  ; Set storage location
+ Local: Field: fsnf:invisible:yes  ; Make field invisible
+
+; =====================================================================
+; SYSTEM UDF DEFINITION
+; Purpose: Defines user-defined field for voucher display number
+; =====================================================================
+ [System: UDF]
+ cwdisvouchernumber:string:908  ; Define UDF for voucher display number
+
+; =====================================================================
+; SYSTEM VARIABLE DEFINITION
+; Purpose: Defines system variable for temporary storage
+; =====================================================================
+[system : variable]
+cwxx12 : ""  ; Empty string variable for temporary storage
+
+[variable : cwxx12]
+type : string  ; Define variable type
+persistent : no  ; Non-persistent variable
+    /*
+
+; =====================================================================
+; FUNCTION: cwExportforSigning2
+; Purpose: Alternative export function for signing
+; =====================================================================
+[function : cwExportforSigning2]
+object : voucher : ##VoucherID  ; Set current voucher object
+10 : log:$partyledgername  ; Log party ledger name
+20 : call : cwExportforSigningx  ; Call main export function
+
+
+; =====================================================================
+; FUNCTION: cwbfDealID
+; Purpose: Retrieves and formats deal ID from inventory entries
+; =====================================================================
+[function: cwbfDealID]
+returns : string  ; Function returns string value
+variable : str: string : ""  ; Initialize empty string variable
+01 : set : num1 : 0  ; Initialize counter
+;; {02.Aug.21 14:27} 05 : log : "in function"
+10 : walk : AllInventoryEntries  ; Loop through all inventory entries
+;; {02.Aug.21 14:26} 11 : log object
+20 : if :not $$isempty:$cwbfDonumber  ; Check if DO number exists
+30 : if : $$isempty:##str  ; Check if string is empty
+31 : set : str : $cwbfDonumber  ; Set string to DO number
+32 : else
+33 : set : str : ##str + ";" + $cwbfDonumber  ; Append DO number with separator
+34 : end if
+34a: set : num1 : ##num1 + 1  ; Increment counter
+35 : end if
+37 : end walk  ; End inventory entries loop
+
+;; {02.Aug.21 14:27} 40 : log : "Deal id: " +##str
+44 : return : ##str  ; Return concatenated deal IDs
+                              */
+
+; =====================================================================
+; FUNCTION: cwrepstry
+; Purpose: Sanitizes voucher number by removing special characters
+; =====================================================================
+[function: cwrepstry]
+returns : string  ; Function returns string value
+variable : str : string : $vouchernumber  ; Initialize with voucher number
+ A10 : set : str : $$ReplaceCharacters:##str:"\\":""  ; Remove backslashes
+ A11 : set : str : $$ReplaceCharacters:##str:"/":""   ; Remove forward slashes
+ A12 : set : str : $$ReplaceCharacters:##str:"?":""   ; Remove question marks
+ A13 : set : str : $$ReplaceCharacters:##str:":":""   ; Remove colons
+ A14 : set : str : $$ReplaceCharacters:##str:"*":""   ; Remove asterisks
+ A15 : set : str : $$ReplaceCharacters:##str:'"':""   ; Remove double quotes
+ A16 : set : str : $$ReplaceCharacters:##str:"<":""   ; Remove less than signs
+ A17 : set : str : $$ReplaceCharacters:##str:">":""   ; Remove greater than signs
+ A18 : set : str : $$ReplaceCharacters:##str:"|":""   ; Remove pipe symbols
+ A19 : set : str : $$ReplaceCharacters:##str:" ":""   ; Remove spaces
+ A20 : set : str : $$ReplaceCharacters:##str:"-":""   ; Remove hyphens
+ A21 : set : str : $$ReplaceCharacters:##str:"_":""   ; Remove underscores
+
+ A50 : return : ##str  ; Return sanitized string
+
+
+; =====================================================================
+; FUNCTION: cwExportforSigningy
+; Purpose: Main function for exporting vouchers for signing
+; =====================================================================
+[function : cwExportforSigningy]
+parameter : fromBulk : logical : false  ; Parameter to indicate if called from bulk process
+
+;; {28.Aug.21 14:45} VARIABLE:VID:STRING
+
+variable : cwExportLocation : string : @@cwExportLocation2  ; Export location path
+variable : cwExportFileName : string : @@cwExportFileName   ; Export file name
+variable : CwPDfFileNameWithPath : string : ##cwExportLocation + ##cwExportFileName  ; Complete file path
+
+variable : cwTxtFilename : string  ; Text file name variable
+
+
+variable : cwpartyledger  : string : if not $$isempty:@@AllLedName then @@AllLedName else if not $$isempty:$partyledgername then $partyledgername else if not $$isempty:$FirstLedger then $FirstLedger else ""  ; Party ledger name
+
+VARIABLE : isfexists : LOGICAL : NO  ; Flag for file existence check
+
+VARIABLE : CWSENDeMAIL : LOGICAL : yes  ; Flag for email sending
+variable : istr : string  ; String variable for intermediate operations
+variable : temp : string  ; Temporary string variable
+variable : strno : string  ; String number variable
+variable : tempcopies : number  ; Number of copies
+variable : exefilepath : string : if @@cwsperateparnewridenbopt then $cwInvoiceUploader:vouchertype:##svvouchertype else  $cwInvoiceUploader:COMPANY:##SVCURRENTCOMPANY  ; Path to executable
+
+variable : str : string : ""  ; Initialize empty string
+
+variable : invamount : amount : if not $$isempty:$amount then $amount else if not $$isempty:$daybookamount then $daybookamount else ""  ; Invoice amount
+
+
+011a:walk collection:cwSelectedColy  ; Loop through selected collection
+
+00pg1 : set : cwExportLocation : @@cwExportLocation2  ; Set export location
+00pg2 : set : cwExportFileName : @@cwExportFileName   ; Set export file name
+
+;; {28.Aug.21 17:54} 00pg1a: log : "Loc " +##cwExportLocation
+
+
+00pg3 : set : CwPDfFileNameWithPath : ##cwExportLocation + ##cwExportFileName  ; Set complete file path
+
+00pg4 : set : cwpartyledger  : if not $$isempty:@@AllLedName then @@AllLedName else if not $$isempty:$partyledgername then $partyledgername else if not $$isempty:$FirstLedger then $FirstLedger else ""  ; Set party ledger
+
+00pg5 : set : exefilepath : string : if @@cwsperateparnewridenbopt then $cwInvoiceUploader:vouchertype:$vouchertypename else  $cwInvoiceUploader:COMPANY:##SVCURRENTCOMPANY  ; Set executable path
+00pg6 : set : invamount : amount : if not $$isempty:$amount then $amount else if not $$isempty:$daybookamount then $daybookamount else ""  ; Set invoice amount
+
+
+
+0111: set : strno : $vouchertypename  ; Set string number to voucher type name
+
+ ; Sanitize export file name by removing special characters
+ A10 : set : cwExportFileName : $$ReplaceCharacters:##cwExportFileName:"\\":""  ; Remove backslashes
+ A11 : set : cwExportFileName : $$ReplaceCharacters:##cwExportFileName:"/":""   ; Remove forward slashes
+ A12 : set : cwExportFileName : $$ReplaceCharacters:##cwExportFileName:"?":""   ; Remove question marks
+ A13 : set : cwExportFileName : $$ReplaceCharacters:##cwExportFileName:":":""   ; Remove colons
+ A14 : set : cwExportFileName : $$ReplaceCharacters:##cwExportFileName:"*":""   ; Remove asterisks
+ A15 : set : cwExportFileName : $$ReplaceCharacters:##cwExportFileName:'"':""   ; Remove double quotes
+ A16 : set : cwExportFileName : $$ReplaceCharacters:##cwExportFileName:"<":""   ; Remove less than signs
+ A17 : set : cwExportFileName : $$ReplaceCharacters:##cwExportFileName:">":""   ; Remove greater than signs
+ A18 : set : cwExportFileName : $$ReplaceCharacters:##cwExportFileName:"|":""   ; Remove pipe symbols
+ A19 : set : cwExportFileName : $$ReplaceCharacters:##cwExportFileName:" ":""   ; Remove spaces
+ A20 : set : cwExportFileName : $$ReplaceCharacters:##cwExportFileName:"_":""   ; Remove underscores
+ A21 : set : cwExportFileName : $$ReplaceCharacters:##cwExportFileName:"-":""   ; Remove hyphens
+
+
+;; {28.Aug.21 17:55} 00pg2a: log : "File " +##cwExportFileName
+
+ ; Exporting Supporting File
+
+        ; Create and write to text file with metadata
+        B00 : set : cwTxtFilename : ##cwExportLocation+"\"+##cwExportFileName+##istr+".txt"  ; Set text file name
+;; {28.Aug.21 17:55}         B01 : log : ##cwTxtFilename
+        B10 : OPEN FILE : ##cwTxtFilename  : TEXT : WRITE : ASCII  ; Open text file for writing
+        B12 : TRUNCATE FILE  ; Clear file contents
+
+        ; Build JSON structure with metadata
+        B14: set : str : "{"  ; Start JSON object
+        B14A:set :str  : ##str + '"exportedon":"' + $$string:$$machinedate + " " + $$string:$$machinetime + '",'  ; Add export timestamp
+
+        B14B: set : str : ##str + '"version":"'+@@cwESigningVersion + '",'  ; Add version information
+
+        B15 : set : str : ##str +  '"dealerid":"'+ @@cwpartner  + '",'  ; Add dealer ID
+
+
+         ; VALUES From Voucher
+       ; B45 : WRITE FILE LINE : '"partyledgername":"' + ##cwpartyledger  + '",'
+       B50 : set : str : ##str +  '"dealid":"' + $$cwbfDealID  + '",'  ; Add deal ID
+        B51 : set : str : ##str + '"vouchernumber":"' + $$cwrepstry  + '",'  ; Add voucher number
+        B52 : set : str : ##str+ '"voucherdate":"' + $$STRING:$DATE  + '",'  ; Add voucher date
+        B53 : set : str : ##str + '"counter":"' + $$STRING:##num1  + '",'  ; Add counter
+
+        B74 : set : str : ##str + '"subscriptionkey":"'+ @@cwsubprimarykeyforUpload + '",'  ; Add subscription key
+
+        ; Add additional custom fields
+        B75 :set : str : ##str +  '"txt1":"' + @@cwOthers1 + '",'  ; Add custom field 1
+        B76 :set : str : ##str +  '"txt2":"' + @@cwOthers2  + '",'  ; Add custom field 2
+        B77 :set : str : ##str + '"txt3":"' + @@cwOthers3 + '",'  ; Add custom field 3
+        B78 :set : str : ##str +'"txt4":"' + @@cwOthers4  + '",'  ; Add custom field 4
+        B79 :set : str : ##str + '"txt5":"' + @@cwOthers5  + '"'  ; Add custom field 5
+        B80 :set : str : ##str +  "}"  ; Close JSON object
+
+        B81 : write file line : ##str  ; Write JSON string to file
+
+        C175 : CLOSE TARGET FILE  ; Close text file
+
+
+; Exporting PDF
+	A100	: SET			: SVExportLocation	: ##cwExportLocation  ; Set export location
+	A110	: SET			: SVExportFormat	: $$SysName:PDF  ; Set export format to PDF
+	A120	: SET			: SVPrintFileName	: ##cwExportLocation+##cwExportFileName+##istr  ; Set print file name
+
+	A140	: SET			: SVPrintFileName	: $$MakeExportName:##SVPrintFileName:##SVExportFormat  ; Format export name
+	A130    : set : isfexists : $$isfileexists:##SVPrintFileName  ; Check if file exists
+;        a2323 :  log : "Exporting to: " + ##SVPrintFileName  + " " + ##SVPrintCopy
+
+	A150 : do if : ##isfexists : TriggerKey:Enter  ; Handle existing file
+        A155 : set : SVOpenFileAfterExport : no  ; Don't open file after export
+        safasd : set : cwxx12: ##SVPrintCopy  ; Set print copy
+;f003 : log : ##strno
+
+
+;; {28.Aug.21 14:48}   15 : SET : VID	:$$SPrintf:@@VCHMasterID:$masterid
+;; {09.Feb.17 11:42} 32 :log :##vid
+;; {08.Feb.17 18:28}  17 :modify object : (Voucher, ##VID).isoptional:no
+;; {28.Aug.21 14:48}  17 :modify object : (Voucher, ##VID).cwisexported[1].cwisexported:yes
+
+
+;; {28.Aug.21 11:21} 	A160	:   EXPORT REPORT	: cwxx12
+;; {28.Aug.21 14:59} 	A160	: do if : not ##fromBulk :  EXPORT REPORT	: cwxx12 : true
+	
+;; {28.Aug.21 10:51} 	A162	: do if : ##fromBulk :  EXPORT REPORT	:MyInvoice : true ;; cwxy : true
+
+
+;; {28.Aug.21 15:48} 	A162	: do if : ##fromBulk :  EXPORT REPORT	:cwxx12 : true ;; cwxx : true
+ 11          :   Set : MyVoucherId           : $MasterID  ; Set voucher ID for report
+
+;; {02.Dec.21 17:49} 900	: EXPORT REPORT	:cwMyInvoice: true
+910:do if : @@cwBFLInvFormat : EXPORT REPORT	:RepBajajExportPdf : true  ; Export Bajaj format if enabled
+920:do if : not @@cwBFLInvFormat :EXPORT REPORT:cwMyInvoice: true  ; Export standard format otherwise
+
+
+
+;; {30.Jul.21 16:28}         C090 : end for
+
+
+;; {28.Aug.21 15:18} c999 : log: ##cwTxtFilename
+;; {28.Aug.21 15:18}        C100 : do if : ##exefilepath <> "" : exec command : ##exefilepath :##cwTxtFilename+" " +##SVPrintFileName
+
+
+
+       c100a:end walk  ; End collection walk
+
+
+        C980 : return : yes  ; Return success
+
+
+; =====================================================================
+; REPORT DEFINITION: cwMyInvoice
+; Purpose: Defines invoice report format
+; =====================================================================
+    [Report : cwMyInvoice]
+	Object 		: Voucher : @@VcHFormula  ; Set voucher object
+	Use			: Voucher  ; Use voucher collection
+	Form		: Printed Invoice  ; Use printed invoice form
+	Use:Printed Invoice  ; Use printed invoice
+	
+; =====================================================================
+; SYSTEM FORMULA: VcHFormula
+; Purpose: Formats voucher ID for report
+; =====================================================================
+	[System: Formula]
+ VcHFormula : $$Sprintf:@@VchMasterID:##MyVoucherId  ; Format voucher ID
+
+; =====================================================================
+; SYSTEM VARIABLES: MyVoucherId
+; Purpose: Defines voucher ID variable
+; =====================================================================
+[System:Variables]
+    MyVoucherId:0  ; Initialize voucher ID variable
+
+[Variable:MyVoucherId]
+    Type:Number  ; Define variable type
+
+
+     /* ss   [report : cwxy]
+        use : cwxx1
+        object : voucher : ##VCHID
+        fetch object : voucher : ##VCHID : *.*
+
+;; {15.Nov.19 15:07}         local : field: default : set as : ##myid     ss */
+
+; =====================================================================
+; REPORT DEFINITION: cwxx12
+; Purpose: Defines print format for invoice
+; =====================================================================
+         [report : cwxx12]
+
+         use :printed invoice  ; Use printed invoice format
+
+         set : svprintcopies : 1  ; Set number of copies to 1
+         PrintSet : SVPrintCopies : 1  ; Set print copies to 1
+
+
+     ;    printset : svprintcopy : $$LocaleString:"Original" ;;##cwxx
+         printset : svprintcopy :  if not $$isempty:##cwxx12 then ##cwxx12 else "Original"  ; Set copy label
+
+	; Set page margins and layout
+	local : form : default : Space Left 	    :  5% Page  ; Left margin
+	local : form : default : Space Top 	    :  5% Page  ; Top margin
+	local : form : default : Space Bottom    :  3% Page  ; Bottom margin
+
+  local : form : default :   Space Top   : @@InvSpace  inch  ; Top margin in inches
+  local : form : default :   Space Right : 0.25 inch  ; Right margin
+  local : form : default :   Space Left  : 0.25 inch  ; Left margin
+  local : form : default :   Space Bottom: 0.25 inch  ; Bottom margin
+;; {16.May.20 10:18}   local : form : default :  Set : SV Print Orientation : "Landscape"
+local: form: default : 	Set: VCHPrintJurisdiction : If $$IsEmpty:@@DSPJurisdictionValue Then ##SAJurisdiction Else @@DSPJurisdictionValue  ; Set jurisdiction
+       option : cwcustomdimentsion :  @@cwdocformatlwidthnumfform <> 0  ; Custom dimensions option
+
+
+; =====================================================================
+; REPORT DEFINITION: RepcwBFReportx
+; Purpose: Extension of BF report with filter
+; =====================================================================
+     [report:RepcwBFReportx]
+      use:RepcwBFReport  ; Use base report
+      local:collection:ColcwBFReport:add:filter:cwupdateopt  ; Add filter
+
+
+; =====================================================================
+; SYSTEM FORMULA: cwupdateopt
+; Purpose: Filter for exported vouchers
+; =====================================================================
+    [System: Formula]
+     cwupdateopt:$cwisexported="yes"  ; Filter for exported vouchers
+
+
+      /* ss
+
+
+       [System: Formula]
+        cwsetprintformat:POS Invoice Print
+
+
+
+       [!form : cwcustomdimentsion]
+
+         local : form : default : Height  	    : @@cwdocformatlheightnumform inch;;100% Page
+	local : form : default : Width  		    :@@cwdocformatlwidthnumfform inch;; 95% Page
+
+        ;; {18.May.20 16:44}   local : form : default :    Height      : @@invheight ;;if ##SVPrintOrientation = "portrait" then @@invwidth else @@InvHeight inch
+;; {18.May.20 16:44}   local : form : default :   Width       : @@invwidth ;;if ##SVPrintOrientation = "portrait" then @@InvHeight else @@invwidth    inch
+
+; --------------------------------------------        ss */
+ /*
+; =====================================================================
+; REPORT DEFINITION: Day Book
+; Purpose: Day book report with pre-fetch
+; =====================================================================
+[#Report: Day Book]
+Pre Fetch Object : Voucher Type : ##VoucherTypeName	:MasterID, Name, IsReserved, IsDeemedPositive
+ local: collection : default : fetch : *.*
+     */
+
+
+;;===============================================collection

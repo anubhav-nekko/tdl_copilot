@@ -1,0 +1,39 @@
+[PROJECT INFO]
+Project Name=cwBajajFinance DEMOPM
+Project File=.\cwBajajFinance.txt
+[PRODUCT INFO]
+Target Serial=762683418
+Target Serial=732194766
+Target Serial=755048385
+Target Serial=762683418
+Target Serial=762683418
+Target Serial=785117025
+Target Serial=785117025
+Target Serial=722101419
+Target Serial=722101419
+Target Serial=745054965
+Target Serial=786526785
+Target Serial=776245473
+Target Serial=722101419
+Target Serial=735116364
+Output Path=.\cwBajajFinance_DEMOPM.tcp
+Product Name=cwBajajFinancePM
+Product Author=Circuit World,9903039753
+Product Version=2.8  02.Dec.2021 12:19
+Secured Compile=1
+Authorization Required=1
+Deny Loading In Edu Mode=0
+Target Serial=722668977
+Target Serial=742231584
+Target Serial=785876652
+Target Serial=735003873
+Trial Period=7
+[COMPILER OPTIONS]
+Show Warning=1
+Treat Warning as Error=0
+Show Remark=0
+Ignore Error=1
+Analyze=0
+[EXECUTION OPTIONS]
+LoadNoIniTDL=2
+LoadNoIniCmp=2

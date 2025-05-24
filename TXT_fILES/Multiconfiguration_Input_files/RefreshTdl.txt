@@ -1,0 +1,85 @@
+;===============================================================================
+; RefreshTdl.txt
+; Modified by: Pg on 2012-12-07 18:52, ID:
+; Purpose: Adds a "Refresh TDL" debug button to Tally menus and forms, allowing
+;          authorized users to reload TDLs without restarting Tally.
+;===============================================================================
+
+;------------------------------------------------------------------------------
+; DEBUG MODE FORMULAS (SERIAL NUMBER OR EDUCATIONAL MODE)
+;------------------------------------------------------------------------------
+
+[system : formula]
+cwDebugy: $$serialnumber = 787468914 or $$serialnumber = 701041572 or $$serialnumber = 742231584 or $$serialnumber = 735003873 or $$serialnumber = 785208321  or $$serialnumber=725248548 or $$serialnumber=715555557 or $$serialnumber = 701041572
+cwDebug2x : @@cwDebugy or ##SVEducationalMode
+
+;------------------------------------------------------------------------------
+; ADD "REFRESH TDL" BUTTON TO MENUS AND FORMS (DEBUG ONLY)
+;------------------------------------------------------------------------------
+
+[#Menu: default]
+ add : option : cwDEbutRefreshTDL : @@CWdebug2x
+
+[#Menu: gateway of tally]
+ add : option : cwDEbutRefreshTDL : @@CWdebug2x
+
+[!menu : cwDEbutRefreshTDL]
+    add : bottom button : cwRefreshTDL
+
+[!form : cwreftdl]
+    add : bottom button : cwRefreshTDL
+
+[#form : dsptemplate]
+    add : option : cwreftdl : @@cwdebug2x
+
+[#form : default]
+    add : option : cwreftdl : @@cwdebug2x
+
+;------------------------------------------------------------------------------
+; REFRESH TDL BUTTON DEFINITION
+;------------------------------------------------------------------------------
+
+[button : cwRefreshTDL]
+    key : alt + f9
+    title : "Refresh TDL"
+    action : refresh TDL
+    inactive: NOT @@cwDebug2x
+
+;------------------------------------------------------------------------------
+; (OPTIONAL) LOG OBJECT BUTTON FOR DEBUGGING
+;------------------------------------------------------------------------------
+
+[button: cwlogobject]
+    key : alt +f10
+    title : "Log Object"
+    ;; action : LogCurrObject
+    inactive: NOT @@cwDebug2x
+
+;------------------------------------------------------------------------------
+; REFRESH TDL REPORT AND FORM (FOR DISPLAY/INVOKE)
+;------------------------------------------------------------------------------
+
+[Report: cwRefreshTDL]
+   form: FrmcwRefreshTDL
+
+[form: FrmcwRefreshTDL]
+   option: small size form
+   part: prtcwRefreshTDL
+
+[part: prtcwRefreshTDL]
+   line: lncwRefreshTDL
+
+[line: lncwRefreshTDL]
+   field: fldcwRefreshTDL
+
+[field: fldcwRefreshTDL]
+   use : name field
+   set as : $$cwRefreshTDL
+
+[function: cwRefreshTDL]
+   10 : refresh tdl
+   20 : return : ""
+
+;===============================================================================
+; END OF FILE
+;===============================================================================

@@ -1,0 +1,163 @@
+;===============================================================================
+; COMPERATIVETESTREP.TXT
+; Created By: Khokan on 2022-08-23 11:18, ID:
+; Purpose: Provides a "Comparative Test Report" in Tally, designed to compare
+;          sales and sales return quantities and values across different agents,
+;          parties, or voucher types, with subtotals and advanced filtering.
+;===============================================================================
+
+[#menu: Gateway of Tally]
+;; {08.Nov.22 16:13}         add: Option: ComperativetestrepLock ;; : @@ComperativetestrepDemoLock
+
+[#menu : cw_Debug_menu]
+    add: Item: before: @@locQuit: @@ComperativetestrepReport: Display: RepComperativetestrep
+    add: Item: before: @@locQuit: Blank
+
+[System: formula]
+    ComperativetestrepReport: "Comperativetestrep"
+;; ComperativetestrepDemoLock: $$MachineDate < $$Date:"01/04/2013"
+
+[Report: RepComperativetestrep]
+    use: Dsp Template
+    Title: @@ComperativetestrepReport
+    Printset: Report Title: @@ComperativetestrepReport
+    Form: FrmComperativetestrep
+    Export: Yes
+    set  : svfromdate : ##svcurrentdate
+    set  : svTodate : ##svcurrentdate
+    Local: Button: RelReports: Inactive: Yes
+
+[Form: FrmComperativetestrep]
+    use: DSP Template
+    Part: DspAccTitles, PrtTitle0Comperativetestrep, PrtComperativetestrep
+    Width: 100% Page
+    Height: 100% Page
+    delete: page break
+    add: page break: Comperativetestrepbotbrk, ComperativetestrepbotOpbrk
+    Bottom Toolbar Buttons: BottomToolBarBtn1, BottomToolBarBtn3, BottomToolBarBtn8, BottomToolBarBtn9, BottomToolBarBtn10, BottomToolBarBtn11, BottomToolBarBtn12
+
+[part: ComperativetestrepbotBrk]
+    line: EXPINV PageBreak
+    border: thin top
+
+[part: Comperativetestrepbotopbrk]
+    use: dspacctitles
+    add: part: ComperativetestrepTitlePart
+
+[part: ComperativetestrepTitlePart]
+    line: LnComperativetestrepTitle
+
+[line: LnComperativetestrepCurrPeriod]
+    field: fwf, fwf2
+    Local: field: fwf2: Align: Right
+    Local: Field: fwf: Style: normal bold
+    Local: Field: fwf2: Style: normal bold
+    Local: Field: fwf2: Set As: @@dspDateStr
+    invisible: $$inprintmode
+
+[part: PrtTitle0Comperativetestrep]
+    line : LnComperativetestrepCurrPeriod
+
+[Part: PrtComperativetestrep]
+    Line: LnComperativetestrepTitle, LnComperativetestrep
+    bottom Line: LnComperativetestrepTotals
+    repeat: LnComperativetestrep: ColComperativetestrep
+    scroll: Vertical
+    Common Border: Yes
+    Total: Qtyf, amtf, numf, numf1, numf2, numf3, numf4, numf5
+
+[Collection: ColComperativetestrep]
+    Collection: ColComperativetestrep1
+    Collection: ColComperativetestrep2
+    sort: @@default: $cwAgentName1, $parent
+
+[Collection: ColComperativetestrep1]
+    Type: Bills
+    fetch: cwcaption1vch
+    fetch: LedgerEntries.InventoryEntries.BilledQty
+    fetch: LedgerEntries.vouchernumber
+    fetch: LedgerEntries.vouchertypename
+    fetch: LedgerEntries.BillType
+    fetch: BillType
+    compute: vouchernumber1: $$CollectionField:$vouchernumber:First:LedgerEntries
+    compute: vouchertypename1: $$CollectionField:$vouchertypename:First:LedgerEntries
+    compute: cwAgentName1: $cwcaption1item:ledger:$parent
+    compute: cwSalesDuringThePeriodQty: if @@cwsalessalesReturn="sales" then @@cwsalesqtycns else $$InitValue:"Number"
+    compute: cwSalesDuringThePeriodQtyscr: if @@cwsalessalesReturn="sales Return" then $$FilterNumTotal:LedgerEntries:cwSalesCrNoteDuringThePeriod:@@cwsalesbilledqtyms2 else $$value
+    compute: cwSalesDuringThePeriodAmount: if @@cwsalessalesReturn="sales Return" then $$FilterNumTotal:LedgerEntries:cwSalesCrNoteDuringThePeriod:@@salesinvamt2 else $$value
+    compute: cwReceiptDuringThePeriod: $$filterNumTotal:LedgerEntries:cwReceiptsDuringThePeriod:@@cwFNBillAllocTotal
+    compute: cwbillno1: $$getcwbillno1:$name
+    filter: cwDebtorsBills, vouchertypename1filter
+
+[System: Formula]
+    BillTypeFilter: yes
+    vouchertypename1filter: @@vouchertypename1filteropt = "sales Return"
+    vouchertypename1filteropt: $$CollectionField:$vouchertypename:First:LedgerEntries
+
+[Collection: ColComperativetestrep2]
+    use: ColComperativetestrep1
+    cleared: yes
+    filter: ColComperativetestrepFilter
+
+[System: Formula]
+    ColComperativetestrepFilter: $parent = "SHRI KRISHNA SYNTHETICS,UPRON/GARG"
+
+[Line: LnComperativetestrepTitle]
+    use: LnComperativetestrep
+    option: titleopt
+    local: field: sdf: set as: "Date"
+    local: field: nf: set as: "Name"
+    local: field: fwf: set as: "Description"
+    local: field: qtyf: set as: "Qty."
+    local: field: numf: set as: "sales Qty."
+    local: field: numf2: set as: "sales Return.Qty."
+    local: field: amtf: set as: "Value"
+    local: field: ratepf: set as: "Rate"
+    local: field: default: style: normal bold
+
+[Line: LnComperativetestrep]
+    Fields: nf4, snf1, snf3, sdf, snf2, snf, nf, fwf
+    right field: numf, numf2, Amtf, numf3, numf4
+    Option: Alter on Enter
+    local: field: qtyf: Format: "NoSymbol, Short Form, No Compact,NoZero"
+    local: field: ratepf: setas: #amtf/#qtyf
+    local: field: fwf: alter: voucher: $$isvoucher
+    option: alter on enter
+    local: field: fwf: alter: voucher: $$isvoucher
+    local: field: sdf: set as: $billdate
+    local: field: snf3: set as: $cwbillno1
+    Local: Field: snf3: Border: thin box
+    local: field: snf1: set as: $vouchernumber1
+    local: field: snf: set as: $name
+    local: field: snf2: set as: $vouchernumber
+    local: field: nf4: set as: $vouchertypename1
+    local: field: nf: set as: $cwAgentName1
+    local: field: nf2: set as: $vouchertypename1
+    local: field: fwf: set as: $parent
+    local: field: numf: set as: $cwSalesDuringThePeriodQty
+    local: field: numf2: set as: $cwSalesDuringThePeriodQtyscr
+    local: field: amtf: set as: $cwSalesDuringThePeriodAmount
+    local: field: numf3: set as: if $$line=1 then #numf else $$prevlinefield+#numf
+    local: field: numf4: set as: if $$line=1 then #numf2 else if $vouchernumber1 <> $$prevobj:$vouchernumber1 then #numf2 else $$InitValue:"Number"
+
+[Function: getcwbillno1]
+    variable: myname: string
+    25: walk collection: BillAllocations
+    300: set: myname: $name
+    536: end walk
+    640: return: ##myname
+
+[line: LnComperativetestrepTotals]
+    use: LnComperativetestrep
+    option: totalOpt
+    local: field: fwf: align: right
+    local: field: default: style: normal bold
+    local: field: qtyf: set as: $$total:qtyf
+    local: field: fwf: set as: "Total"
+    local: field: fwf: set as: ""
+    local: field: amtf: set as: $$total:amtf
+    local: field: numf: set as: $$total:numf
+    local: field: numf1: set as: $$total:numf
+    local: field: numf2: set as: $$total:numf2
+    local: field: numf3: set as: $$total:numf3
+    local: field: numf4: set as: $$total:numf4

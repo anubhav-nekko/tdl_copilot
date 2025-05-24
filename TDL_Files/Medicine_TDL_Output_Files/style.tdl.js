@@ -1,0 +1,65 @@
+// Auto-generated from style.txt
+const tdl = `
+;===============================================================================
+; STYLE.TXT
+; Created By: Suman on 2019-06-27 10:39, ID:
+; Purpose: Defines reusable font styles for Tally reports and forms, with
+;          varying heights and boldness for different UI elements.
+;===============================================================================
+
+[Style: newstyle]
+    Font   : Normal
+    Height : 8
+    Bold   : No
+
+[Style: newstyle0]
+    Font   : Normal
+    Height : 10
+    Bold   : No
+
+[Style: newstyle1]
+    Font   : Normal
+    Height : 11
+    Bold   : No
+
+[Style: newstyle2]
+    Font   : Normal
+    Height : 11
+    Bold   : Yes
+
+[Style: newstyle3]
+    Font   : Normal
+    Height : 12
+    Bold   : Yes
+
+[Style: newstyle4]
+    Font   : Normal
+    Height : 18
+    Bold   : Yes
+
+[Style: newstyle5]
+    Font   : Normal
+    Height : 13
+    Bold   : No
+
+[Style: newstyle6]
+    Font   : Normal
+    Height : 9
+    Bold   : Yes
+
+[Style: newstyle7]
+    Font   : Normal
+    Height : 15
+    Bold   : No
+
+[Style: newstyle8]
+    Font   : Normal
+    Height : 18
+    Bold   : Yes
+
+;; {19.Feb.18 17:43}    [include:testcom.txt]
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+`;
+export default tdl;

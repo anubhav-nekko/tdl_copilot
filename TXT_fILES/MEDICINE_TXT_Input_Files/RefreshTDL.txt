@@ -1,0 +1,73 @@
+;===============================================================================
+; REFRESHTDL.TXT
+; Modified by: Pg on 2012-12-07 18:52, ID:
+; Modified by: pg on 2012-09-24 11:24, ID: 983
+; Purpose: Adds a "Refresh TDL" button to Tally menus and forms for developers,
+;          allowing quick reloading of TDLs in debug or educational mode.
+;===============================================================================
+
+;------------------------------------------------------------------------------
+; MENU INTEGRATION: ADD "REFRESH TDL" BUTTON IN DEBUG/EDU MODE
+;------------------------------------------------------------------------------
+
+[#Menu: default]
+  add : option : cwDEbutRefreshTDL : @@CWdebug2x
+
+[#Menu: gateway of tally]
+  add : option : cwDEbutRefreshTDL : @@CWdebug2x
+
+[!menu : cwDEbutRefreshTDL]
+   add : bottom button : cwRefreshTDL
+
+;------------------------------------------------------------------------------
+; FORM INTEGRATION: ADD "REFRESH TDL" BUTTON TO FORMS IN DEBUG/EDU MODE
+;------------------------------------------------------------------------------
+
+[!form : cwreftdl]
+add : bottom button : cwRefreshTDL
+
+[#form : dsptemplate]
+add : option : cwreftdl : @@cwdebug2x
+
+[#form : default]
+   add : option : cwreftdl : @@cwdebug2x
+
+;------------------------------------------------------------------------------
+; REFRESH TDL BUTTON DEFINITION
+;------------------------------------------------------------------------------
+
+[button : cwRefreshTDL]
+    key : alt + f9
+    title : "Refresh TDL"
+    action : refresh TDL
+    inactive: NOT @@cwDebug2x
+
+;------------------------------------------------------------------------------
+; LOG OBJECT BUTTON (FOR FUTURE DEBUGGING)
+;------------------------------------------------------------------------------
+
+[button: cwlogobject]
+    key : alt +f10
+    title : "Log Object"
+    ;; action : LogCurrObject
+    inactive: NOT @@cwDebug2x
+
+;------------------------------------------------------------------------------
+; SYSTEM FORMULAS: DEBUG MODE CONDITIONS
+;------------------------------------------------------------------------------
+
+[system : formula]
+cwDebugy: $$serialnumber = 742231584 or $$serialnumber = 735003873 or $$serialnumber = 785208321
+cwDebug2x : @@cwDebugy or ##SVEducationalMode
+
+;------------------------------------------------------------------------------
+; FUNCTION: LOG CURRENT OBJECT (PLACEHOLDER)
+;------------------------------------------------------------------------------
+
+[function : cwLogCurrObject]
+05 : walk
+10 : log object
+
+;===============================================================================
+; END OF FILE
+;===============================================================================

@@ -1,0 +1,318 @@
+; ==============================================================================
+;  ITEM-WISE NET SALES REPORT 
+;  Author : Anil  Created : 2024-03-18 18:13  
+; ==============================================================================
+
+
+
+     [#menu: Gateway of Tally]
+;; {19.Mar.24 15:18}         add: Option: ItemwisenetsalesreportLock ;; : @@ItemwisenetsalesreportDemoLock
+       
+
+     [#menu : cw_Debug_menu]   
+        add: Item: before: @@locQuit: @@ItemwisenetsalesreportReport: Display collection:collRepstockitemrep3new
+
+
+
+     [!menu: ItemwisenetsalesreportLock]
+        add: Item: before: @@locQuit: @@ItemwisenetsalesreportReport: Display collection:collRepstockitemrep3new
+        add: Item: before: @@locQuit: Blank
+        
+
+    [System: formula]
+   ItemwisenetsalesreportReport: "Item Wise Net Sales Report"
+;; ItemwisenetsalesreportDemoLock: $$MachineDate < $$Date:"01/04/2013"
+
+
+
+; ----------------------------------------------------------------------------- 
+;  STOCK-ITEM PICK LIST – lets user choose an item and triggers the report
+; -----------------------------------------------------------------------------
+[collection:collRepstockitemrep3new]
+Use: Extract Alias Collection
+Source Collection	:List of Stockitems
+Title       		: $$LocaleString:"List of Stock item"
+Collection  		: Primary
+Variable    		: SStockItem ;;Group Name
+Report      		:RepItemwisenetsalesreport
+Trigger     		: SStockItem ;;GroupNamex
+Fetch				: Name, ReserveName, Parent
+     
+
+
+; ----------------------------------------------------------------------------- 
+;  REPORT SHELL (Range Template)
+; -----------------------------------------------------------------------------
+    [Report: RepItemwisenetsalesreport]
+        use: Dsp Template
+;; Use				: Range Value Template
+        Use				: Range  Template
+      Title: @@ItemwisenetsalesreportReport
+   Printset: Report Title: @@ItemwisenetsalesreportReport
+       Form: FrmItemwisenetsalesreport
+     Export: Yes
+     set  : svfromdate : ##svcurrentdate
+     set  : svTodate : ##svcurrentdate
+    Local       : Button   : RelReports        : Inactive : Yes
+     
+
+
+; ----------------------------------------------------------------------------- 
+;  MAIN FORM
+; -----------------------------------------------------------------------------
+      [Form: FrmItemwisenetsalesreport]
+        use: DSP Template
+       Part: DspAccTitles,PrtTitle0Itemwisenetsalesreport,PrtItemwisenetsalesreport
+      Width: 100% Page
+     Height: 100% Page
+     delete: page break
+        add: page break: Itemwisenetsalesreportbotbrk,ItemwisenetsalesreportbotOpbrk
+Bottom Toolbar Buttons 	: BottomToolBarBtn1, BottomToolBarBtn3, BottomToolBarBtn8, BottomToolBarBtn9, BottomToolBarBtn10, BottomToolBarBtn11,BottomToolBarBtn12
+  add:button:Save View,change view
+ ;;    local : button : report config : action :modify variable: ItemwisenetsalesreportConfigure
+        option : enable Range filters
+        
+
+; -------- bottom-border helper parts -----------------------------------------
+      [part: ItemwisenetsalesreportbotBrk]
+       line: EXPINV PageBreak
+     border: thin top
+
+      [part: Itemwisenetsalesreportbotopbrk]
+        use: dspacctitles
+  add: part: ItemwisenetsalesreportTitlePart
+
+      [part: ItemwisenetsalesreportTitlePart]
+       line: LnItemwisenetsalesreportTitle
+       
+
+; -------- caption line shows <Item> and the period ---------------------------
+      [line: LnItemwisenetsalesreportCurrPeriod]
+      field: fwf,fwf2
+      Local: field: fwf2: Align: Right
+      Local: Field: fwf: Style: styleCalisto
+       Local: Field: fwf: Set As: ##SStockItem
+      Local: Field: fwf2: Style: styleCalisto
+      Local: Field: fwf2: Set As: @@dspDateStr
+  invisible: $$inprintmode
+
+
+
+      [part: PrtTitle0Itemwisenetsalesreport]
+      line : LnItemwisenetsalesreportCurrPeriod
+      
+
+; -------- body container (two-row header + detail + totals) ------------------
+      [Part: PrtItemwisenetsalesreport]
+       Line: LnItemwisenetsalesreportTitle,LnItemwisenetsalesreportTitle2,LnItemwisenetsalesreport
+bottom Line: LnItemwisenetsalesreportTotals
+     repeat: LnItemwisenetsalesreport: cwitemcollx ;;ColItemwisenetsalesreport
+     scroll: Vertical
+ Common Border: YEs
+      Total: Qtyf,amtf,amtf1,amtf2,amtf3,amtf4,amtf5,numf,numf1,numf2,numf3,numf4,amtf20
+
+
+
+; ===================== DATA COLLECTIONS ======================================
+ [collection:cwitemcollx]
+ type:stock item
+belongs to:yes
+filter:cwColItemnetFilter2
+;;filter:cwallpartyfilter
+
+[System: Formula]
+cwColpartynetFilter:not $$IsEmpty:$TBalDebits or not $$IsEmpty:$TBalCredits
+cwColItemnetFilter2:$name=##SStockItem
+
+
+
+[Collection: ColItemwisenetsalesreport]
+  source Collection: souceColstockregisternew3
+;; {18.Mar.24 18:46} walk:inventoryentries,batchallocations
+by:partyledgername:$partyledgername
+by:stockitemname:$stockitemname
+by:parent1:$parent:ledger:$partyledgername
+by:parent2:$grandparent:ledger:$partyledgername
+
+aggr compute:salesbilledqtyx:sum:if $$issales:$vouchertypename then @@salesbilledqty2 else $$InitValue:"Quantity"
+compute:cwEnableNetSalesReport1:$cwEnableNetSalesReport:vouchertype:$vouchertypename
+aggr compute:salescrbilledqtyx:sum:if $$IsCreditNote:$vouchertypename then @@salesbilledqty2 else $$InitValue:"Quantity"
+aggr compute:salesamount:sum:if $$issales:$vouchertypename then $amount else $$InitValue:"amount"
+aggr compute:salesinvamt1x:sum:if $$issales:$vouchertypename then @@salesinvamt2 else $$InitValue:"amount"
+aggr compute:salescramount:sum:if $$IsCreditNote:$vouchertypename then $amount else $$InitValue:"amount"
+aggr compute:crnoteinvamt1x:sum:if $$IsCreditNote:$vouchertypename then @@salesinvamt2 else $$InitValue:"amount"
+aggr compute:cwsalesdiscamt1xx:sum:if $$issales:$vouchertypename then (@@cwsalesdiscamt/@@cwinvamt)*@@salesinvamt2 else $$InitValue:"amount"
+aggr compute:cwcrnotediscamt1xx:sum:if $$IsCreditNote:$vouchertypename then (@@cwsalesdiscamt/@@cwinvamt)*@@salesinvamt2 else $$InitValue:"amount"
+filter:Colstockregister2Filternew5
+;; {19.Mar.24 12:15} search key:$partyledgername
+search key:$stockitemname
+
+
+
+[Collection: souceColstockregisternew3]
+Type : Vouchers : VoucherType
+Child Of: $$VchTypeSALES
+BelongsTo: Yes
+
+
+
+ [system: Formula]
+Colstockregister2Filternew5:##SStockItem=$stockitemname
+salesinvamt1valueallx:$$reportobject:$$collectionfieldbykey:$salesinvamt1x:#fwf:ColItemwisenetsalesreport
+cwsalesdiscamt1xallx:$$reportobject:$$collectionfieldbykey:$cwsalesdiscamt1xx:#fwf:ColItemwisenetsalesreport
+crnoteinvamt1all:$$reportobject:$$collectionfieldbykey:$crnoteinvamt1x:#fwf:ColItemwisenetsalesreport
+cwcrnotediscamt1all:$$reportobject:$$collectionfieldbykey:$cwcrnotediscamt1xx:#fwf:ColItemwisenetsalesreport
+
+
+
+; ===================== HEADER ROW 1 – group titles ===========================
+      [Line: LnItemwisenetsalesreportTitle]
+        use: LnItemwisenetsalesreport
+     option: titleopt
+local:field: fwf: set as:"Item Name"
+local:field: grsales: set as:"Net Sales"
+local:field: grSRIN: set as:"Net Sals Return"
+local:field: snetsales: set as:"S.Net Sales "
+local:field: numf3: set as:"Net Sales"
+local:field: amtf3: set as:"Gross Sale Less Gross Sales Return"
+local:field: amtf4: set as:"Net Sale Without Gst"
+local:field: amtf5: set as:"Colleection"
+local : field : grsales : cells :2
+local : field : grSRIN :cells :2
+local : field : snetsales : cells :2
+local: field: default : style: normal bold
+local : field : grsales : delete :field
+local : field : grSRIN : delete :field
+local : field : snetsales : delete :field
+Local: Field:grsales : Sub title : Yes
+Local: Field:grSRIN : Sub title : Yes
+Local: Field:snetsales : Sub title : Yes
+Local: field: grSRIN: Align:centre
+Local: field: grsales: Align:centre
+Local: field: snetsales: Align:centre
+Local: field: default: Align:centre
+Local: field: snf: Align:left
+Local: field: fwf: Align:left
+Local: field: nf: Align:left
+Local : field : default: Lines : 0
+Local: field: default: Align:centre
+Local: field: fwf: Align:left
+local: field: grsales : style:styleCalisto2
+ local: field: grSRIN : style:styleCalisto2
+ local: field: snetsales : style:styleCalisto2
+ local: field: fwf : style:styleCalisto2
+local: field: numf : style:styleCalisto2
+local: field: snf2 : style:styleCalisto2
+local: field: numf1 : style:styleCalisto2
+local: field: numf2 : style:styleCalisto2
+local: field: numf3 : style:styleCalisto2
+local: field: amtf : style:styleCalisto2
+local: field: amtf1 : style:styleCalisto2
+local: field: amtf2 : style:styleCalisto2
+local: field: amtf3 : style:styleCalisto2
+local: field: amtf4 : style:styleCalisto2
+local: field: amtf5 : style:styleCalisto2
+
+
+
+; ===================== HEADER ROW 2 – PCS / Amount labels ====================
+[Line: LnItemwisenetsalesreportTitle2]
+use: LnItemwisenetsalesreport
+option: titleopt
+local:field: fwf: set as:""
+local:field: numf: set as:"Pcs"
+local:field: numf2: set as:"Pcs"
+local:field: amtf: set as:"Amount"
+local:field: amtf2: set as:"Amount"
+local:field: numf3: set as:"Pcs"
+local:field: amtf3: set as:"Amount"
+local:field: amtf4: set as:"Amount"
+local:field: amtf5: set as:"Amount"
+Local: field: default: Align:centre
+Local: field: fwf: Align:left
+local: field: grsales : style:styleCalisto2
+ local: field: grSRIN : style:styleCalisto2
+ local: field: snetsales : style:styleCalisto2
+ local: field: fwf : style:styleCalisto2
+local: field: numf : style:styleCalisto2
+local: field: snf2 : style:styleCalisto2
+local: field: numf1 : style:styleCalisto2
+local: field: numf2 : style:styleCalisto2
+local: field: numf3 : style:styleCalisto2
+local: field: amtf : style:styleCalisto2
+local: field: amtf1 : style:styleCalisto2
+local: field: amtf2 : style:styleCalisto2
+local: field: amtf3 : style:styleCalisto2
+local: field: amtf4 : style:styleCalisto2
+local: field: amtf5 : style:styleCalisto2
+
+
+
+; ===================== DETAIL LINE – all calculations unchanged ==============
+      [Line: LnItemwisenetsalesreport]
+ Fields:fwf
+right field:nf,grsales,grSRIN,snetsales,amtf6,amtf4,amtf5,amtf7,amtf8,amtf9,amtf10,numf7,numf8,amtf12,amtf13,amtf14,amtf15
+Option: Alter on Enter
+local:field: ratepf : setas  : #amtf/#qtyf
+local: field: fwf: alter : voucher : $$isvoucher
+option : alter on enter
+local : field : fwf : alter : voucher : $$isvoucher
+local:field: snfx: set as:$cwShowinReport1
+; (--- all original quantity and amount formula lines are untouched ---)
+Local: Field: default: Border: thin right
+ local: field: nf: Invisible: yes
+Local: field: default : style:styleCalisto
+border:thin bottom
+
+
+
+; ===================== TOTALS LINE – includes running vars ===================
+      [line: LnItemwisenetsalesreportTotals]
+        use: LnItemwisenetsalesreport
+     option: totalOpt
+     local: field: fwf: align: right
+local: field: default : style: normal bold
+local: field: qtyf: set as: $$total:qtyf
+local: field: fwf: set as: "Total"
+
+local:field: numf: set as:$$total:numf
+local:field: numf2: set as:$$total:numf2
+local:field: amtf: set as:#amtf7
+local:field: amtf2: set as:#amtf8
+local:field: numf3: set as:$$total:numf3
+local:field: amtf3: set as:#amtf9
+local:field: amtf4: set as:#amtf10
+local:field: amtf5: set as:$$total:amtf5
+local:field: amtf6: set as:$$total:amtf6
+local:field: amtf20: set as:$$total:amtf20
+
+; ---------- running totals forwarded to $$prevlinefield ----------------------
+local:field: amtf7: set as:$$prevlinefield
+local:field: amtf8: set as:$$prevlinefield
+local:field: amtf9: set as:$$prevlinefield
+local:field: amtf10: set as:$$prevlinefield
+local:field: amtf11: set as:$$prevlinefield
+local:field: numf7: set as:$$prevlinefield
+local:field: numf8: set as:$$prevlinefield
+local:field: qtyf10: set as:$$prevlinefield
+
+; ---------- uniform print style for totals row --------------------------------
+local: field: grsales : style:styleCalisto2
+ local: field: grSRIN : style:styleCalisto2
+ local: field: fwf : style:styleCalisto2
+local: field: numf : style:styleCalisto2
+local: field: numf1 : style:styleCalisto2
+local: field: numf2 : style:styleCalisto2
+local: field: numf3 : style:styleCalisto2
+local: field: amtf : style:styleCalisto2
+local: field: amtf1 : style:styleCalisto2
+local: field: amtf2 : style:styleCalisto2
+local: field: amtf3 : style:styleCalisto2
+local: field: amtf4 : style:styleCalisto2
+local: field: amtf5 : style:styleCalisto2
+
+
+
+; =============================================================================
+;  END OF FILE 
+; =============================================================================

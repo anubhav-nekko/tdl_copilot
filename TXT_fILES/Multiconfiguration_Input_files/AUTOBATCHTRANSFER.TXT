@@ -1,0 +1,210 @@
+; ========================
+; Created By: Khokan
+; Created On: 2019-04-03 and 2019-03-19
+; Purpose: Batch Transfer Utility between Companies
+; ========================
+
+;; Define a custom menu under Inventory Info
+;; Moved to: Gateway of Tally > Display > Stock Item
+;; Custom form "TS RightInactveButtons Template" referenced
+
+[#Form: List of Accounts]
+add:option:cwnewgatewayoftallyBarcode : ##accounttype = $$sysname:StockItems
+
+[!menu:cwnewgatewayoftallyBarcode]
+add:button:cwfileitemBarcode
+
+[!form:cwnewgatewayoftallyBarcode]
+add:button: at beginning : cwfileitemBarcode
+
+;; Custom Button for Batch Transfer
+[button:cwfileitemBarcode]
+key:alt+B
+TITLE:"Batch Transfer"
+action:modify variable:cwBatchTransferrep
+
+;; Report that calls the form used for batch transfer
+[report:cwBatchTransferrep]
+form:cwBatchTransferrep
+
+;; Main Form for the Batch Transfer Operation
+[form:cwBatchTransferrep]
+part:cwBatchTransferrep
+HEIGHT:30% PAGE
+WIDTH:40% PAGE
+on : form accept : yes : call :cwBatchTransferfun:#nf:#nf2
+
+;; Define Form Layout - Source and Target Company Fields
+[part:cwBatchTransferrep]
+line:cwsourcecompany,cwtargetcompany
+
+[line:cwsourcecompany]
+field:sp,nf
+Local: Field: sp: Set As:"Source Company"
+Local: field: sp: Width:15
+Local: field: NF: Width:40
+Local: Field: nf: table:cwcollSourceCompany
+Local: Field: nf: Show table: Always
+SPACE BOTTOM:0.5
+
+[line:cwtargetcompany]
+field:sp,nf2
+Local: Field: sp: Set As:"Target Company"
+Local: field: sp: Width:15
+Local: field: NF2: Width:40
+Local: Field: nf2: table:cwcollSourceCompany
+Local: Field: nf2: Show table: Always
+
+;; Collection for Source/Target Company Dropdown
+[Collection:cwcollSourceCompany]
+use:listofcompanies
+
+;; Define Variables for Batch Transfer Process
+[variable:cwmyitem2]
+variable: cwitembatchgodown : string
+variable: cwmyitem : string
+variable: cwmygodown : string
+variable: cwmybatch : string
+variable:cwmycwBaleNo:string
+variable:cwmycwbatchcaption1:string
+variable:cwmycwbatchcaption2:string
+variable:cwmycwbatchcaption3:string
+variable:cwmycwmrpbatch:string
+variable:MyActualQty : quantity
+
+;; Temporary Collection to Hold Items for Transfer
+[collection : cwCollmyitemnew]
+data source : variable : cwmyitem2
+format:$cwitembatchgodown,10
+format:$cwmyitem,10
+format:$cwmygodown ,10
+format:$cwmybatch,10
+format:$cwmytype,10
+format:$cwmycwBaleNo,10
+format:$cwmycwBiltyNo,10
+format:$cwmycwbatchcaption1,10
+format:$cwmycwbatchcaption2,10
+format:$cwmycwbatchcaption3,10
+format:$cwmycwmrpbatch,10
+
+[system : variable]
+list variable :cwmyitem2
+
+;; Main Function to Handle Batch Transfer
+[Function: cwBatchTransferfun]
+parameter:cwSourceCompany:string
+parameter:cwTargetCompany:string
+
+;; Declare Working Variables
+variable : myitem : string
+variable : mygodown : string
+variable : mybatch : string
+variable : cwtype : string
+variable:mycwBaleNo:string
+variable:mycwBiltyNo:string
+variable:mycwbatchcaption1:string
+variable:mycwbatchcaption2:string
+variable:mycwbatchcaption3:string
+variable:mycwmrpbatch:string
+Variable : cwProgressCount : Number :1
+Variable : cwProgressCount2 : Number :1
+variable : BatchIndex : number
+variable : ctr : number : $$numitems:cwcollstockitem
+variable:itembatchgodown:string
+ListVariable:cwmyitem2
+
+;; Confirmation Box
+02:Querybox:"Batch Transfer?":yes:no
+03:do if :not $$lastresult:continue
+
+;; Switch to Source Company
+10:set:SVCURRENTCOMPANY:##cwSourceCompany
+11:set:cwProgressCount:$$numitems:cwcollstockitem
+12: LIST DELETE :cwmyitem2
+04: start Progress : ##cwProgressCount:"Gathering Items":"":"Please Wait...."
+
+;; Walk Through Stock Items
+20:walk collection:cwcollstockitem
+05:Show Progress: ##cwProgressCount2
+06:incr:cwProgressCount2
+
+21 : set : myitem : $stockitemname
+
+;; Loop Through Batches in Item
+29:walk collection:cwcollbatchnew
+30 : set : mygodown :$godownname
+31 : set : mybatch :$name
+32:set:itembatchgodown:##myitem+##mygodown+##mybatch
+
+;; Set Captions and MRP Batch Details
+33b:set:mycwbatchcaption1:$cwbatchcaption1
+33c:set:mycwbatchcaption2:$cwbatchcaption2
+33d:set:mycwbatchcaption3:$cwbatchcaption3
+33f:set:mycwmrpbatch:$cwmrpbatch
+
+;; Add Data to List
+002 : list add : cwmyitem2 : ##itembatchgodown
+005:set : BatchIndex : $$listIndex:cwmyitem2:##itembatchgodown
+
+;; Set Field Values in List
+0009 : set : cwmyitem2[##BatchIndex].cwitembatchgodown : ##itembatchgodown
+0009a : set : cwmyitem2[##BatchIndex].cwmybatch : ##mybatch
+0012 : set : cwmyitem2[##BatchIndex].cwmycwbatchcaption1 : ##mycwbatchcaption1
+0013 : set : cwmyitem2[##BatchIndex].cwmycwbatchcaption2 : ##mycwbatchcaption2
+0014 : set : cwmyitem2[##BatchIndex].cwmycwbatchcaption3 : ##mycwbatchcaption3
+0015 : set : cwmyitem2[##BatchIndex].cwmycwmrpbatch : ##mycwmrpbatch
+00120 : set : cwmyitem2[##BatchIndex].cwmyitem : ##myitem
+00131 : set : cwmyitem2[##BatchIndex].cwmygodown : ##mygodown
+0022: set :cwmyitem2[##BatchIndex].MyActualQty  :  ##cwmyitem2[##BatchIndex].MyActualQty +$actualqty
+
+;; End Loops
+61 : end walk ;;29:
+62 : end walk
+180 : END Progress
+
+;; Switch to Target Company and Start Data Update
+186a: set: cwProgressCount : $$numitems:cwCollmyitemnew
+186b: start Progress : ##cwProgressCount:"Updadting Items" :"":"Please Wait...."
+186c: set : cwProgressCount2 : 1
+
+187:set:SVCURRENTCOMPANY:##cwTargetCompany
+188: walk collection:cwCollmyitemnew
+
+;; Extract Fields for Writing to Target Company
+35x : set : mygodown :$cwmygodown
+40x : set : mybatch :$cwmybatch
+41c : set : mycwbatchcaption1 : $cwmycwbatchcaption1
+41d : set : mycwbatchcaption2 : $cwmycwbatchcaption2
+41e : set : mycwbatchcaption3 : $cwmycwbatchcaption3
+41f : set : mycwmrpbatch : $cwmycwmrpbatch
+
+;; Modify the Target Object with Data from Source
+188a : modifyobject: (stockitem,$cwmyitem).batchallocations[1,@@cwaFormula].cwbatchcaption1[1].cwbatchcaption1:##mycwbatchcaption1,cwbatchcaption2[1].cwbatchcaption2:##mycwbatchcaption2,cwbatchcaption3[1].cwbatchcaption3:##mycwbatchcaption3,cwmrpbatch[1].cwmrpbatch:##mycwmrpbatch
+
+305:Show Progress: ##cwProgressCount2
+306:incr:cwProgressCount2
+350 : end walk
+450 : return
+
+;; Formula to Match Batch & Godown
+[System: Formula]
+cwaFormula : $batchname = ##mybatch and $godownname=##mygodown
+
+;; Source Item Collection with Filter
+[Collection: cwcollstockitem]
+type:stockitem
+filter:cwitembatchfilter
+fetch : batchallocations.*
+fetch : closingbalance,name
+
+;; Formula Filter to Avoid Empty Batches
+[System: Formula]
+cwitembatchfilter:not $$isempty:$closingbalance
+cwitembatchfilter2:not $$isempty:$closingbalance
+
+;; Batch Collection for Each Item
+[Collection: cwcollbatchnew]
+use : Active Batches VchExtract
+child of:##myitem
+filter:cwitembatchfilter2
+Fetch : cwbatchcaption1,cwbatchcaption2,cwbatchcaption3,cwmrpbatch,Name, Parent, ExpiryPeriod, ClosingBalance, GodownName, MfdOn, ClosingAsOnDate,cwtype,cwChasissno,cwEngineno,cwColorcode,cwMfgyear,cwkeyNo,cwFSCno,cwBatteryslno,cwBatterymake

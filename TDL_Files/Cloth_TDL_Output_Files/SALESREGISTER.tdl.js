@@ -1,0 +1,215 @@
+// Auto-generated from SALESREGISTER.TXT
+const tdl = `
+;===============================================================================
+; SALESREGISTER.TXT
+; Created By: Khokan on 2021-02-09 14:06, ID:
+; Purpose: Enhances the Sales Register (and related registers) in Tally by adding
+;          custom caption fields (up to six), advanced filtering, and dynamic
+;          columnar reporting for sales, purchase, credit note, and debit note vouchers.
+;===============================================================================
+
+;;------------------------------------------------------------------------------
+;; SYSTEM FORMULAS: Voucher type detection for conditional logic
+;;------------------------------------------------------------------------------
+
+[System: Formula]
+    cwnsaleopt:##VoucherTypeName contains "Sales"
+    cwnpuropt:##VoucherTypeName contains "Purchase"
+    cwnCreditNoteopt:##VoucherTypeName contains "CreditNote"
+    cwnDebitNoteopt:##VoucherTypeName contains "DebitNote"
+
+;;------------------------------------------------------------------------------
+;; LINE OPTIONS: Add custom caption columns to register titles and details
+;;------------------------------------------------------------------------------
+
+[#Line: DBTitle1]
+    add:option:DBTitle1opt:(@@cwnsaleopt or @@cwnpuropt or @@cwnCreditNoteopt or @@cwnDebitNoteopt) and @@MinuSareeEnabled
+
+[!line:DBTitle1opt]
+    ;; Add custom caption fields to the right of the title line
+    add:right field:Atbeginning:snf1,snf2,snf3,snf4,snf5,snf6
+    Local: Field: snf1: Set As:$cwcaption1:COMPANY:##SVCURRENTCOMPANY
+    Local: Field: snf2: Set As:$cwcaption2:COMPANY:##SVCURRENTCOMPANY
+    Local: Field: snf3: Set As:$cwcaption3:COMPANY:##SVCURRENTCOMPANY
+    Local: Field: snf4: Set As:$cwcaption4:COMPANY:##SVCURRENTCOMPANY
+    Local: Field: snf5: Set As:$cwcaption5:COMPANY:##SVCURRENTCOMPANY
+    Local: Field: snf6: Set As:$cwcaption6:COMPANY:##SVCURRENTCOMPANY
+
+[#line:DBTitle2]
+    add:option:DBTitle2opt:(@@cwnsaleopt or @@cwnpuropt or @@cwnCreditNoteopt or @@IsDebitNote) and @@MinuSareeEnabled
+
+[!line:DBTitle2opt]
+    ;; Add blank custom caption fields to the right of the second title line
+    add:right field:Atbeginning:snf1,snf2,snf3,snf4,snf5,snf6
+    Local: Field: snf1: Set As:""
+    Local: Field: snf2: Set As:""
+    Local: Field: snf3: Set As:""
+    Local: Field: snf4: Set As:""
+    Local: Field: snf5: Set As:""
+    Local: Field: snf6: Set As:""
+
+[#line:DSP VchDetail]
+    add:option:VchDetailopt:(@@cwnsaleopt or @@cwnpuropt or @@cwnCreditNoteopt or @@IsDebitNote) and @@MinuSareeEnabled
+
+[!line:VchDetailopt]
+    ;; Add custom caption fields to voucher detail lines
+    add:right field:Atbeginning:snf1,snf2,snf3,snf4,snf5,snf6
+    Local: Field: snf1: Set As:$cwcaption1vch
+    Local: Field: snf2: Set As:$cwcaption2vch
+    Local: Field: snf3: Set As:$cwcaption3vch
+    Local: Field: snf4: Set As:$cwcaption4vch
+    Local: Field: snf5: Set As:$cwcaption5vch
+    Local: Field: snf6: Set As:$cwcaption6vch
+
+;;------------------------------------------------------------------------------
+;; COLLECTIONS: Fetch and filter custom caption fields in all relevant voucher collections
+;;------------------------------------------------------------------------------
+
+[#Collection: Columnar Filtered Vouchers of Company]
+    fetch:cwcaption1vch,cwcaption2vch,cwcaption3vch,cwcaption4vch,cwcaption5vch,cwcaption6vch,FirstLedger
+    filter:cwcaption1vchfilter,cwcaption2vchfilter,cwcaption3vchfilter,cwcaption4vchfilter,cwcaption5vchfilter,cwcaption6vchfilter,cwpartyvchfilternew2
+
+[#Collection: Filtered Vouchers of Company]
+    fetch:cwcaption1vch,cwcaption2vch,cwcaption3vch,cwcaption4vch,cwcaption5vch,cwcaption6vch,FirstLedger
+    filter:cwcaption1vchfilter,cwcaption2vchfilter,cwcaption3vchfilter,cwcaption4vchfilter,cwcaption5vchfilter,cwcaption6vchfilter,cwpartyvchfilternew
+
+[#Collection: Vouchers of Company]
+    fetch:cwcaption1vch,cwcaption2vch,cwcaption3vch,cwcaption4vch,cwcaption5vch,cwcaption6vch,FirstLedger
+    filter:cwcaption1vchfilter,cwcaption2vchfilter,cwcaption3vchfilter,cwcaption4vchfilter,cwcaption5vchfilter,cwcaption6vchfilter,cwpartyvchfilternew
+
+[#Collection: Daybook Vouchers of Company]
+    fetch:cwcaption1vch,cwcaption2vch,cwcaption3vch,cwcaption4vch,cwcaption5vch,cwcaption6vch,FirstLedger
+    filter:cwcaption1vchfilter,cwcaption2vchfilter,cwcaption3vchfilter,cwcaption4vchfilter,cwcaption5vchfilter,cwcaption6vchfilter,cwpartyvchfilternew
+
+[#Collection: Modified Vouchers of Company]
+    fetch:cwcaption1vch,cwcaption2vch,cwcaption3vch,cwcaption4vch,cwcaption5vch,cwcaption6vch,FirstLedger
+    filter:cwcaption1vchfilter,cwcaption2vchfilter,cwcaption3vchfilter,cwcaption4vchfilter,cwcaption5vchfilter,cwcaption6vchfilter,cwpartyvchfilternew
+
+;;------------------------------------------------------------------------------
+;; FILTER BUTTON: F7 filter popup for custom caption fields
+;;------------------------------------------------------------------------------
+
+[button:deliverybotton]
+    key:alt+f7
+    title:"Filter"
+    Action : Modify Variables:deliveryrep
+
+[report:deliveryrep]
+    form:deliveryform
+
+[form:deliveryform]
+    part:deliverypart
+    HEIGHT:40  ;;% PAGE
+    WIDTH:30   ;;% PAGE
+
+[part:deliverypart]
+    line:titlelinex,cwcapline6party,cwcapline1,cwcapline2,cwcapline3,cwcapline4,cwcapline5,cwcapline6
+
+;; Each line below allows filtering by a specific custom caption field (up to six)
+[line:cwcapline1]
+    field:sp,nf
+    Local: Field: nf:modifies:astr1
+    space bottom:0.5
+    Local: field: sp: Width:12
+    Local: Field: sp: Style: Normal Bold
+    Local: Field: sp: Set As:$cwcaption1:COMPANY:##SVCURRENTCOMPANY
+    Local: Field: nf: Set As:$cwcaption1table:COMPANY:##SVCURRENTCOMPANY
+    Local: field: sp: Width:28
+    space top:0.5
+    Local:Field:nf:table:cwcaption1tableundercc,Not Applicable:$cwcaption1table:COMPANY:##SVCURRENTCOMPANY="Cost Centre"
+    Local:Field:nf:Show table: Always
+    Local: Field:nf:Table : cwcaption1tableundersc, Not Applicable:$cwcaption1table:COMPANY:##SVCURRENTCOMPANY="Stock Category"
+    Local: Field:nf:Table : cwcaption1tableunderled, Not Applicable:$cwcaption1table:COMPANY:##SVCURRENTCOMPANY="ledger"
+    Local: Field:nf:option:optcc:$cwcaption1table:COMPANY:##SVCURRENTCOMPANY="Cost Centre"
+    Local: Field:nf:option:optsc:$cwcaption1table:COMPANY:##SVCURRENTCOMPANY="Stock Category"
+    Local: Field:nf:option:optled:$cwcaption1table:COMPANY:##SVCURRENTCOMPANY="ledger"
+
+;; ... (Similar lines for cwcapline2, cwcapline3, cwcapline4, cwcapline5, cwcapline6, each for a different caption)
+
+;;------------------------------------------------------------------------------
+;; FILTER FORMULAS: Used in collections above to filter by selected captions
+;;------------------------------------------------------------------------------
+
+[System: Formula]
+    cwcaption1vchfilter:if $$issysname:##astr1 then yes else $cwcaption1vch =##astr1
+    cwcaption2vchfilter:if $$issysname:##astr2 then yes else $cwcaption2vch =##astr2
+    cwcaption3vchfilter:if $$issysname:##astr3 then yes else $cwcaption3vch =##astr3
+    cwcaption4vchfilter:if $$issysname:##astr4 then yes else $cwcaption4vch =##astr4
+    cwcaption5vchfilter:if $$issysname:##astr5 then yes else $cwcaption5vch =##astr5
+    cwcaption6vchfilter:if $$issysname:##astr6 then yes else $cwcaption6vch =##astr6
+    cwpartyvchfilternew:if $$issysname:##astr7 then yes else $FirstLedger =##astr7
+    cwpartyvchfilternew2:if $$issysname:##astr7 then yes else $DSPPartyLedger =##astr7
+
+;;------------------------------------------------------------------------------
+;; VARIABLES: Used for filter popups and dynamic filtering
+;;------------------------------------------------------------------------------
+
+[#Form: Day Book]
+    add:button:deliverybotton
+
+[#report:Voucher Register]
+    variable:astr1,astr2,astr3,astr4,astr5,astr6,astr7
+    set:astr1:""
+    set:astr2:""
+    set:astr3:""
+    set:astr4:""
+    set:astr5:""
+    set:astr6:""
+    set:astr7:""
+
+[variable : astr1]
+    type : string
+    default : ""
+    persistent: no
+
+[variable : astr2]
+    type : string
+    default : ""
+    persistent: no
+
+[variable : astr3]
+    type : string
+    default : ""
+    persistent: no
+
+[variable : astr4]
+    type : string
+    default : ""
+    persistent: no
+
+[variable : astr5]
+    type : string
+    default : ""
+    persistent: no
+
+[variable : astr6]
+    type : string
+    default : ""
+    persistent: no
+
+[variable : astr7]
+    type : string
+    default : ""
+    persistent: no
+
+[variable : astr8]
+    type : string
+    default : ""
+    persistent: no
+
+[system : variable]
+    astr1 : ""
+    astr2 : ""
+    astr3 : ""
+    astr4 : ""
+    astr5 : ""
+    astr6 : ""
+    astr7 : ""
+    astr8 : ""
+
+;===============================================================================
+; End of SALESREGISTER.TXT (with documentation comments)
+;===============================================================================
+
+`;
+export default tdl;

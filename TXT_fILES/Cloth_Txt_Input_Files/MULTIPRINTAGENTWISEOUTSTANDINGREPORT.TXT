@@ -1,0 +1,565 @@
+; Created By: Khokan on 2021-08-28 13:12, ID: 
+
+/**
+ * AGENT-WISE OUTSTANDING REPORT MODULE
+ * 
+ * This module implements an Agent-wise Outstanding Statement report in Tally.
+ * The report displays outstanding balances for agents, showing both debit and credit entries
+ * with details like bill dates, due days, and amounts.
+ * 
+ * Original configuration section below is preserved for reference.
+ */
+    /*
+[#Line: DSP CfgSubTitle]
+[#Line: Company ConfigTitle]
+[#Line: DSPShowOp]
+border:thin box
+[#System: Formula]
+ShowOpBal				: $$LocaleString:"Show Opening Balance222"
+ [#System: Formula]
+	ShowOp			: $$LocaleString:"Show Opening Balance33"
+	
+	
+	[#Object: Cfg ShowOpBal]
+
+	Use		: Cfg Report Config
+	Name	: @@ShowOpBal+"111111111"
+	
+	*/
+
+/**
+ * Menu Configuration Section
+ * Adds the report option to the Gateway of Tally menu
+ */
+     [#menu: Gateway of Tally]
+;; {06.Sep.21 14:49}         add: Option: multiprintAGENTWISEOutstandingReportLock ;; : @@multiprintAGENTWISEOutstandingReportDemoLock
+       
+/**
+ * Debug Menu Configuration
+ * Adds the report to the debug menu for testing purposes
+ */
+     [#menu : cw_Debug_menu]   
+        add: Item: before: @@locQuit: @@multiprintAGENTWISEOutstandingReportReport: Display: RepmultiprintAGENTWISEOutstandingReport
+
+
+/**
+ * Report Menu Configuration
+ * Defines the menu structure for the Agent-wise Outstanding Report
+ * Includes options for displaying and printing the report
+ */
+     [!menu: multiprintAGENTWISEOutstandingReportLock]
+;; {06.Sep.21 11:05}         add: Item: before: @@locQuit: @@multiprintAGENTWISEOutstandingReportReport: Display Collection: collRepmultiprintAGENTWISEOutstandingReport ;;: RepmultiprintAGENTWISEOutstandingReport
+        add: Item: before: @@locQuit: @@multiprintAGENTWISEOutstandingReportReport: print Collection: collRepmultiprintAGENTWISEOutstandingReport ;;: RepmultiprintAGENTWISEOutstandingReport
+        add: Item: before: @@locQuit: Blank
+        
+/**
+ * System Formula Definition
+ * Defines the report title by combining the agent type with "wise O/S Statement"
+ */
+    [System: formula]
+   multiprintAGENTWISEOutstandingReportReport:@@cwcaption1tableundernew+" "+"wise O/S Statement" ;;@@cwcaption1tableundernew+" "+"wise outstanding report"
+;; multiprintAGENTWISEOutstandingReportDemoLock: $$MachineDate < $$Date:"01/04/2013"
+
+
+/**
+ * Collection Definition for Report
+ * This collection extracts ledger names to be used in the report
+ * Acts as the main data source for the report
+ */
+       [Collection: collRepmultiprintAGENTWISEOutstandingReport]
+
+  Use         : Extract Alias Collection
+   Source Collection	: List of Ledgers
+   Variable    : Ledger Name
+   Report      :RepmultiprintAGENTWISEOutstandingReport
+   Trigger     : cwLedgerName1
+   Fetch       : Name
+
+/**
+ * Main Report Definition
+ * Configures the Agent-wise Outstanding Report with template, title, and form settings
+ */     
+    [Report: RepmultiprintAGENTWISEOutstandingReport]
+        use: Dsp Template
+      Title: @@multiprintAGENTWISEOutstandingReportReport
+   Printset: Report Title: @@multiprintAGENTWISEOutstandingReportReport
+       Form: FrmmultiprintAGENTWISEOutstandingReport
+     Export: Yes
+    ; set  : svfromdate : ##svcurrentdate
+   ;  set  : svTodate : ##svcurrentdate
+    Local       : Button   : RelReports        : Inactive : Yes
+     
+/**
+ * Form Definition for the Report
+ * Configures the layout, dimensions, and components of the report form
+ */
+      [Form: FrmmultiprintAGENTWISEOutstandingReport]
+        use: DSP Template
+;; {06.Sep.21 13:07}        Part: DspAccTitles,multiagentpart,PrtTitle0multiprintAGENTWISEOutstandingReport,PrtmultiprintAGENTWISEOutstandingReport
+       Part: PrtTitle0multiprintAGENTWISEOutstandingReport,multiagentpart,PrtmultiprintAGENTWISEOutstandingReport
+      Width: 100% Page
+     Height: 100% Page
+ Background: @@SV_STOCKSUMMARY
+     delete: page break
+        add: page break: multiprintAGENTWISEOutstandingReportbotbrk,multiprintAGENTWISEOutstandingReportbotOpbrk
+Bottom Toolbar Buttons 	: BottomToolBarBtn1, BottomToolBarBtn3, BottomToolBarBtn8, BottomToolBarBtn9, BottomToolBarBtn10, BottomToolBarBtn11,BottomToolBarBtn12
+;; BottomToolBarBtn2, BottomToolBarBtn4, BottomToolBarBtn5,BottomToolBarBtn6, BottomToolBarBtn7,
+;;                        1 Quit, 2 Accept, 3 Delete, 4 Cancel, 5 Duplicate Voucher, 6 Add Voucher, 7 Insert Voucher, 8 Remove Line, 9 Restore Line, 10 Restore all, 11 Select, 12 Select All
+;;    local : button : report config : action :modify variable: MyPLConfigure
+
+/**
+ * Company Information Display Configuration
+ * Sets up the display of company name, address, and report title with appropriate styling
+ */
+local:Part:DSPCompanyName:local:line:DSPCompanyName: Local: Field: DSP CompanyName:PrintStyle:styleCalisto2
+local:Part:DSPCompanyAddress:local:line:DSPCompanyAddress: Local: Field: DSPCompanyAddress:PrintStyle:style2n
+local:Part:DSPReportTitle:local:line:DSPReportName: Local: Field: DSPReportName:PrintStyle:style3n
+local:Part:DSPReportSubTitle:local:line:DSPReportSubTitle: Local: Field: DSPReportSubTitle:PrintStyle:style2n
+local:Part:DSPReportTitle:local:line:DSPReportPeriod:Local: Field: DSPReportPeriod:PrintStyle:style2n  ;; Local: Field: DSPReportPeriod:border:thin box  ;;PrintStyle:style2
+local:Part:DSPPageNo:local:line:DSPPageNo: Local: Field:DSPPageNo:PrintStyle:style2n
+
+DELETE:PART:DSPCompanyAddress
+
+/**
+ * Style Definitions
+ * Defines text styles used throughout the report
+ */
+[style:style3n]
+font:"timesnewroman"
+height:14
+bold:yes
+
+[style:style2n]
+font:"timesnewroman"
+height:11
+bold:no
+
+
+/**
+ * Page Break Configuration
+ * Defines the bottom page break with border
+ */
+      [part: multiprintAGENTWISEOutstandingReportbotBrk]
+       line:EXPINV PageBreak
+     border: thin top
+     
+/**
+ * Empty Line Definition
+ * Creates an empty line for spacing purposes
+ */
+     [line: multiprintAGENTlineII]
+       field:fwfC
+       Local: Field: fwfC: Set AS:""
+
+/**
+ * Report Title Part Configuration
+ * Adds the title part to the report
+ */
+      [part: multiprintAGENTWISEOutstandingReportbotopbrk]
+;; {06.Sep.21 13:01}         use: dspacctitles
+  add: part: multiprintAGENTWISEOutstandingReportTitlePart
+
+/**
+ * Title Part Definition
+ * Configures the title section with company name and report title
+ */
+      [part: multiprintAGENTWISEOutstandingReportTitlePart]
+;; {06.Sep.21 13:33}        line: multiprintAGENTline1,LnmultiprintAGENTWISEOutstandingReportTitle
+
+       line:DSPCompanyName,LnmultiprintAGENTWISEOutstandingReportCurrPeriod,multiprintAGENTline,LnmultiprintAGENTWISEOutstandingReportTitle   ;;,multiledger
+      local:line:DSPCompanyName: Local: Field: DSP CompanyName:PrintStyle:styleCalisto2
+      local:line:DSPReportName: Local: Field: DSPReportName:PrintStyle:styleCalisto
+        local:line:DSPReportName: Local: Field: DSPReportName:Align:RIGHT
+       local:line:DSPCompanyName: Local: Field: DSP CompanyName:Align:LEFT
+         local:line:DSPCompanyName:add:field:nf
+         local:line:DSPCompanyName:Local: Field:nf:set as:@@multiprintAGENTWISEOutstandingReportReport
+         local:line:DSPCompanyName:Local: Field:nf:style:styleCalisto2
+         local:line:DSPCompanyName:Local: Field:nf:Align:right
+
+        add:option:PrtTitle0multiprintAGENTWISEOutstandingReportOPT:##mpms
+        
+/**
+ * Conditional Title Part Configuration
+ * Removes the title line when specific conditions are met
+ */
+         [!PART:PrtTitle0multiprintAGENTWISEOutstandingReportOPT]
+         DELETE:LINE:LnmultiprintAGENTWISEOutstandingReportTitle
+
+/**
+ * Empty Line Definition
+ * Creates an empty line for spacing in the report
+ */      
+       [line: multiprintAGENTline1]
+       field:fwfC
+       Local: Field: fwfC: Set As:""
+
+/**
+ * Title Part Definition
+ * Alternative configuration for the report title section
+ */
+        [part: PrtTitle0multiprintAGENTWISEOutstandingReport]
+      line :DSPCompanyName, LnmultiprintAGENTWISEOutstandingReportCurrPeriod  ;;,multiledger
+
+/**
+ * Company Name and Report Title Styling
+ * Configures the appearance and alignment of company name and report title
+ */
+        local:line:DSPCompanyName: Local: Field: DSP CompanyName:PrintStyle:styleCalisto2
+       local:line:DSPReportName: Local: Field: DSPReportName:PrintStyle:styleCalisto
+       local:line:DSPReportName: Local: Field: DSPReportName:Align:RIGHT
+       local:line:DSPCompanyName: Local: Field: DSP CompanyName:Align:LEFT
+        local:line:DSPCompanyName:add:field:nf
+        local:line:DSPCompanyName:Local: Field:nf:set as:@@multiprintAGENTWISEOutstandingReportReport
+         local:line:DSPCompanyName:Local: Field:nf:style:styleCalisto2
+         local:line:DSPCompanyName:Local: Field:nf:Align:right
+
+/**
+ * Current Period Line Configuration
+ * Sets up the display of the current date period in the report
+ */       
+      [line: LnmultiprintAGENTWISEOutstandingReportCurrPeriod]
+      field: fwf
+      Local: field: fwf2: Align: Right
+      Local: Field: fwf: Style: normal bold
+      Local: Field: fwf2: Style:styleCalisto
+      Local: Field: fwf: Style:styleCalisto
+      Local: Field: fwf: Set As:""
+      Local: Field: nf: Set As:""
+      Local: Field: fwf: Set As: @@dspDateStr
+;; {06.Sep.21 13:42}       Local: Field: fwf2:Align:CENTRE
+;; {06.Sep.21 13:42}       Local: Field: fwf2:Align:CENTRE
+;; {06.Sep.21 12:53}       Local: Field: fwf2:invisible: $$inprintmode
+
+/**
+ * Agent Part Definition
+ * Configures the section that displays agent information
+ */      
+      [part:multiagentpart]
+      line:multiprintAGENTline  ;;,multiprintagenTaddress,multiprintagenTaddress2  ;;,multipagentpartyphline
+
+/**
+ * Agent Line Configuration
+ * Sets up the display of agent name with appropriate styling
+ */      
+      [line:multiprintAGENTline]
+        field: fwf
+      Local: Field: fwf: Style:styleCalisto2
+      Local: Field: fwf: Set As:##LedgerName
+      Local: field: FWF: Align: Right ;;centre
+
+       border:thin bottom
+
+/**
+ * Main Report Content Part
+ * Configures the main section that displays outstanding entries
+ */      
+      [Part: PrtmultiprintAGENTWISEOutstandingReport]
+     Line: multiledger ;;,LnmultiprintAGENTWISEOutstandingReportTitle ;;,LnmultiprintAGENTWISEOutstandingReport
+
+     set : 1
+
+     repeat: multiledger : ColmultiprintAGENTWISEOutstandingReport
+     scroll: Vertical
+;; {04.Sep.21 18:25}  Common Border: YEs
+      Total: Qtyf,amtf,amtf1,amtf2
+      Width:50% page
+;; {04.Sep.21 18:25}       Border: thin box
+
+/**
+ * Main Data Collection Definition
+ * Configures the collection that retrieves ledger data for the report
+ */
+[Collection: ColmultiprintAGENTWISEOutstandingReport]
+
+Type :ledger
+child of: $$groupsundrydebtors
+belongs to : yes
+fetch : *
+Fetch: BillDate, Name, Parent,BillDueDate,ClosingBalance,cwcaption1item
+filter:cwnotcloingbalancemultiprint ;;,cwnotcloingbalancemultiprintdrcr
+;; {06.Sep.21 11:37} compute:cwcldramt:$$CollAmtTotal:ColmultiprintAGENTWISEOutstandingReporta:$closingbalance
+;; {06.Sep.21 11:13} compute:cwclcramt:$$CollAmtTotal:ColmultiprintAGENTWISEOutstandingReportb:$closingbalance
+
+/**
+ * Filter Formulas
+ * Defines conditions for filtering data in the report
+ */
+[System: Formula]
+cwnotcloingbalancemultiprintdrcr:not $$isempty:$closingbalance  ;;not $$IsEmpty:$TBalDebits or not $$IsEmpty:$TBalCredits
+
+;; {06.Sep.21 11:58} cwnotcloingbalancemultiprint:##ledgername=$cwcaption1item  ;and not $$isempty:$closingbalance
+cwnotcloingbalancemultiprint:##ledgername=$cwcaption1item and (not $$isempty:$OnAccountValue or not $$isempty:$closingbalance)
+
+;; not $$IsEmpty:$TBalDebits or not $$IsEmpty:$TBalCredits
+
+
+/**
+ * Debit Bills Collection
+ * Collection for retrieving bills with debit balances
+ */
+;; {04.Sep.21 17:23} [Collection: ColmultiprintAGENTWISEOutstandingReportaa]
+;; {04.Sep.21 17:23} Collection: ColmultiprintAGENTWISEOutstandingReporta
+;; {04.Sep.21 17:23} Collection: ColmultiprintAGENTWISEOutstandingReportb
+
+[Collection: ColmultiprintAGENTWISEOutstandingReporta]
+
+TYPE:BILLS
+filter:ColmultiprintAGENTWISEOutstandingReportFilterdr
+child of:#fwfc2
+;; {04.Sep.21 16:39} sort:@@default:$parent
+
+/**
+ * Credit Bills Collection
+ * Collection for retrieving bills with credit balances
+ */
+[Collection: ColmultiprintAGENTWISEOutstandingReportb]
+TYPE:BILLS
+child of:#fwfc2
+filter:ColmultiprintAGENTWISEOutstandingReportFiltercr
+fetch:ledgerentries.ledgerentries.vouchertypename
+sort:@@default:$parent
+
+/**
+ * Filter Formulas for Bills
+ * Defines conditions for filtering debit and credit bills
+ */
+ [system: Formula]
+;; {28.Aug.21 15:54}  ColmultiprintAGENTWISEOutstandingReportFilter:$$ISDR:$closingbalance and $cwcaption1vch=##LedgerName
+ ColmultiprintAGENTWISEOutstandingReportFiltercr:if $cwcaption1item:ledger:$parent=##LedgerName then not $$isdr:$closingbalance else no
+ ColmultiprintAGENTWISEOutstandingReportFilterdr:if $cwcaption1item:ledger:$parent=##LedgerName then $$isdr:$closingbalance else no
+
+/**
+ * Multi-ledger Line Configuration
+ * Sets up the display of ledger entries with appropriate styling
+ */
+ [line:multiledger]
+ field:fwfc2  ;;,amtf30,amtf31
+
+ Local: Field: fwfc2: Set As:$name
+ Local: Field: amtf30: Set As:$closingbalance  ;;$closingbalance
+ Local: Field: amtf31: Set As:$OnAccountValue
+
+ Local: field: FWFC2: Align:LEFT
+
+ next page :yes
+;; Local: Field:default: Border: thin top bottom
+ local: field: FWFc2 : style:styleCalisto2
+
+ add:explode:Lnmultiprintleaddress
+ add:explode:LnmultiprintAGENTWISEos
+ add:explode:cwmultisubtotal
+ 
+/**
+ * Multi-ledger Option Configuration
+ * Conditional configuration based on specific parameter
+ */
+ add:option:multiledgeropt:not ##mpms
+ [!line:multiledgeropt]
+  next page :no
+ 
+/**
+ * Ledger Address Part
+ * Configures the display of ledger address information
+ */ 
+ [part:Lnmultiprintleaddress]
+ line:multiprintAGENTbilldetailpartaddx,multiprintAGENTbilldetailpartadd2x,multiprintAGENTbilldetailpartphx
+ 
+
+/**
+ * Address Line Configuration
+ * Sets up the display of the first line of address
+ */
+[line:multiprintAGENTbilldetailpartaddx]
+field:fwfc
+Local: Field: fwfc: Set As:$$CollectionField:$address:First:collcwLedgeraggaddress1
+local: field: fwfc : style:styleCalisto
+ delete:explode
+ Local: field: FWFC: Align:LEFT
+ 
+/**
+ * Second Address Line Configuration
+ * Sets up the display of the second line of address
+ */
+[line:multiprintAGENTbilldetailpartadd2x]
+field:fwfc
+Local: Field: fwfc: Set As:$$CollectionField:$address:2:collcwLedgeraggaddress1
+local: field: fwfc : style:styleCalisto
+  delete:explode
+ Local: field: FWFC: Align:LEFT
+
+/**
+ * Phone Information Line Configuration
+ * Sets up the display of phone and mobile numbers
+ */
+[line:multiprintAGENTbilldetailpartphx]
+field:fwfc
+ Local: Field: fwfc: Set As:"Phone."+" "+$LedgerPhone:ledger:#fwfc2+"    "+$LedgerMobile:ledger:#fwfc2
+       local: field: FWFc : style:styleCalisto
+  Local: field: FWFC: Align:LEFT
+  delete:explode
+
+/**
+ * Ledger Address Collection
+ * Collection for retrieving address information for ledgers
+ */
+[Collection: collcwLedgeraggaddress1]
+type : address : ledger
+  child of :#fwfc2
+
+
+/**
+ * Outstanding Statement Part
+ * Configures the section that displays outstanding statement details
+ */
+ [part:LnmultiprintAGENTWISEos]
+ line:LnmultiprintAGENTWISEOutstandingReportTitle,LnmultiprintAGENTWISEOutstandingReport
+ repeat:LnmultiprintAGENTWISEOutstandingReport;;  :ColmultiprintAGENTWISEOutstandingReportaa
+ set:$$multiRepeatControl
+;; {06.Sep.21 10:05}  Total: Qtyf,amtf,amtf1,amtf2
+ 
+/**
+ * Repeat Control Function
+ * Function to determine the number of rows to display based on debit and credit counts
+ */
+ [Function: multiRepeatControl]
+ variable: drcount : number : $$numitems:ColmultiprintAGENTWISEOutstandingReporta
+ variable: crcount : number : $$numitems:ColmultiprintAGENTWISEOutstandingReportb
+;; {04.Sep.21 18:01}  01 : log : #fwfc2
+;; {04.Sep.21 18:01}  02 : log : ##drcount
+;; {04.Sep.21 18:01}  03 : log : ##crcount
+;; {04.Sep.21 18:01}  04: log : "----"
+
+ 
+ 10 : do if : ##drcount > ##crcount : return :##drcount
+ 20 : return : ##crcount
+ 
+
+/**
+ * Outstanding Report Title Line
+ * Configures the header row for the outstanding statement
+ */
+[Line: LnmultiprintAGENTWISEOutstandingReportTitle]
+use: LnmultiprintAGENTWISEOutstandingReport
+option: titleopt
+local:field: sdf: set as: "Date"
+local:field: snf: set as: "Bill No"
+local:field: fwf: set as: "Bill No"
+local:field: nf: set as: "Bill No"
+;; {30.Aug.21 11:58} local:field: fwf: set as: ""
+local:field: numf: set as:"Due Days"
+
+
+local:field: amtf: set as: "Amount"
+
+
+local:field: sdf2: set as: "Date"
+local:field: snf2: set as: "Mode of credit"
+local:field: amtf2: set as: "Amount"
+
+local: field: default : style: normal bold
+Local: field: default: Align:centre
+Local: field:fwf: Align:left
+local: field: sdf : style:styleCalisto2
+local: field: sdf2 : style:styleCalisto2
+local: field: sdf : style:styleCalisto2
+local: field: sNf : style:styleCalisto2
+local: field: sNf2 : style:styleCalisto2
+local: field: fwf : style:styleCalisto2
+local: field: nf : style:styleCalisto2
+local: field: numf : style:styleCalisto2
+local: field: amtf : style:styleCalisto2
+local: field: amtf2 : style:styleCalisto2
+;; {28.Aug.21 16:27} Local: Field: amtf: Border: thin right
+
+;; {30.Aug.21 11:59}  local:field: fwf:indent:25
+delete:explode
+
+/**
+ * System Formulas for Outstanding Report
+ * Defines calculations for due days and credit mode display
+ */
+[System: Formula]
+cwmultiduedays:@@DSPToDate - $BillDate
+cwvchtypenamems: $$CollectionField:$vouchertypename:First:ledgerentries
+
+cwModeofcreditmulti:if @@cwvchtypenamems="Receipt" then (if not $$isempty:@@cwTransactionTypec  then @@cwTransactionTypec else "Cash") else @@cwModeofcredit
+ 
+/**
+ * Outstanding Report Detail Line
+ * Configures the data rows for the outstanding statement
+ */
+[Line: LnmultiprintAGENTWISEOutstandingReport]
+;; {06.Sep.21 13:48} Fields: sdf,fwf
+;; {06.Sep.21 13:48} right field:numf,Amtf,sdf2,snf2,Amtf2,amtf20,amtf21
+field:sdf,nf,numf,Amtf,sdf2,snf1,snf2,Amtf2,amtf20,amtf21,amtf22,amtf23
+
+Option: Alter on Enter
+
+local:field: sdf: set as: $$CollectionField:$billdate:$$line:ColmultiprintAGENTWISEOutstandingReporta ;;if $$ISDR:$closingbalance then $billdate else "";; "Date"
+
+local:field: fwf: set as:$$CollectionField:$name:$$line:ColmultiprintAGENTWISEOutstandingReporta  ;;if $$ISDR:$closingbalance then $name else ""  ;; "Bill No"
+local:field: nf: set as:$$CollectionField:$name:$$line:ColmultiprintAGENTWISEOutstandingReporta  ;;if $$ISDR:$closingbalance then $name else ""  ;; "Bill No"
+;; {30.Aug.21 11:58} local:field: fwf: set as:"";;$parent;; "Bill No"
+;; {04.Sep.21 17:31} local:field: numf: set as:if $$ISDR:$closingbalance then @@DSPToDate - $BillDate else "" ;;"Due Days"
+local:field: numf: set as:$$CollectionField:@@cwmultiduedays:$$line:ColmultiprintAGENTWISEOutstandingReporta
+
+local:field: amtf: set as:$$CollectionField:$closingbalance:$$line:ColmultiprintAGENTWISEOutstandingReporta ;;if $$ISDR:$closingbalance then $closingbalance else "" ;; "Bill Amt"
+
+local:field: sdf2: set as:$$CollectionField:$billdate:$$line:ColmultiprintAGENTWISEOutstandingReportb ;;if not $$ISDR:$closingbalance then $billdate else ""
+
+;; {04.Sep.21 18:27} local:field: snf2: set as:$$CollectionField:@@cwvchtypenamems:$$line:ColmultiprintAGENTWISEOutstandingReportb
+local:field: snf2: set as:$$CollectionField:@@cwModeofcreditmulti:$$line:ColmultiprintAGENTWISEOutstandingReportb
+
+/**
+ * Amount Field Configuration
+ * Sets up the display of amount values with appropriate calculations
+ */
+local:field: amtf2: set as:$$CollectionField:$closingbalance:$$line:ColmultiprintAGENTWISEOutstandingReportb  ;;if not $$ISDR:$closingbalance then $closingbalance else "" ;; "Bill Amt"
+
+/**
+ * Running Total Calculations
+ * Calculates running totals for debit and credit amounts
+ */
+Local: Field: amtf20: Set As:if $$line=1 then #amtf else $$prevlinefield+#amtf
+Local: Field: amtf21: Set As:if $$line=1 then #amtf2 else $$prevlinefield+#amtf2
+
+Local: Field: amtf22: Set As:if $$line=1 then #amtf else $$prevlinefield+#amtf
+Local: Field: amtf23: Set As:if $$line=1 then #amtf2 else $$prevlinefield+#amtf2
+
+;;Local: Field: amtf4: Set As:if $$line=1 then #amtf2 else if $parent <> $$prevobj:$parent then #amtf2 else $$prevlinefield+#amtf2
+
+/**
+ * Field Styling and Visibility
+ * Sets the style for fields and hides calculation fields
+ */
+ local: field: default : style:styleCalisto
+;; {04.Sep.21 18:41} local: field: amtf3: Invisible: yes
+local: field: amtf20: Invisible: yes
+local: field: amtf21: Invisible: yes
+local: field: amtf22: Invisible: yes
+local: field: amtf23: Invisible: yes
+
+/**
+ * Subtotal Part Configuration
+ * Configures the display of subtotals at the end of each agent section
+ */
+[part:cwmultisubtotal]
+line:cwmultisubtotalline
+border:thin top
+
+/**
+ * Subtotal Line Configuration
+ * Sets up the display of debit and credit subtotals
+ */
+[line:cwmultisubtotalline]
+field:fwfc,amtf,amtf2
+
+Local: Field: fwfc: Set As:"Total"
+Local: Field: amtf: Set As:$$CollAmtTotal:ColmultiprintAGENTWISEOutstandingReporta:$closingbalance
+Local: Field: amtf2: Set As:$$CollAmtTotal:ColmultiprintAGENTWISEOutstandingReportb:$closingbalance
+
+local: field: fwfc : style:styleCalisto2
+local: field: amtf : style:styleCalisto2
+local: field: amtf2 : style:styleCalisto2
+
+Local: field: FWFC: Align:LEFT
