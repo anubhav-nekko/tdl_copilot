@@ -526,7 +526,7 @@ def query_documents_with_page_range(
     # sort ascending by distance, take top_k
     relevant_sorted = sorted(relevant, key=lambda x: x[0])[: top_k]
     top_k_metadata = [r[1] for r in relevant_sorted]
-
+    web_search_results = {}
     # Step 3: Perform web search using Tavily API
     if web_search:
         try:
@@ -569,7 +569,7 @@ def query_documents_with_page_range(
             system_message,
             combined_context
         )
-        return response
+        return response, top_k_metadata, web_search_results
     except Exception as e:
         st.error(f"LLM query failed: {str(e)}")
         return "An error occurred while querying the LLM."
@@ -1228,6 +1228,28 @@ def main():
 
                 with st.expander("Show Copyable Text"):
                     st.code(message["content"], language="text")
+                
+                with st.expander("Sources (click to view)"):
+                        sources = message.get("sources", [])
+                        if not sources:
+                            st.write("No sources for this response.")
+                        else:
+                            top_k_metadata = sources[0]
+                            ws_query = sources[1]
+
+                            # Display file sources separately
+                            for metadata in top_k_metadata:
+                                try:
+                                    st.markdown(f"**Filename:** {metadata['filename']}, **Page:** {metadata['page']}")
+                                    st.code(metadata['text'], language="markdown")  # Use st.code for better formatting
+                                except:
+                                    st.code(json.dumps(metadata), language="markdown")  # Use st.code for better formatting
+
+                            # Show Web Search Results separately
+                            if ws_query:
+                                st.markdown("Web Search Results")
+                                st.code(ws_query)
+                
 
         # --- New User Input using text_area ---
         user_message = user_input()
@@ -1260,7 +1282,7 @@ def main():
                     st.markdown(f"[**{file_key}**]({preview_url})", unsafe_allow_html=True)
 
 
-                answer = query_documents_with_page_range(
+                answer, top_k_metadata, ws_response = query_documents_with_page_range(
                     st.session_state.selected_files, 
                     st.session_state.selected_page_ranges, 
                     user_message,
@@ -1270,7 +1292,9 @@ def main():
                 )
 
                 st.session_state.sources.append({
-                    "answer": answer
+                    "top_k_metadata": top_k_metadata,
+                    "answer": answer,
+                    "websearch_metadata": ws_response
                 })
 
 
@@ -1282,7 +1306,8 @@ def main():
             st.session_state.messages.append({
                 "role": "assistant",
                 "content": assistant_answer,
-                "time": current_time
+                "time": current_time,
+                "sources": [top_k_metadata, ws_response]
             })
 
             # Show the assistant response in the UI
