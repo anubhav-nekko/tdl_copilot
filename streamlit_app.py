@@ -47,15 +47,15 @@ import plotly.graph_objects as go # type: ignore
 from docx import Document # type: ignore
 from pptx import Presentation # type: ignore
 import pandas as pd # type: ignore
-from azure.storage.blob import BlobServiceClient # type: ignore
+# from azure.storage.blob import BlobServiceClient # type: ignore
 import io
 from io import BytesIO
 from PIL import Image # type: ignore
 import cv2 # type: ignore
 import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from openai import AzureOpenAI, OpenAI # type: ignore
+# from email.mime.multipart import MIMEMultipart
+# from email.mime.text import MIMEText
+# from openai import AzureOpenAI, OpenAI # type: ignore
 import copy
 import uuid
 import tiktoken # type: ignore
