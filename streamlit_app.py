@@ -507,13 +507,19 @@ def query_documents_with_page_range(
     k = faiss_index.ntotal
     D, I = faiss_index.search(query_embedding, k)
 
+    include_all = not selected_files    
     # 2) filter
     relevant = []
     for dist, idx in zip(D[0], I[0]):
         if idx < len(metadata_store):
             record = metadata_store[idx]
-            if record["filename"] in selected_files:
-                (start_pg, end_pg) = selected_page_range.get(record["filename"], (1,999999))
+
+            # ---------- NEW LINE --------------------------------------------
+            if include_all or record["filename"] in selected_files:
+            # ----------------------------------------------------------------
+                (start_pg, end_pg) = selected_page_range.get(
+                    record["filename"], (1, 999_999)
+                )
                 if start_pg <= record["page"] <= end_pg:
                     relevant.append((dist, record))
 
@@ -1082,7 +1088,7 @@ def main():
         if available_files:
             # Use multiselect and store the selection in session state.
             st.session_state.selected_files = st.multiselect(
-                "Select files to include in the query:",
+                "Select files (leave blank to search all):",
                 available_files,
                 default=st.session_state.selected_files
             )
